@@ -141,7 +141,7 @@ export const ProductsPage: React.FC = () => {
               <TableCell>Packing</TableCell>
               <TableCell align="right">Sale Price</TableCell>
               <TableCell align="right">Purchase Price</TableCell>
-              <TableCell align="right">Total Qty</TableCell>
+              <TableCell align="center">Total Qty</TableCell>
               <TableCell align="center">Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -176,7 +176,7 @@ export const ProductsPage: React.FC = () => {
                     variant="outlined"
                   />
                 </TableCell>
-                <TableCell align="right">
+                <TableCell align="center">
                   <Chip
                     label={product.totalQuantity}
                     size="small"

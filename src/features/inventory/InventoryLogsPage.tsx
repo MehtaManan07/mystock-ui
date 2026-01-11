@@ -121,7 +121,7 @@ export const InventoryLogsPage: React.FC = () => {
               <TableCell>Action</TableCell>
               <TableCell>Product ID</TableCell>
               <TableCell>Container ID</TableCell>
-              <TableCell align="right">Quantity</TableCell>
+              <TableCell align="center">Quantity</TableCell>
               <TableCell>Note</TableCell>
               <TableCell align="center">Actions</TableCell>
             </TableRow>
@@ -160,7 +160,7 @@ export const InventoryLogsPage: React.FC = () => {
                     sx={{ cursor: 'pointer' }}
                   />
                 </TableCell>
-                <TableCell align="right">
+                <TableCell align="center">
                   <Chip
                     label={log.action === 'remove' || log.action === 'sale' ? `-${log.quantity}` : `+${log.quantity}`}
                     size="small"

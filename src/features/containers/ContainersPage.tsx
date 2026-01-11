@@ -133,7 +133,7 @@ export const ContainersPage: React.FC = () => {
             <TableRow>
               <TableCell>Name</TableCell>
               <TableCell>Type</TableCell>
-              <TableCell align="right">Products</TableCell>
+              <TableCell align="center">Products</TableCell>
               <TableCell align="center">Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -158,7 +158,7 @@ export const ContainersPage: React.FC = () => {
                     variant="outlined"
                   />
                 </TableCell>
-                <TableCell align="right">
+                <TableCell align="center">
                   <Chip
                     label={container.productCount}
                     size="small"

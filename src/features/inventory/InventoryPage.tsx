@@ -120,7 +120,7 @@ export const InventoryPage: React.FC = () => {
               <TableCell>Size</TableCell>
               <TableCell>Packing</TableCell>
               <TableCell>Container</TableCell>
-              <TableCell align="right">Quantity</TableCell>
+              <TableCell align="center">Quantity</TableCell>
               <TableCell align="center">Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -144,7 +144,7 @@ export const InventoryPage: React.FC = () => {
                     sx={{ cursor: 'pointer' }}
                   />
                 </TableCell>
-                <TableCell align="right">
+                <TableCell align="center">
                   <Chip
                     label={item.quantity}
                     size="small"

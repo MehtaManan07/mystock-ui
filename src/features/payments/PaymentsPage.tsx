@@ -168,7 +168,7 @@ export const PaymentsPage: React.FC = () => {
               <TableCell>Description</TableCell>
               <TableCell>Method</TableCell>
               <TableCell align="right">Amount</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell align="center">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -223,7 +223,7 @@ export const PaymentsPage: React.FC = () => {
                     {formatCurrency(payment.amount)}
                   </Typography>
                 </TableCell>
-                <TableCell align="right">
+                <TableCell align="center">
                   <Tooltip title="Edit">
                     <IconButton
                       size="small"
