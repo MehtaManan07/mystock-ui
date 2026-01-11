@@ -53,6 +53,22 @@ export interface AuthResponse {
   token: TokenResponse;
 }
 
+export interface CreateUserDto {
+  username: string;
+  password: string;
+  name: string;
+  role: UserRole;
+  contact_info?: string;
+}
+
+export interface UpdateUserDto {
+  username?: string;
+  password?: string;
+  name?: string;
+  role?: UserRole;
+  contact_info?: string;
+}
+
 // ============================================
 // Product Types
 // ============================================

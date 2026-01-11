@@ -5,6 +5,8 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import { useThemeStore } from './stores/themeStore';
 import { lightTheme, darkTheme } from './theme';
 import AppRoutes from './routes';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { NotificationProvider } from './components/common/NotificationProvider';
 
 // Create a client with proper caching settings
 const queryClient = new QueryClient({
@@ -31,9 +33,12 @@ const ThemedApp: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
+      <ErrorBoundary>
+        <BrowserRouter>
+          <AppRoutes />
+          <NotificationProvider />
+        </BrowserRouter>
+      </ErrorBoundary>
     </ThemeProvider>
   );
 };

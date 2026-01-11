@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { productsApi } from '../api/products.api';
 import { QUERY_KEYS } from '../constants';
 import type { CreateProductDto, UpdateProductDto, Product } from '../types';
+import { useNotificationStore } from '../stores/notificationStore';
 
 /**
  * Hook to fetch all products
@@ -33,6 +34,7 @@ export const useProduct = (id: number) => {
  */
 export const useCreateProduct = () => {
   const queryClient = useQueryClient();
+  const { success, error } = useNotificationStore();
 
   return useMutation({
     mutationFn: (data: CreateProductDto) => productsApi.create(data),
@@ -65,14 +67,17 @@ export const useCreateProduct = () => {
       return { previousProducts };
     },
     
-    onError: (_err, _newProduct, context) => {
+    onError: (err, _newProduct, context) => {
       // Rollback on error
       if (context?.previousProducts) {
         queryClient.setQueryData(QUERY_KEYS.PRODUCTS, context.previousProducts);
       }
+      error(`Failed to create product: ${(err as Error).message || 'Unknown error'}`);
     },
     
     onSuccess: (serverProduct) => {
+      success(`Product "${serverProduct.name}" created successfully`);
+
       // Replace optimistic product with server response
       const products = queryClient.getQueryData<Product[]>(QUERY_KEYS.PRODUCTS);
       if (products) {
@@ -89,6 +94,7 @@ export const useCreateProduct = () => {
  */
 export const useUpdateProduct = () => {
   const queryClient = useQueryClient();
+  const { success, error } = useNotificationStore();
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateProductDto }) =>
@@ -116,7 +122,7 @@ export const useUpdateProduct = () => {
       return { previousProducts, previousProduct };
     },
     
-    onError: (_err, { id }, context) => {
+    onError: (err, { id }, context) => {
       // Rollback on error
       if (context?.previousProducts) {
         queryClient.setQueryData(QUERY_KEYS.PRODUCTS, context.previousProducts);
@@ -124,9 +130,11 @@ export const useUpdateProduct = () => {
       if (context?.previousProduct) {
         queryClient.setQueryData(QUERY_KEYS.PRODUCT(id), context.previousProduct);
       }
+      error(`Failed to update product: ${(err as Error).message || 'Unknown error'}`);
     },
     
     onSuccess: (serverProduct, { id }) => {
+      success('Product updated successfully');
       // Update with server response
       const products = queryClient.getQueryData<Product[]>(QUERY_KEYS.PRODUCTS);
       if (products) {
@@ -146,6 +154,7 @@ export const useUpdateProduct = () => {
  */
 export const useDeleteProduct = () => {
   const queryClient = useQueryClient();
+  const { success, error } = useNotificationStore();
 
   return useMutation({
     mutationFn: (id: number) => productsApi.delete(id),
@@ -168,11 +177,16 @@ export const useDeleteProduct = () => {
       return { previousProducts };
     },
     
-    onError: (_err, _id, context) => {
+    onError: (err, _id, context) => {
       // Rollback on error
       if (context?.previousProducts) {
         queryClient.setQueryData(QUERY_KEYS.PRODUCTS, context.previousProducts);
       }
+      error(`Failed to delete product: ${(err as Error).message || 'Unknown error'}`);
+    },
+    
+    onSuccess: () => {
+      success('Product deleted successfully');
     },
   });
 };

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { paymentsApi } from '../api/payments.api';
 import { QUERY_KEYS } from '../constants';
 import type { Payment, CreatePaymentDto, UpdatePaymentDto, PaymentFilters } from '../types';
+import { useNotificationStore } from '../stores/notificationStore';
 
 /**
  * Hook to get all payments with optional filters
@@ -61,6 +62,7 @@ export const usePaymentCategories = () => {
  */
 export const useCreatePayment = () => {
   const queryClient = useQueryClient();
+  const { success, error } = useNotificationStore();
 
   return useMutation({
     mutationFn: (data: CreatePaymentDto) => paymentsApi.create(data),
@@ -93,13 +95,15 @@ export const useCreatePayment = () => {
       return { previousPayments };
     },
     onSuccess: () => {
+      success('Payment recorded successfully');
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PAYMENTS });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PAYMENT_SUMMARY });
     },
-    onError: (_, __, context) => {
+    onError: (err, _, context) => {
       if (context?.previousPayments) {
         queryClient.setQueryData(QUERY_KEYS.PAYMENTS, context.previousPayments);
       }
+      error(`Failed to create payment: ${(err as Error).message || 'Unknown error'}`);
     },
   });
 };
@@ -109,6 +113,7 @@ export const useCreatePayment = () => {
  */
 export const useUpdatePayment = () => {
   const queryClient = useQueryClient();
+  const { success, error } = useNotificationStore();
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdatePaymentDto }) =>
@@ -133,14 +138,16 @@ export const useUpdatePayment = () => {
       return { previousPayments };
     },
     onSuccess: (updatedPayment) => {
+      success('Payment updated successfully');
       queryClient.setQueryData(QUERY_KEYS.PAYMENT(updatedPayment.id), updatedPayment);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PAYMENTS });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PAYMENT_SUMMARY });
     },
-    onError: (_, __, context) => {
+    onError: (err, _, context) => {
       if (context?.previousPayments) {
         queryClient.setQueryData(QUERY_KEYS.PAYMENTS, context.previousPayments);
       }
+      error(`Failed to update payment: ${(err as Error).message || 'Unknown error'}`);
     },
   });
 };
@@ -150,6 +157,7 @@ export const useUpdatePayment = () => {
  */
 export const useDeletePayment = () => {
   const queryClient = useQueryClient();
+  const { success, error } = useNotificationStore();
 
   return useMutation({
     mutationFn: (id: number) => paymentsApi.delete(id),
@@ -165,13 +173,15 @@ export const useDeletePayment = () => {
       return { previousPayments };
     },
     onSuccess: () => {
+      success('Payment deleted successfully');
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PAYMENTS });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PAYMENT_SUMMARY });
     },
-    onError: (_, __, context) => {
+    onError: (err, _, context) => {
       if (context?.previousPayments) {
         queryClient.setQueryData(QUERY_KEYS.PAYMENTS, context.previousPayments);
       }
+      error(`Failed to delete payment: ${(err as Error).message || 'Unknown error'}`);
     },
   });
 };

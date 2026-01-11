@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,7 +10,6 @@ import {
   TextField,
   Button,
   Typography,
-  Link,
   Alert,
   InputAdornment,
   IconButton,
@@ -147,17 +146,9 @@ export const LoginPage: React.FC = () => {
               fullWidth
               size="large"
               disabled={isPending}
-              sx={{ mb: 2 }}
             >
               {isPending ? 'Signing in...' : 'Sign In'}
             </Button>
-
-            <Typography variant="body2" textAlign="center" color="text.secondary">
-              Don't have an account?{' '}
-              <Link component={RouterLink} to="/register" fontWeight={600}>
-                Sign up
-              </Link>
-            </Typography>
           </form>
         </CardContent>
       </Card>

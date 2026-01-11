@@ -5,7 +5,6 @@ import MainLayout from '../components/layout/MainLayout';
 
 // Direct imports instead of lazy loading for faster navigation
 import LoginPage from '../features/auth/LoginPage';
-import RegisterPage from '../features/auth/RegisterPage';
 import DashboardPage from '../features/dashboard/DashboardPage';
 import ProductsPage from '../features/products/ProductsPage';
 import ProductDetailPage from '../features/products/ProductDetailPage';
@@ -20,6 +19,8 @@ import TransactionDetailPage from '../features/transactions/TransactionDetailPag
 import CreateSalePage from '../features/transactions/CreateSalePage';
 import CreatePurchasePage from '../features/transactions/CreatePurchasePage';
 import PaymentsPage from '../features/payments/PaymentsPage';
+import UsersPage from '../features/users/UsersPage';
+import { USER_ROLES } from '../constants';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -30,14 +31,6 @@ export const AppRoutes: React.FC = () => {
         element={
           <GuestGuard>
             <LoginPage />
-          </GuestGuard>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <GuestGuard>
-            <RegisterPage />
           </GuestGuard>
         }
       />
@@ -76,6 +69,16 @@ export const AppRoutes: React.FC = () => {
         
         {/* Payments */}
         <Route path="/payments" element={<PaymentsPage />} />
+        
+        {/* Users - Admin only */}
+        <Route
+          path="/users"
+          element={
+            <AuthGuard allowedRoles={[USER_ROLES.ADMIN]}>
+              <UsersPage />
+            </AuthGuard>
+          }
+        />
       </Route>
 
       {/* Redirect root to dashboard */}
