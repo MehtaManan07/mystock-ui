@@ -1,20 +1,17 @@
 import { create } from 'zustand';
 
-export type NotificationType = 'success' | 'error' | 'warning' | 'info';
+type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
 interface Notification {
   id: string;
-  message: string;
   type: NotificationType;
-  duration?: number;
+  message: string;
 }
 
 interface NotificationState {
   notifications: Notification[];
-  addNotification: (message: string, type: NotificationType, duration?: number) => void;
+  addNotification: (type: NotificationType, message: string) => void;
   removeNotification: (id: string) => void;
-  
-  // Convenience methods
   success: (message: string) => void;
   error: (message: string) => void;
   warning: (message: string) => void;
@@ -23,38 +20,40 @@ interface NotificationState {
 
 export const useNotificationStore = create<NotificationState>((set, get) => ({
   notifications: [],
-  
-  addNotification: (message, type, duration = 4000) => {
-    const id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
-    const notification: Notification = { id, message, type, duration };
-    
+
+  addNotification: (type: NotificationType, message: string) => {
+    const id = Date.now().toString();
+    const notification: Notification = { id, type, message };
+
     set((state) => ({
       notifications: [...state.notifications, notification],
     }));
-    
-    // Auto-remove after duration
-    if (duration > 0) {
-      setTimeout(() => {
-        get().removeNotification(id);
-      }, duration);
-    }
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      get().removeNotification(id);
+    }, 5000);
   },
-  
-  removeNotification: (id) => {
+
+  removeNotification: (id: string) => {
     set((state) => ({
       notifications: state.notifications.filter((n) => n.id !== id),
     }));
   },
-  
-  // Convenience methods
-  success: (message) => get().addNotification(message, 'success'),
-  error: (message) => get().addNotification(message, 'error', 6000),
-  warning: (message) => get().addNotification(message, 'warning'),
-  info: (message) => get().addNotification(message, 'info'),
-}));
 
-// Export a hook for easy access
-export const useNotification = () => {
-  const { success, error, warning, info } = useNotificationStore();
-  return { success, error, warning, info };
-};
+  success: (message: string) => {
+    get().addNotification('success', message);
+  },
+
+  error: (message: string) => {
+    get().addNotification('error', message);
+  },
+
+  warning: (message: string) => {
+    get().addNotification('warning', message);
+  },
+
+  info: (message: string) => {
+    get().addNotification('info', message);
+  },
+}));

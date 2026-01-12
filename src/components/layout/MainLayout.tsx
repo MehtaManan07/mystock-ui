@@ -37,7 +37,6 @@ import {
 import { useAuthStore } from '../../stores/authStore';
 import { useThemeStore } from '../../stores/themeStore';
 import { useLogout } from '../../hooks/useAuth';
-import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { USER_ROLES } from '../../constants';
 
 const DRAWER_WIDTH = 260;
@@ -46,19 +45,18 @@ interface NavItem {
   text: string;
   icon: React.ReactNode;
   path: string;
-  shortcut?: string;
   adminOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
-  { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard', shortcut: 'Alt+H' },
-  { text: 'Products', icon: <ProductIcon />, path: '/products', shortcut: 'Alt+P' },
-  { text: 'Containers', icon: <ContainerIcon />, path: '/containers', shortcut: 'Alt+C' },
-  { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory', shortcut: 'Alt+I' },
-  { text: 'Contacts', icon: <ContactIcon />, path: '/contacts', shortcut: 'Alt+O' },
-  { text: 'Transactions', icon: <TransactionIcon />, path: '/transactions', shortcut: 'Alt+T' },
-  { text: 'Payments', icon: <PaymentIcon />, path: '/payments', shortcut: 'Alt+M' },
-  { text: 'Users', icon: <UsersIcon />, path: '/users', shortcut: 'Alt+U', adminOnly: true },
+  { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
+  { text: 'Products', icon: <ProductIcon />, path: '/products' },
+  { text: 'Containers', icon: <ContainerIcon />, path: '/containers' },
+  { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
+  { text: 'Contacts', icon: <ContactIcon />, path: '/contacts' },
+  { text: 'Transactions', icon: <TransactionIcon />, path: '/transactions' },
+  { text: 'Payments', icon: <PaymentIcon />, path: '/payments' },
+  { text: 'Users', icon: <UsersIcon />, path: '/users', adminOnly: true },
 ];
 
 export const MainLayout: React.FC = () => {
@@ -73,9 +71,6 @@ export const MainLayout: React.FC = () => {
   const user = useAuthStore((state) => state.user);
   const { mode, toggleTheme } = useThemeStore();
   const logout = useLogout();
-  
-  // Register global keyboard shortcuts
-  useKeyboardShortcuts();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -161,13 +156,8 @@ export const MainLayout: React.FC = () => {
                 </ListItemIcon>
                 <ListItemText
                   primary={item.text}
-                  secondary={!isMobile && item.shortcut}
                   primaryTypographyProps={{
                     fontWeight: isActive ? 600 : 500,
-                  }}
-                  secondaryTypographyProps={{
-                    variant: 'caption',
-                    sx: { opacity: 0.6, fontSize: '0.65rem' },
                   }}
                 />
               </ListItemButton>
