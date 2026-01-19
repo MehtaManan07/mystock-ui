@@ -3,12 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Card,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   IconButton,
   Chip,
   Tooltip,
@@ -25,6 +19,7 @@ import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
+import { ResponsiveTable } from '../../components/common/ResponsiveTable';
 import { ProductFormDialog } from './components/ProductFormDialog';
 import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '../../hooks/useProducts';
 import type { Product, CreateProductDto, UpdateProductDto } from '../../types';
@@ -110,6 +105,118 @@ export const ProductsPage: React.FC = () => {
     return `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
   };
 
+  // Define table columns for ResponsiveTable
+  const columns = [
+    {
+      id: 'name',
+      label: 'Name',
+      render: (product: Product) => (
+        <Typography variant="body2" fontWeight={600}>
+          {product.name}
+        </Typography>
+      ),
+    },
+    {
+      id: 'size',
+      label: 'Size',
+      render: (product: Product) => <Typography variant="body2">{product.size || '-'}</Typography>,
+      hideOnMobile: true,
+    },
+    {
+      id: 'packing',
+      label: 'Packing',
+      render: (product: Product) => <Typography variant="body2">{product.packing || '-'}</Typography>,
+      hideOnMobile: true,
+    },
+    {
+      id: 'salePrice',
+      label: 'Sale Price',
+      mobileLabel: 'Sale',
+      align: 'right' as const,
+      render: (product: Product) => (
+        <Chip
+          label={formatCurrency(product.default_sale_price)}
+          size="small"
+          color="success"
+          variant="outlined"
+        />
+      ),
+    },
+    {
+      id: 'purchasePrice',
+      label: 'Purchase Price',
+      mobileLabel: 'Purchase',
+      align: 'right' as const,
+      render: (product: Product) => (
+        <Chip
+          label={formatCurrency(product.default_purchase_price)}
+          size="small"
+          color="primary"
+          variant="outlined"
+        />
+      ),
+      hideOnMobile: true,
+    },
+    {
+      id: 'quantity',
+      label: 'Total Qty',
+      mobileLabel: 'Qty',
+      align: 'center' as const,
+      render: (product: Product) => (
+        <Chip
+          label={product.totalQuantity}
+          size="small"
+          color={product.totalQuantity > 0 ? 'primary' : 'default'}
+          variant={product.totalQuantity > 0 ? 'filled' : 'outlined'}
+        />
+      ),
+    },
+    {
+      id: 'actions',
+      label: 'Actions',
+      align: 'center' as const,
+      isAction: true,
+      render: (product: Product) => (
+        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+          <Tooltip title="View">
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleViewProduct(product);
+              }}
+            >
+              <ViewIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Edit">
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenEditDialog(product);
+              }}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete">
+            <IconButton
+              size="small"
+              color="error"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenDeleteDialog(product);
+              }}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      ),
+    },
+  ];
+
   // Render content for the table area
   const renderTableContent = () => {
     if (showFullLoading) {
@@ -132,90 +239,13 @@ export const ProductsPage: React.FC = () => {
     }
     
     return (
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Size</TableCell>
-              <TableCell>Packing</TableCell>
-              <TableCell align="right">Sale Price</TableCell>
-              <TableCell align="right">Purchase Price</TableCell>
-              <TableCell align="center">Total Qty</TableCell>
-              <TableCell align="center">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {products.map((product) => (
-              <TableRow
-                key={product.id}
-                hover
-                sx={{ cursor: 'pointer' }}
-                onClick={() => handleViewProduct(product)}
-              >
-                <TableCell>
-                  <Typography variant="body2" fontWeight={600}>
-                    {product.name}
-                  </Typography>
-                </TableCell>
-                <TableCell>{product.size || '-'}</TableCell>
-                <TableCell>{product.packing || '-'}</TableCell>
-                <TableCell align="right">
-                  <Chip
-                    label={formatCurrency(product.default_sale_price)}
-                    size="small"
-                    color="success"
-                    variant="outlined"
-                  />
-                </TableCell>
-                <TableCell align="right">
-                  <Chip
-                    label={formatCurrency(product.default_purchase_price)}
-                    size="small"
-                    color="primary"
-                    variant="outlined"
-                  />
-                </TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={product.totalQuantity}
-                    size="small"
-                    color={product.totalQuantity > 0 ? 'primary' : 'default'}
-                    variant={product.totalQuantity > 0 ? 'filled' : 'outlined'}
-                  />
-                </TableCell>
-                <TableCell align="center" onClick={(e) => e.stopPropagation()}>
-                  <Tooltip title="View">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleViewProduct(product)}
-                    >
-                      <ViewIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Edit">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleOpenEditDialog(product)}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete">
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleOpenDeleteDialog(product)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <ResponsiveTable
+        columns={columns}
+        data={products}
+        keyExtractor={(product) => product.id.toString()}
+        onRowClick={handleViewProduct}
+        emptyMessage="No products found"
+      />
     );
   };
 
@@ -229,12 +259,14 @@ export const ProductsPage: React.FC = () => {
       />
 
       {/* Search bar - always visible */}
-      <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Search by name, size, or packing..."
-        />
+      <Box sx={{ mb: { xs: 2, sm: 3 }, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+        <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' }, minWidth: { xs: '100%', sm: '200px' } }}>
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search by name, size, or packing..."
+          />
+        </Box>
         {isFetching && !showFullLoading && (
           <Typography variant="caption" color="text.secondary">
             Searching...

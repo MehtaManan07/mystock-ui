@@ -44,7 +44,6 @@ interface FormData {
   contact_id: number | null;
   description: string;
   reference_number: string;
-  notes: string;
 }
 
 export const PaymentFormDialog: React.FC<PaymentFormDialogProps> = ({
@@ -76,7 +75,6 @@ export const PaymentFormDialog: React.FC<PaymentFormDialogProps> = ({
       contact_id: null,
       description: '',
       reference_number: '',
-      notes: '',
     },
   });
 
@@ -93,7 +91,6 @@ export const PaymentFormDialog: React.FC<PaymentFormDialogProps> = ({
           contact_id: payment.contact?.id || null,
           description: payment.description || '',
           reference_number: payment.reference_number || '',
-          notes: payment.notes || '',
         });
       } else {
         setPaymentType(PAYMENT_TYPES.EXPENSE);
@@ -106,7 +103,6 @@ export const PaymentFormDialog: React.FC<PaymentFormDialogProps> = ({
           contact_id: null,
           description: '',
           reference_number: '',
-          notes: '',
         });
       }
     }
@@ -131,7 +127,6 @@ export const PaymentFormDialog: React.FC<PaymentFormDialogProps> = ({
       contact_id: data.contact_id || undefined,
       description: data.description || undefined,
       reference_number: data.reference_number || undefined,
-      notes: data.notes || undefined,
     };
 
     try {
@@ -303,22 +298,12 @@ export const PaymentFormDialog: React.FC<PaymentFormDialogProps> = ({
             </Grid>
 
             {/* Reference Number */}
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 label="Reference Number"
                 fullWidth
                 {...register('reference_number')}
-                placeholder="e.g., Receipt #, Check #"
-              />
-            </Grid>
-
-            {/* Notes */}
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                label="Notes"
-                fullWidth
-                {...register('notes')}
-                placeholder="Additional notes"
+                placeholder="e.g., Receipt #, Check #, UPI Transaction ID"
               />
             </Grid>
           </Grid>

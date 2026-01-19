@@ -42,33 +42,42 @@ const commonOptions: ThemeOptions = {
     fontFamily: '"DM Sans", "Segoe UI", Roboto, sans-serif',
     h1: {
       fontWeight: 700,
-      fontSize: '2.5rem',
+      fontSize: 'clamp(1.75rem, 5vw, 2.5rem)',
       letterSpacing: '-0.02em',
     },
     h2: {
       fontWeight: 700,
-      fontSize: '2rem',
+      fontSize: 'clamp(1.5rem, 4vw, 2rem)',
       letterSpacing: '-0.01em',
     },
     h3: {
       fontWeight: 600,
-      fontSize: '1.75rem',
+      fontSize: 'clamp(1.375rem, 3.5vw, 1.75rem)',
     },
     h4: {
       fontWeight: 600,
-      fontSize: '1.5rem',
+      fontSize: 'clamp(1.25rem, 3vw, 1.5rem)',
     },
     h5: {
       fontWeight: 600,
-      fontSize: '1.25rem',
+      fontSize: 'clamp(1.125rem, 2.5vw, 1.25rem)',
     },
     h6: {
       fontWeight: 600,
-      fontSize: '1rem',
+      fontSize: 'clamp(1rem, 2vw, 1rem)',
     },
     button: {
       textTransform: 'none',
       fontWeight: 600,
+    },
+  },
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 900,
+      lg: 1200,
+      xl: 1536,
     },
   },
   shape: {
@@ -81,6 +90,10 @@ const commonOptions: ThemeOptions = {
           borderRadius: 8,
           padding: '10px 20px',
           fontWeight: 600,
+          '@media (max-width: 600px)': {
+            padding: '8px 16px',
+            fontSize: '0.875rem',
+          },
         },
         contained: {
           boxShadow: 'none',
@@ -90,11 +103,23 @@ const commonOptions: ThemeOptions = {
         },
       },
     },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          '@media (max-width: 600px)': {
+            padding: 8,
+          },
+        },
+      },
+    },
     MuiCard: {
       styleOverrides: {
         root: {
           borderRadius: 16,
           boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+          '@media (max-width: 600px)': {
+            borderRadius: 12,
+          },
         },
       },
     },
@@ -131,12 +156,52 @@ const commonOptions: ThemeOptions = {
         head: {
           fontWeight: 600,
         },
+        root: {
+          '@media (max-width: 600px)': {
+            padding: '12px 8px',
+            fontSize: '0.875rem',
+          },
+        },
       },
     },
     MuiDialog: {
       styleOverrides: {
         paper: {
           borderRadius: 16,
+          '@media (max-width: 600px)': {
+            borderRadius: 0,
+            margin: 16,
+            maxHeight: 'calc(100% - 32px)',
+          },
+        },
+      },
+    },
+    MuiDialogTitle: {
+      styleOverrides: {
+        root: {
+          '@media (max-width: 600px)': {
+            padding: '16px',
+            fontSize: '1.25rem',
+          },
+        },
+      },
+    },
+    MuiDialogContent: {
+      styleOverrides: {
+        root: {
+          '@media (max-width: 600px)': {
+            padding: '16px',
+          },
+        },
+      },
+    },
+    MuiDialogActions: {
+      styleOverrides: {
+        root: {
+          '@media (max-width: 600px)': {
+            padding: '16px',
+            gap: '8px',
+          },
         },
       },
     },

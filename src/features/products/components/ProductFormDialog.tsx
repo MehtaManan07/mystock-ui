@@ -8,6 +8,8 @@ import {
   TextField,
   Grid,
   InputAdornment,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -47,6 +49,8 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   onSubmit,
   onClose,
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isEditing = !!product;
 
   const {
@@ -102,7 +106,13 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      maxWidth="sm" 
+      fullWidth
+      fullScreen={isMobile}
+    >
       <form onSubmit={handleSubmit(handleFormSubmit)}>
         <DialogTitle>{isEditing ? 'Edit Product' : 'Add New Product'}</DialogTitle>
         <DialogContent>
@@ -167,11 +177,11 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={onClose} disabled={isLoading}>
+        <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: 2, gap: 1 }}>
+          <Button onClick={onClose} disabled={isLoading} fullWidth={isMobile}>
             Cancel
           </Button>
-          <Button type="submit" variant="contained" disabled={isLoading}>
+          <Button type="submit" variant="contained" disabled={isLoading} fullWidth={isMobile}>
             {isLoading ? 'Saving...' : isEditing ? 'Update' : 'Create'}
           </Button>
         </DialogActions>

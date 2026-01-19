@@ -21,6 +21,8 @@ interface Column<T> {
   align?: 'left' | 'center' | 'right';
   hideOnMobile?: boolean;
   minWidth?: number;
+  mobileLabel?: string; // Custom label for mobile view
+  isAction?: boolean; // Special handling for action columns
 }
 
 interface ResponsiveTableProps<T> {
@@ -29,6 +31,7 @@ interface ResponsiveTableProps<T> {
   keyExtractor: (row: T) => string | number;
   onRowClick?: (row: T) => void;
   emptyMessage?: string;
+  mobileCardProps?: object; // Additional props for mobile cards
 }
 
 export function ResponsiveTable<T>({
@@ -37,57 +40,110 @@ export function ResponsiveTable<T>({
   keyExtractor,
   onRowClick,
   emptyMessage = 'No data available',
+  mobileCardProps = {},
 }: ResponsiveTableProps<T>) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   if (data.length === 0) {
     return (
-      <Box sx={{ p: 4, textAlign: 'center' }}>
-        <Typography color="text.secondary">{emptyMessage}</Typography>
+      <Box sx={{ p: { xs: 3, sm: 4 }, textAlign: 'center' }}>
+        <Typography color="text.secondary" variant="body2">
+          {emptyMessage}
+        </Typography>
       </Box>
     );
   }
 
   // Mobile: Card-based layout
   if (isMobile) {
+    const visibleColumns = columns.filter((col) => !col.hideOnMobile);
+    const actionColumn = visibleColumns.find((col) => col.isAction);
+    const dataColumns = visibleColumns.filter((col) => !col.isAction);
+
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: 2 }}>
         {data.map((row) => (
           <Card
             key={keyExtractor(row)}
             sx={{
               p: 2,
               cursor: onRowClick ? 'pointer' : 'default',
+              transition: 'all 0.2s ease-in-out',
               '&:hover': onRowClick
-                ? { bgcolor: 'action.hover' }
+                ? { 
+                    bgcolor: 'action.hover',
+                    transform: 'translateY(-2px)',
+                    boxShadow: theme.shadows[4],
+                  }
                 : {},
+              ...mobileCardProps,
             }}
-            onClick={() => onRowClick?.(row)}
+            onClick={(e) => {
+              // Don't trigger row click if clicking on action buttons
+              if (!(e.target as HTMLElement).closest('button, a')) {
+                onRowClick?.(row);
+              }
+            }}
           >
-            {columns
-              .filter((col) => !col.hideOnMobile)
-              .map((col, index) => (
-                <React.Fragment key={col.id}>
-                  {index > 0 && <Divider sx={{ my: 1 }} />}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
+            {/* Action buttons at top right if they exist */}
+            {actionColumn && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  mb: dataColumns.length > 0 ? 1.5 : 0,
+                  pb: dataColumns.length > 0 ? 1.5 : 0,
+                  borderBottom: dataColumns.length > 0 ? `1px solid ${theme.palette.divider}` : 'none',
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {actionColumn.render(row)}
+              </Box>
+            )}
+            
+            {/* Data rows */}
+            {dataColumns.map((col, index) => (
+              <React.Fragment key={col.id}>
+                {index > 0 && <Divider sx={{ my: 1.5 }} />}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    gap: 2,
+                    minHeight: 28,
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ 
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      fontSize: '0.7rem',
+                      letterSpacing: '0.5px',
+                      flexShrink: 0,
+                      pt: 0.5,
                     }}
                   >
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ fontWeight: 500 }}
-                    >
-                      {col.label}
-                    </Typography>
-                    <Box sx={{ textAlign: 'right' }}>{col.render(row)}</Box>
+                    {col.mobileLabel || col.label}
+                  </Typography>
+                  <Box 
+                    sx={{ 
+                      textAlign: col.align || 'right',
+                      flex: 1,
+                      display: 'flex',
+                      justifyContent: col.align === 'left' ? 'flex-start' : col.align === 'center' ? 'center' : 'flex-end',
+                      flexWrap: 'wrap',
+                      gap: 0.5,
+                    }}
+                  >
+                    {col.render(row)}
                   </Box>
-                </React.Fragment>
-              ))}
+                </Box>
+              </React.Fragment>
+            ))}
           </Card>
         ))}
       </Box>

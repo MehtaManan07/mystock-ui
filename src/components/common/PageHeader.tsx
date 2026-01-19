@@ -31,14 +31,14 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   action,
 }) => {
   return (
-    <Box sx={{ mb: 4 }}>
+    <Box sx={{ mb: { xs: 3, sm: 4 } }}>
       {/* Breadcrumbs */}
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <Breadcrumbs sx={{ mb: 1 }}>
+        <Breadcrumbs sx={{ mb: 1, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
           {breadcrumbs.map((item, index) => {
             const isLast = index === breadcrumbs.length - 1;
             return isLast || !item.path ? (
-              <Typography key={item.label} color="text.primary" variant="body2">
+              <Typography key={item.label} color="text.primary" variant="body2" sx={{ fontSize: 'inherit' }}>
                 {item.label}
               </Typography>
             ) : (
@@ -49,6 +49,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                 underline="hover"
                 color="inherit"
                 variant="body2"
+                sx={{ fontSize: 'inherit' }}
               >
                 {item.label}
               </Link>
@@ -62,24 +63,39 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          flexWrap: 'wrap',
-          gap: 2,
+          alignItems: { xs: 'stretch', sm: 'flex-start' },
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: { xs: 2, sm: 2 },
         }}
       >
-        <Box>
-          <Typography variant="h4" fontWeight={700} gutterBottom={!!subtitle}>
+        <Box sx={{ flex: 1 }}>
+          <Typography 
+            variant="h4" 
+            fontWeight={700} 
+            gutterBottom={!!subtitle}
+            sx={{ 
+              fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+            }}
+          >
             {title}
           </Typography>
           {subtitle && (
-            <Typography variant="body1" color="text.secondary">
+            <Typography 
+              variant="body1" 
+              color="text.secondary"
+              sx={{ 
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+              }}
+            >
               {subtitle}
             </Typography>
           )}
         </Box>
 
         {action ? (
-          action
+          <Box sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start' } }}>
+            {action}
+          </Box>
         ) : (
           actionLabel && onAction && (
             <Button
@@ -87,6 +103,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               startIcon={actionIcon}
               onClick={onAction}
               disabled={actionDisabled}
+              fullWidth
+              sx={{
+                width: { xs: '100%', sm: 'auto' },
+                minWidth: { sm: 'fit-content' },
+              }}
             >
               {actionLabel}
             </Button>

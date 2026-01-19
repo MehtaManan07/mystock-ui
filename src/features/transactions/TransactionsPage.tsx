@@ -3,12 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Card,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Chip,
   Typography,
   ToggleButton,
@@ -21,6 +15,7 @@ import {
   ListItemIcon,
   ListItemText,
   TextField,
+  Stack,
 } from '@mui/material';
 import {
   Visibility as ViewIcon,
@@ -37,6 +32,7 @@ import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
+import { ResponsiveTable } from '../../components/common/ResponsiveTable';
 import { useTransactions, useDeleteTransaction } from '../../hooks/useTransactions';
 import { TRANSACTION_TYPES, PAYMENT_STATUS, type TransactionType, type PaymentStatus } from '../../constants';
 import type { Transaction, TransactionFilters } from '../../types';
@@ -111,6 +107,139 @@ export const TransactionsPage: React.FC = () => {
     }
   };
 
+  // Define table columns for ResponsiveTable
+  const columns = [
+    {
+      id: 'number',
+      label: 'Transaction #',
+      mobileLabel: 'TXN #',
+      render: (transaction: Transaction) => (
+        <Typography variant="body2" fontWeight={600}>
+          {transaction.transaction_number}
+        </Typography>
+      ),
+    },
+    {
+      id: 'date',
+      label: 'Date',
+      render: (transaction: Transaction) => (
+        <Typography variant="caption">
+          {formatDate(transaction.transaction_date)}
+        </Typography>
+      ),
+      hideOnMobile: true,
+    },
+    {
+      id: 'type',
+      label: 'Type',
+      render: (transaction: Transaction) => (
+        <Chip
+          icon={transaction.type === TRANSACTION_TYPES.SALE ? <SaleIcon /> : <PurchaseIcon />}
+          label={transaction.type}
+          size="small"
+          color={transaction.type === TRANSACTION_TYPES.SALE ? 'primary' : 'secondary'}
+          variant="outlined"
+        />
+      ),
+    },
+    {
+      id: 'contact',
+      label: 'Contact',
+      render: (transaction: Transaction) => (
+        <Box>
+          <Typography variant="body2">
+            {transaction.contact.name}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {transaction.contact.phone}
+          </Typography>
+        </Box>
+      ),
+      hideOnMobile: true,
+    },
+    {
+      id: 'total',
+      label: 'Total',
+      align: 'right' as const,
+      render: (transaction: Transaction) => (
+        <Typography variant="body2" fontWeight={500}>
+          {formatCurrency(transaction.total_amount)}
+        </Typography>
+      ),
+    },
+    {
+      id: 'paid',
+      label: 'Paid',
+      align: 'right' as const,
+      render: (transaction: Transaction) => (
+        <Typography variant="body2" color="success.main">
+          {formatCurrency(transaction.paid_amount)}
+        </Typography>
+      ),
+      hideOnMobile: true,
+    },
+    {
+      id: 'balance',
+      label: 'Balance',
+      align: 'right' as const,
+      render: (transaction: Transaction) => (
+        <Typography
+          variant="body2"
+          color={transaction.balance_due > 0 ? 'error.main' : 'text.secondary'}
+          fontWeight={transaction.balance_due > 0 ? 600 : 400}
+        >
+          {formatCurrency(transaction.balance_due)}
+        </Typography>
+      ),
+      hideOnMobile: true,
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      render: (transaction: Transaction) => (
+        <Chip
+          label={transaction.payment_status}
+          size="small"
+          color={getStatusColor(transaction.payment_status)}
+          variant="filled"
+        />
+      ),
+    },
+    {
+      id: 'actions',
+      label: 'Actions',
+      align: 'center' as const,
+      isAction: true,
+      render: (transaction: Transaction) => (
+        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+          <Tooltip title="View">
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/transactions/${transaction.id}`);
+              }}
+            >
+              <ViewIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete">
+            <IconButton
+              size="small"
+              color="error"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenDeleteDialog(transaction);
+              }}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      ),
+    },
+  ];
+
   const renderTableContent = () => {
     if (showFullLoading) {
       return <LoadingState message="Loading transactions..." />;
@@ -130,107 +259,13 @@ export const TransactionsPage: React.FC = () => {
     }
 
     return (
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Transaction #</TableCell>
-              <TableCell>Date</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Contact</TableCell>
-              <TableCell align="right">Total</TableCell>
-              <TableCell align="right">Paid</TableCell>
-              <TableCell align="right">Balance</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="center">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {transactions.map((transaction) => (
-              <TableRow
-                key={transaction.id}
-                hover
-                sx={{ cursor: 'pointer' }}
-                onClick={() => navigate(`/transactions/${transaction.id}`)}
-              >
-                <TableCell>
-                  <Typography variant="body2" fontWeight={600}>
-                    {transaction.transaction_number}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="caption">
-                    {formatDate(transaction.transaction_date)}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    icon={transaction.type === TRANSACTION_TYPES.SALE ? <SaleIcon /> : <PurchaseIcon />}
-                    label={transaction.type}
-                    size="small"
-                    color={transaction.type === TRANSACTION_TYPES.SALE ? 'primary' : 'secondary'}
-                    variant="outlined"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2">
-                    {transaction.contact.name}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {transaction.contact.phone}
-                  </Typography>
-                </TableCell>
-                <TableCell align="right">
-                  <Typography variant="body2" fontWeight={500}>
-                    {formatCurrency(transaction.total_amount)}
-                  </Typography>
-                </TableCell>
-                <TableCell align="right">
-                  <Typography variant="body2" color="success.main">
-                    {formatCurrency(transaction.paid_amount)}
-                  </Typography>
-                </TableCell>
-                <TableCell align="right">
-                  <Typography
-                    variant="body2"
-                    color={transaction.balance_due > 0 ? 'error.main' : 'text.secondary'}
-                    fontWeight={transaction.balance_due > 0 ? 600 : 400}
-                  >
-                    {formatCurrency(transaction.balance_due)}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={transaction.payment_status}
-                    size="small"
-                    color={getStatusColor(transaction.payment_status)}
-                    variant="filled"
-                  />
-                </TableCell>
-                <TableCell align="center" onClick={(e) => e.stopPropagation()}>
-                  <Tooltip title="View">
-                    <IconButton
-                      size="small"
-                      onClick={() => navigate(`/transactions/${transaction.id}`)}
-                    >
-                      <ViewIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete">
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleOpenDeleteDialog(transaction)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <ResponsiveTable
+        columns={columns}
+        data={transactions}
+        keyExtractor={(transaction) => transaction.id.toString()}
+        onRowClick={(transaction) => navigate(`/transactions/${transaction.id}`)}
+        emptyMessage="No transactions found"
+      />
     );
   };
 
@@ -242,12 +277,14 @@ export const TransactionsPage: React.FC = () => {
       />
 
       {/* Action Button */}
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: { xs: 2, sm: 3 } }}>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           endIcon={<ArrowDownIcon />}
           onClick={(e) => setCreateMenuAnchor(e.currentTarget)}
+          fullWidth
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
           New Transaction
         </Button>
@@ -271,23 +308,31 @@ export const TransactionsPage: React.FC = () => {
         </Menu>
       </Box>
 
-      {/* Filters - always visible */}
-      <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Search by transaction # or notes..."
-        />
+      {/* Filters - responsive with Stack */}
+      <Stack 
+        direction={{ xs: 'column', sm: 'row' }} 
+        spacing={2} 
+        sx={{ mb: { xs: 2, sm: 3 } }}
+        flexWrap="wrap"
+      >
+        <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' }, minWidth: { xs: '100%', sm: '200px' } }}>
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search by transaction # or notes..."
+          />
+        </Box>
 
         <ToggleButtonGroup
           value={typeFilter}
           exclusive
           onChange={(_, value) => value && setTypeFilter(value)}
           size="small"
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
-          <ToggleButton value="all">All</ToggleButton>
-          <ToggleButton value={TRANSACTION_TYPES.SALE}>Sales</ToggleButton>
-          <ToggleButton value={TRANSACTION_TYPES.PURCHASE}>Purchases</ToggleButton>
+          <ToggleButton value="all" sx={{ flex: { xs: 1, sm: 'initial' } }}>All</ToggleButton>
+          <ToggleButton value={TRANSACTION_TYPES.SALE} sx={{ flex: { xs: 1, sm: 'initial' } }}>Sales</ToggleButton>
+          <ToggleButton value={TRANSACTION_TYPES.PURCHASE} sx={{ flex: { xs: 1, sm: 'initial' } }}>Purchases</ToggleButton>
         </ToggleButtonGroup>
 
         <ToggleButtonGroup
@@ -295,11 +340,12 @@ export const TransactionsPage: React.FC = () => {
           exclusive
           onChange={(_, value) => value && setStatusFilter(value)}
           size="small"
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
-          <ToggleButton value="all">All</ToggleButton>
-          <ToggleButton value={PAYMENT_STATUS.PAID}>Paid</ToggleButton>
-          <ToggleButton value={PAYMENT_STATUS.PARTIAL}>Partial</ToggleButton>
-          <ToggleButton value={PAYMENT_STATUS.UNPAID}>Unpaid</ToggleButton>
+          <ToggleButton value="all" sx={{ flex: { xs: 1, sm: 'initial' } }}>All</ToggleButton>
+          <ToggleButton value={PAYMENT_STATUS.PAID} sx={{ flex: { xs: 1, sm: 'initial' } }}>Paid</ToggleButton>
+          <ToggleButton value={PAYMENT_STATUS.PARTIAL} sx={{ flex: { xs: 1, sm: 'initial' } }}>Partial</ToggleButton>
+          <ToggleButton value={PAYMENT_STATUS.UNPAID} sx={{ flex: { xs: 1, sm: 'initial' } }}>Unpaid</ToggleButton>
         </ToggleButtonGroup>
 
         <TextField
@@ -309,7 +355,7 @@ export const TransactionsPage: React.FC = () => {
           value={fromDate}
           onChange={(e) => setFromDate(e.target.value)}
           InputLabelProps={{ shrink: true }}
-          sx={{ width: 150 }}
+          sx={{ width: { xs: '100%', sm: 150 } }}
         />
         <TextField
           type="date"
@@ -318,15 +364,15 @@ export const TransactionsPage: React.FC = () => {
           value={toDate}
           onChange={(e) => setToDate(e.target.value)}
           InputLabelProps={{ shrink: true }}
-          sx={{ width: 150 }}
+          sx={{ width: { xs: '100%', sm: 150 } }}
         />
 
         {isFetching && !showFullLoading && (
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" color="text.secondary" sx={{ alignSelf: 'center' }}>
             Loading...
           </Typography>
         )}
-      </Box>
+      </Stack>
 
       {/* Transactions table */}
       <Card>{renderTableContent()}</Card>

@@ -8,6 +8,7 @@ import {
   CardContent,
   CardHeader,
   useTheme,
+  useMediaQuery,
   Table,
   TableBody,
   TableCell,
@@ -71,14 +72,14 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color, loading,
       }}
       onClick={onClick}
     >
-      <CardContent sx={{ p: 3 }}>
+      <CardContent sx={{ p: { xs: 2, sm: 3 }, pt: { xs: 4, sm: 3 } }}>
         <Box
           sx={{
             position: 'absolute',
-            top: -20,
-            left: 24,
-            width: 56,
-            height: 56,
+            top: { xs: -16, sm: -20 },
+            left: { xs: 16, sm: 24 },
+            width: { xs: 48, sm: 56 },
+            height: { xs: 48, sm: 56 },
             borderRadius: 2,
             display: 'flex',
             alignItems: 'center',
@@ -89,16 +90,16 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color, loading,
             boxShadow: `0 4px 20px ${color}40`,
           }}
         >
-          <Box sx={{ color: 'white', fontSize: 28, display: 'flex' }}>{icon}</Box>
+          <Box sx={{ color: 'white', fontSize: { xs: 24, sm: 28 }, display: 'flex' }}>{icon}</Box>
         </Box>
-        <Box sx={{ textAlign: 'right', mt: 2 }}>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
+        <Box sx={{ textAlign: 'right', mt: { xs: 1, sm: 2 } }}>
+          <Typography variant="body2" color="text.secondary" gutterBottom sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
             {title}
           </Typography>
           {loading ? (
             <Skeleton width={80} height={40} sx={{ ml: 'auto' }} />
           ) : (
-            <Typography variant="h4" fontWeight={700}>
+            <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
               {value}
             </Typography>
           )}
@@ -126,6 +127,7 @@ const formatDate = (dateString: string) => {
 
 export const DashboardPage: React.FC = () => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
 
@@ -195,7 +197,7 @@ export const DashboardPage: React.FC = () => {
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: { xs: 3, sm: 4 } }}>
         <Typography variant="h4" fontWeight={700} gutterBottom>
           Welcome back, {user?.name || 'User'}!
         </Typography>
@@ -205,7 +207,7 @@ export const DashboardPage: React.FC = () => {
       </Box>
 
       {/* Stats Grid */}
-      <Grid container spacing={3} sx={{ mt: 2 }}>
+      <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mt: 2 }}>
         {stats.map((stat, index) => (
           <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={index}>
             <StatCard {...stat} />
@@ -214,23 +216,30 @@ export const DashboardPage: React.FC = () => {
       </Grid>
 
       {/* Financial Overview */}
-      <Grid container spacing={3} sx={{ mt: 4 }}>
+      <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mt: { xs: 3, sm: 4 } }}>
         <Grid size={{ xs: 12, md: 4 }}>
           <Card
             sx={{
               background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
               color: 'white',
+              cursor: 'pointer',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: theme.shadows[12],
+              },
             }}
+            onClick={() => navigate('/payments')}
           >
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <IncomeIcon />
-                <Typography variant="subtitle1">Total Income</Typography>
+                <IncomeIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
+                <Typography variant="subtitle1" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>Total Income</Typography>
               </Box>
               {paymentLoading ? (
                 <Skeleton width={120} height={40} sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
               ) : (
-                <Typography variant="h4" fontWeight={700}>
+                <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
                   {formatCurrency(totalIncome)}
                 </Typography>
               )}
@@ -242,17 +251,24 @@ export const DashboardPage: React.FC = () => {
             sx={{
               background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error.dark} 100%)`,
               color: 'white',
+              cursor: 'pointer',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: theme.shadows[12],
+              },
             }}
+            onClick={() => navigate('/payments')}
           >
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <ExpenseIcon />
-                <Typography variant="subtitle1">Total Expenses</Typography>
+                <ExpenseIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
+                <Typography variant="subtitle1" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>Total Expenses</Typography>
               </Box>
               {paymentLoading ? (
                 <Skeleton width={120} height={40} sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
               ) : (
-                <Typography variant="h4" fontWeight={700}>
+                <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
                   {formatCurrency(totalExpenses)}
                 </Typography>
               )}
@@ -267,17 +283,24 @@ export const DashboardPage: React.FC = () => {
                   ? `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`
                   : `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
               color: 'white',
+              cursor: 'pointer',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: theme.shadows[12],
+              },
             }}
+            onClick={() => navigate('/payments')}
           >
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <BalanceIcon />
-                <Typography variant="subtitle1">Net Balance</Typography>
+                <BalanceIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
+                <Typography variant="subtitle1" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>Net Balance</Typography>
               </Box>
               {paymentLoading ? (
                 <Skeleton width={120} height={40} sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
               ) : (
-                <Typography variant="h4" fontWeight={700}>
+                <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
                   {formatCurrency(netBalance)}
                 </Typography>
               )}
@@ -287,21 +310,24 @@ export const DashboardPage: React.FC = () => {
       </Grid>
 
       {/* Recent Activity & Outstanding */}
-      <Grid container spacing={3} sx={{ mt: 2 }}>
+      <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mt: 2 }}>
         {/* Recent Transactions */}
         <Grid size={{ xs: 12, md: 7 }}>
           <Card>
             <CardHeader
               title="Recent Transactions"
+              titleTypographyProps={{ variant: 'h6', sx: { fontSize: { xs: '1rem', sm: '1.25rem' } } }}
               action={
                 <Button
                   endIcon={<ArrowIcon />}
                   onClick={() => navigate('/transactions')}
                   size="small"
+                  sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
                 >
                   View All
                 </Button>
               }
+              sx={{ p: { xs: 2, sm: 3 }, pb: 1 }}
             />
             <Divider />
             {transactionsLoading ? (
@@ -317,74 +343,126 @@ export const DashboardPage: React.FC = () => {
                 </Typography>
               </CardContent>
             ) : (
-              <Table>
-                <TableBody>
-                  {recentTransactions.map((txn) => (
-                    <TableRow
-                      key={txn.id}
-                      hover
-                      sx={{ cursor: 'pointer' }}
-                      onClick={() => navigate(`/transactions/${txn.id}`)}
-                    >
-                      <TableCell sx={{ width: 50 }}>
-                        <Avatar
-                          sx={{
-                            bgcolor:
-                              txn.type === 'sale'
-                                ? theme.palette.success.light
-                                : theme.palette.primary.light,
-                            width: 36,
-                            height: 36,
-                          }}
-                        >
-                          {txn.type === 'sale' ? (
-                            <SaleIcon fontSize="small" />
-                          ) : (
-                            <PurchaseIcon fontSize="small" />
-                          )}
-                        </Avatar>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight={500}>
-                          {txn.transaction_number}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {txn.contact?.name || 'Unknown'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={txn.type}
-                          size="small"
-                          color={txn.type === 'sale' ? 'success' : 'primary'}
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={txn.payment_status.replace(/_/g, ' ')}
-                          size="small"
-                          color={
-                            txn.payment_status === 'paid'
-                              ? 'success'
-                              : txn.payment_status === 'partial'
-                              ? 'warning'
-                              : 'error'
-                          }
-                        />
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography variant="body2" fontWeight={600}>
-                          {formatCurrency(txn.total_amount)}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {formatDate(txn.transaction_date)}
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+                <Table>
+                  <TableBody>
+                    {recentTransactions.map((txn) => (
+                      <TableRow
+                        key={txn.id}
+                        hover
+                        sx={{ cursor: 'pointer' }}
+                        onClick={() => navigate(`/transactions/${txn.id}`)}
+                      >
+                        <TableCell sx={{ width: 50 }}>
+                          <Avatar
+                            sx={{
+                              bgcolor:
+                                txn.type === 'sale'
+                                  ? theme.palette.success.light
+                                  : theme.palette.primary.light,
+                              width: 36,
+                              height: 36,
+                            }}
+                          >
+                            {txn.type === 'sale' ? (
+                              <SaleIcon fontSize="small" />
+                            ) : (
+                              <PurchaseIcon fontSize="small" />
+                            )}
+                          </Avatar>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={500}>
+                            {txn.transaction_number}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {txn.contact?.name || 'Unknown'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={txn.type}
+                            size="small"
+                            color={txn.type === 'sale' ? 'success' : 'primary'}
+                            variant="outlined"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={txn.payment_status.replace(/_/g, ' ')}
+                            size="small"
+                            color={
+                              txn.payment_status === 'paid'
+                                ? 'success'
+                                : txn.payment_status === 'partial'
+                                ? 'warning'
+                                : 'error'
+                            }
+                          />
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography variant="body2" fontWeight={600}>
+                            {formatCurrency(txn.total_amount)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {formatDate(txn.transaction_date)}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Box>
+            )}
+            {/* Mobile view for transactions */}
+            {!transactionsLoading && recentTransactions.length > 0 && (
+              <List sx={{ display: { xs: 'block', sm: 'none' }, p: 1 }}>
+                {recentTransactions.map((txn) => (
+                  <ListItem
+                    key={txn.id}
+                    sx={{
+                      cursor: 'pointer',
+                      borderRadius: 1,
+                      mb: 0.5,
+                      '&:hover': { bgcolor: 'action.hover' },
+                    }}
+                    onClick={() => navigate(`/transactions/${txn.id}`)}
+                  >
+                    <ListItemIcon>
+                      <Avatar
+                        sx={{
+                          bgcolor:
+                            txn.type === 'sale'
+                              ? theme.palette.success.light
+                              : theme.palette.primary.light,
+                          width: 32,
+                          height: 32,
+                        }}
+                      >
+                        {txn.type === 'sale' ? (
+                          <SaleIcon fontSize="small" />
+                        ) : (
+                          <PurchaseIcon fontSize="small" />
+                        )}
+                      </Avatar>
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={txn.transaction_number}
+                      secondary={txn.contact?.name || 'Unknown'}
+                      primaryTypographyProps={{ fontWeight: 600, fontSize: '0.875rem' }}
+                      secondaryTypographyProps={{ fontSize: '0.75rem' }}
+                    />
+                    <Box sx={{ textAlign: 'right' }}>
+                      <Typography variant="body2" fontWeight={600} fontSize="0.875rem">
+                        {formatCurrency(txn.total_amount)}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {formatDate(txn.transaction_date)}
+                      </Typography>
+                    </Box>
+                  </ListItem>
+                ))}
+              </List>
             )}
           </Card>
         </Grid>
@@ -394,15 +472,18 @@ export const DashboardPage: React.FC = () => {
           <Card>
             <CardHeader
               title="Outstanding Balances"
+              titleTypographyProps={{ variant: 'h6', sx: { fontSize: { xs: '1rem', sm: '1.25rem' } } }}
               action={
                 <Button
                   endIcon={<ArrowIcon />}
                   onClick={() => navigate('/contacts')}
                   size="small"
+                  sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
                 >
                   View All
                 </Button>
               }
+              sx={{ p: { xs: 2, sm: 3 }, pb: 1 }}
             />
             <Divider />
             {contactsLoading ? (
@@ -418,11 +499,11 @@ export const DashboardPage: React.FC = () => {
                 </Typography>
               </CardContent>
             ) : (
-              <List disablePadding>
+              <List disablePadding sx={{ p: { xs: 1, sm: 0 } }}>
                 {outstandingContacts.map((contact, index) => (
                   <React.Fragment key={contact.id}>
                     <ListItem
-                      sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
+                      sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' }, px: { xs: 1, sm: 2 } }}
                       onClick={() => navigate(`/contacts/${contact.id}`)}
                     >
                       <ListItemIcon>
@@ -432,8 +513,8 @@ export const DashboardPage: React.FC = () => {
                               contact.balance > 0
                                 ? theme.palette.success.light
                                 : theme.palette.error.light,
-                            width: 36,
-                            height: 36,
+                            width: { xs: 32, sm: 36 },
+                            height: { xs: 32, sm: 36 },
                           }}
                         >
                           <ContactIcon fontSize="small" />
@@ -442,12 +523,14 @@ export const DashboardPage: React.FC = () => {
                       <ListItemText
                         primary={contact.name}
                         secondary={contact.type}
-                        primaryTypographyProps={{ fontWeight: 500 }}
+                        primaryTypographyProps={{ fontWeight: 500, fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                        secondaryTypographyProps={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
                       />
                       <Typography
                         variant="body2"
                         fontWeight={600}
                         color={contact.balance > 0 ? 'success.main' : 'error.main'}
+                        sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
                       >
                         {contact.balance > 0 ? '+' : ''}
                         {formatCurrency(contact.balance)}
@@ -463,16 +546,22 @@ export const DashboardPage: React.FC = () => {
       </Grid>
 
       {/* Quick Actions */}
-      <Card sx={{ mt: 3 }}>
-        <CardHeader title="Quick Actions" />
+      <Card sx={{ mt: { xs: 2, sm: 3 } }}>
+        <CardHeader 
+          title="Quick Actions" 
+          titleTypographyProps={{ variant: 'h6', sx: { fontSize: { xs: '1rem', sm: '1.25rem' } } }}
+          sx={{ p: { xs: 2, sm: 3 }, pb: 1 }}
+        />
         <Divider />
-        <CardContent>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+          <Box sx={{ display: 'flex', gap: { xs: 1.5, sm: 2 }, flexWrap: 'wrap' }}>
             <Button
               variant="contained"
               color="success"
               startIcon={<SaleIcon />}
               onClick={() => navigate('/transactions/new-sale')}
+              sx={{ flex: { xs: '1 1 calc(50% - 6px)', sm: '0 1 auto' } }}
+              size={isMobile ? 'medium' : 'large'}
             >
               New Sale
             </Button>
@@ -481,6 +570,8 @@ export const DashboardPage: React.FC = () => {
               color="primary"
               startIcon={<PurchaseIcon />}
               onClick={() => navigate('/transactions/new-purchase')}
+              sx={{ flex: { xs: '1 1 calc(50% - 6px)', sm: '0 1 auto' } }}
+              size={isMobile ? 'medium' : 'large'}
             >
               New Purchase
             </Button>
@@ -488,6 +579,8 @@ export const DashboardPage: React.FC = () => {
               variant="outlined"
               startIcon={<ProductIcon />}
               onClick={() => navigate('/products')}
+              sx={{ flex: { xs: '1 1 calc(50% - 6px)', sm: '0 1 auto' } }}
+              size={isMobile ? 'medium' : 'large'}
             >
               Add Product
             </Button>
@@ -495,6 +588,8 @@ export const DashboardPage: React.FC = () => {
               variant="outlined"
               startIcon={<ContactIcon />}
               onClick={() => navigate('/contacts')}
+              sx={{ flex: { xs: '1 1 calc(50% - 6px)', sm: '0 1 auto' } }}
+              size={isMobile ? 'medium' : 'large'}
             >
               Add Contact
             </Button>
@@ -502,6 +597,8 @@ export const DashboardPage: React.FC = () => {
               variant="outlined"
               startIcon={<ExpenseIcon />}
               onClick={() => navigate('/payments')}
+              sx={{ flex: { xs: '1 1 100%', sm: '0 1 auto' } }}
+              size={isMobile ? 'medium' : 'large'}
             >
               Record Payment
             </Button>

@@ -58,7 +58,7 @@ export const CreateSalePage: React.FC = () => {
   const [transactionDate, setTransactionDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [items, setItems] = useState<LineItem[]>([]);
-  const [taxAmount, setTaxAmount] = useState(0);
+  const [taxPercent, setTaxPercent] = useState(0);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [paidAmount, setPaidAmount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PAYMENT_METHODS.CASH);
@@ -105,6 +105,11 @@ export const CreateSalePage: React.FC = () => {
   const subtotal = useMemo(() => {
     return items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
   }, [items]);
+
+  // Calculate tax amount from percentage
+  const taxAmount = useMemo(() => {
+    return subtotal * (taxPercent / 100);
+  }, [subtotal, taxPercent]);
 
   const totalAmount = subtotal + taxAmount - discountAmount;
 
@@ -468,15 +473,25 @@ export const CreateSalePage: React.FC = () => {
                   <Typography variant="body2">{formatCurrency(subtotal)}</Typography>
                 </Box>
 
-                <TextField
-                  label="Tax Amount"
-                  type="number"
-                  size="small"
-                  fullWidth
-                  value={taxAmount}
-                  onChange={(e) => setTaxAmount(parseFloat(e.target.value) || 0)}
-                  inputProps={{ min: 0, step: 0.01 }}
-                />
+                <Box>
+                  <TextField
+                    label="Tax %"
+                    type="number"
+                    size="small"
+                    fullWidth
+                    value={taxPercent}
+                    onChange={(e) => setTaxPercent(parseFloat(e.target.value) || 0)}
+                    inputProps={{ min: 0, max: 100, step: 0.5 }}
+                    InputProps={{
+                      endAdornment: <Typography sx={{ ml: 0.5, color: 'text.secondary' }}>%</Typography>,
+                    }}
+                  />
+                  {taxPercent > 0 && (
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                      Tax: {formatCurrency(taxAmount)}
+                    </Typography>
+                  )}
+                </Box>
 
                 <TextField
                   label="Discount Amount"

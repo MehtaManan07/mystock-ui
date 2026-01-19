@@ -100,7 +100,7 @@ export const MainLayout: React.FC = () => {
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Logo */}
-      <Box sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box sx={{ p: { xs: 2, sm: 3 }, display: 'flex', alignItems: 'center', gap: 2 }}>
         <Box
           sx={{
             width: 40,
@@ -122,7 +122,7 @@ export const MainLayout: React.FC = () => {
       <Divider />
       
       {/* Navigation */}
-      <List sx={{ flex: 1, px: 2, py: 2 }}>
+      <List sx={{ flex: 1, px: { xs: 1.5, sm: 2 }, py: 2 }}>
         {navItems
           .filter((item) => !item.adminOnly || user?.role === USER_ROLES.ADMIN)
           .map((item) => {
@@ -133,6 +133,7 @@ export const MainLayout: React.FC = () => {
                 onClick={() => handleNavClick(item.path)}
                 sx={{
                   borderRadius: 2,
+                  py: { xs: 1, sm: 1.5 },
                   backgroundColor: isActive
                     ? theme.palette.primary.main + '15'
                     : 'transparent',
@@ -169,10 +170,10 @@ export const MainLayout: React.FC = () => {
       <Divider />
       
       {/* User info at bottom */}
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
         <Box
           sx={{
-            p: 2,
+            p: { xs: 1.5, sm: 2 },
             borderRadius: 2,
             backgroundColor: theme.palette.action.hover,
             display: 'flex',
@@ -216,7 +217,7 @@ export const MainLayout: React.FC = () => {
           borderBottom: `1px solid ${theme.palette.divider}`,
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ minHeight: { xs: 56, sm: 64 } }}>
           <IconButton
             color="inherit"
             edge="start"
@@ -229,7 +230,7 @@ export const MainLayout: React.FC = () => {
           <Box sx={{ flexGrow: 1 }} />
           
           {/* Theme toggle */}
-          <IconButton onClick={toggleTheme} sx={{ mr: 1 }}>
+          <IconButton onClick={toggleTheme} sx={{ mr: { xs: 0.5, sm: 1 } }}>
             {mode === 'dark' ? (
               <LightModeIcon sx={{ color: 'text.primary' }} />
             ) : (
@@ -241,8 +242,8 @@ export const MainLayout: React.FC = () => {
           <IconButton onClick={handleMenuOpen}>
             <Avatar
               sx={{
-                width: 36,
-                height: 36,
+                width: { xs: 32, sm: 36 },
+                height: { xs: 32, sm: 36 },
                 bgcolor: theme.palette.primary.main,
               }}
             >
@@ -318,11 +319,11 @@ export const MainLayout: React.FC = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          p: { xs: 2, sm: 3 },
           width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
-          mt: '64px',
+          mt: { xs: '56px', sm: '64px' },
           backgroundColor: theme.palette.background.default,
-          minHeight: 'calc(100vh - 64px)',
+          minHeight: { xs: 'calc(100vh - 56px)', sm: 'calc(100vh - 64px)' },
         }}
       >
         <Outlet />
