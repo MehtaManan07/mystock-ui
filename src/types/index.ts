@@ -327,7 +327,6 @@ export interface Payment extends BaseEntity {
   category: string | null;
   description: string | null;
   reference_number: string | null;
-  notes: string | null;
   contact?: ContactInPayment | null;
   transaction?: TransactionInPayment | null;
 }
@@ -357,7 +356,6 @@ export interface CreatePaymentDto {
   transaction_id?: number;
   contact_id?: number;
   reference_number?: string;
-  notes?: string;
 }
 
 export interface UpdatePaymentDto {
@@ -370,7 +368,6 @@ export interface UpdatePaymentDto {
   transaction_id?: number;
   contact_id?: number;
   reference_number?: string;
-  notes?: string;
 }
 
 export interface PaymentFilters {

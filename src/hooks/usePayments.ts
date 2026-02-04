@@ -82,7 +82,6 @@ export const useCreatePayment = () => {
           category: newPayment.category || null,
           description: newPayment.description || null,
           reference_number: newPayment.reference_number || null,
-          notes: newPayment.notes || null,
           contact: null,
           transaction: null,
           created_at: new Date().toISOString(),

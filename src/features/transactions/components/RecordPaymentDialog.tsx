@@ -34,7 +34,6 @@ export const RecordPaymentDialog: React.FC<RecordPaymentDialogProps> = ({
   const [amount, setAmount] = useState(balanceDue);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PAYMENT_METHODS.CASH);
   const [referenceNumber, setReferenceNumber] = useState('');
-  const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -43,7 +42,6 @@ export const RecordPaymentDialog: React.FC<RecordPaymentDialogProps> = ({
       setAmount(balanceDue);
       setPaymentMethod(PAYMENT_METHODS.CASH);
       setReferenceNumber('');
-      setNotes('');
       setError(null);
     }
   }, [open, balanceDue]);
@@ -73,7 +71,6 @@ export const RecordPaymentDialog: React.FC<RecordPaymentDialogProps> = ({
       amount,
       payment_method: paymentMethod,
       reference_number: referenceNumber || undefined,
-      notes: notes || undefined,
     });
   };
 
@@ -138,16 +135,6 @@ export const RecordPaymentDialog: React.FC<RecordPaymentDialogProps> = ({
               value={referenceNumber}
               onChange={(e) => setReferenceNumber(e.target.value)}
               placeholder="Check #, UPI ID, etc."
-            />
-
-            <TextField
-              label="Notes"
-              fullWidth
-              multiline
-              rows={2}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Optional notes..."
             />
           </Box>
         </DialogContent>
