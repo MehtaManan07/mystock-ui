@@ -26,10 +26,10 @@ import type { Product, CreateProductDto, UpdateProductDto } from '../../types';
 
 export const ProductsPage: React.FC = () => {
   const navigate = useNavigate();
-  
+
   // Search state
   const [search, setSearch] = useState('');
-  
+
   // Dialog states
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -38,10 +38,10 @@ export const ProductsPage: React.FC = () => {
 
   // Data fetching
   const { data: products, isLoading, isFetching, isError, refetch } = useProducts(search || undefined);
-  
+
   // Only show full loading on initial load (no data yet)
   const showFullLoading = isLoading && !products;
-  
+
   // Mutations
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
@@ -117,6 +117,27 @@ export const ProductsPage: React.FC = () => {
       ),
     },
     {
+      id: 'company_sku',
+      label: 'Company SKU',
+      render: (product: Product) => (
+        <Typography variant="body2" fontFamily="monospace" color="text.secondary">
+          {product.company_sku || '-'}
+        </Typography>
+      ),
+      hideOnMobile: true,
+    },
+
+    {
+      id: 'displayName',
+      label: 'Display Name',
+      mobileLabel: 'Display',
+      align: 'right' as const,
+      render: (product: Product) => (
+        <Typography variant="body2">{product.display_name || '-'}</Typography>
+      ),
+      hideOnMobile: true,
+    },
+    {
       id: 'size',
       label: 'Size',
       render: (product: Product) => <Typography variant="body2">{product.size || '-'}</Typography>,
@@ -141,21 +162,6 @@ export const ProductsPage: React.FC = () => {
           variant="outlined"
         />
       ),
-    },
-    {
-      id: 'purchasePrice',
-      label: 'Purchase Price',
-      mobileLabel: 'Purchase',
-      align: 'right' as const,
-      render: (product: Product) => (
-        <Chip
-          label={formatCurrency(product.default_purchase_price)}
-          size="small"
-          color="primary"
-          variant="outlined"
-        />
-      ),
-      hideOnMobile: true,
     },
     {
       id: 'quantity',
@@ -222,11 +228,11 @@ export const ProductsPage: React.FC = () => {
     if (showFullLoading) {
       return <LoadingState message="Loading products..." />;
     }
-    
+
     if (isError) {
       return <ErrorState onRetry={() => refetch()} />;
     }
-    
+
     if (!products || products.length === 0) {
       return (
         <EmptyState
@@ -237,7 +243,7 @@ export const ProductsPage: React.FC = () => {
         />
       );
     }
-    
+
     return (
       <ResponsiveTable
         columns={columns}

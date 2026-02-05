@@ -73,6 +73,8 @@ export const ManageProductsDialog: React.FC<ManageProductsDialogProps> = ({
           packing: cp.product.packing,
           default_sale_price: null,
           default_purchase_price: null,
+          display_name: null,
+          company_sku: null,
           totalQuantity: 0,
           created_at: cp.product.created_at,
           updated_at: cp.product.updated_at,

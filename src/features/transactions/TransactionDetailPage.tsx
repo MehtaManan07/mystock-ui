@@ -321,9 +321,14 @@ export const TransactionDetailPage: React.FC = () => {
                           <Typography variant="body2" fontWeight={500}>
                             {item.product.name}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography variant="caption" color="text.secondary" display="block">
                             {item.product.size} • {item.product.packing}
                           </Typography>
+                          {item.product.company_sku && (
+                            <Typography variant="caption" color="text.secondary" fontFamily="monospace" display="block">
+                              SKU: {item.product.company_sku}
+                            </Typography>
+                          )}
                         </TableCell>
                         <TableCell>
                           {item.container ? (

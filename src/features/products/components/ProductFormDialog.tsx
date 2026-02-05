@@ -21,8 +21,10 @@ interface ProductFormData {
   name: string;
   size: string;
   packing: string;
+  company_sku: string;
   default_sale_price: string;
   default_purchase_price: string;
+  display_name: string;
 }
 
 // Validation schema
@@ -30,8 +32,10 @@ const productSchema = z.object({
   name: z.string().min(1, 'Name is required').max(255),
   size: z.string().min(1, 'Size is required').max(255),
   packing: z.string().min(1, 'Packing is required').max(255),
+  company_sku: z.string().max(100).optional(),
   default_sale_price: z.string(),
   default_purchase_price: z.string(),
+  display_name: z.string()
 });
 
 interface ProductFormDialogProps {
@@ -59,13 +63,16 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
     reset,
     formState: { errors },
   } = useForm<ProductFormData>({
-    resolver: zodResolver(productSchema),
+    resolver: zodResolver(productSchema) as any,
     defaultValues: {
       name: '',
       size: '',
       packing: '',
+      company_sku: '',
       default_sale_price: '',
       default_purchase_price: '',
+      display_name: '',
+
     },
   });
 
@@ -77,16 +84,20 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
           name: product.name,
           size: product.size,
           packing: product.packing,
+          company_sku: product.company_sku || '',
           default_sale_price: product.default_sale_price?.toString() || '',
           default_purchase_price: product.default_purchase_price?.toString() || '',
+          display_name: product.display_name || '',
         });
       } else {
         reset({
           name: '',
           size: '',
           packing: '',
+          company_sku: '',
           default_sale_price: '',
           default_purchase_price: '',
+          display_name: '',
         });
       }
     }
@@ -95,21 +106,23 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   const handleFormSubmit = (data: ProductFormData) => {
     const salePrice = data.default_sale_price ? parseFloat(data.default_sale_price) : undefined;
     const purchasePrice = data.default_purchase_price ? parseFloat(data.default_purchase_price) : undefined;
-    
+    const displayName = data.display_name || '';
     onSubmit({
       name: data.name,
       size: data.size,
       packing: data.packing,
+      company_sku: data.company_sku || undefined,
       default_sale_price: salePrice,
       default_purchase_price: purchasePrice,
+      display_name: displayName,
     });
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="sm" 
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
       fullWidth
       fullScreen={isMobile}
     >
@@ -125,6 +138,25 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                 helperText={errors.name?.message}
                 disabled={isLoading}
                 autoFocus
+              />
+            </Grid>
+            <Grid size={12}>
+              <TextField
+                {...register('company_sku')}
+                label="Company SKU (Optional)"
+                placeholder="e.g., SKU-001, PROD-ABC"
+                error={!!errors.company_sku}
+                helperText={errors.company_sku?.message || 'Unique identifier for this product'}
+                disabled={isLoading}
+              />
+            </Grid>
+            <Grid size={12}>
+              <TextField
+                {...register('display_name')}
+                label="Display Name"
+                error={!!errors.display_name}
+                helperText={errors.display_name?.message}
+                disabled={isLoading}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -161,6 +193,7 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                 disabled={isLoading}
               />
             </Grid>
+
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 {...register('default_purchase_price')}

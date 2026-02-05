@@ -53,6 +53,8 @@ export const useCreateProduct = () => {
           ...newProduct,
           default_sale_price: newProduct.default_sale_price ?? null,
           default_purchase_price: newProduct.default_purchase_price ?? null,
+          display_name: newProduct.display_name ?? null,
+          company_sku: newProduct.company_sku ?? null,
           totalQuantity: 0,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),

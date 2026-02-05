@@ -75,8 +75,10 @@ export interface UpdateUserDto {
 
 export interface Product extends BaseEntity {
   name: string;
+  display_name: string | null;
   size: string;
   packing: string;
+  company_sku: string | null;
   default_sale_price: number | null;
   default_purchase_price: number | null;
   totalQuantity: number;
@@ -85,6 +87,7 @@ export interface Product extends BaseEntity {
 export interface ProductDetail extends Omit<Product, 'totalQuantity'> {
   containers: ContainerProductInfo[];
   logs: InventoryLogInfo[];
+  vendor_skus: VendorSkuInfo[];
 }
 
 export interface ContainerProductInfo {
@@ -101,10 +104,18 @@ export interface ContainerInfo {
   deleted_at: string | null;
 }
 
+export interface VendorSkuInfo {
+  vendor_id: number;
+  vendor_name: string;
+  vendor_sku: string;
+}
+
 export interface CreateProductDto {
   name: string;
+  display_name: string;
   size: string;
   packing: string;
+  company_sku?: string;
   default_sale_price?: number;
   default_purchase_price?: number;
 }
@@ -113,6 +124,7 @@ export interface UpdateProductDto {
   name?: string;
   size?: string;
   packing?: string;
+  company_sku?: string;
   default_sale_price?: number;
   default_purchase_price?: number;
 }
@@ -425,6 +437,70 @@ export interface CreateInventoryLogDto {
   quantity: number;
   action: string;
   note?: string;
+}
+
+// ============================================
+// Vendor SKU Types
+// ============================================
+
+export interface CreateVendorSkuDto {
+  product_id: number;
+  vendor_id: number;
+  vendor_sku: string;
+}
+
+export interface UpdateVendorSkuDto {
+  vendor_sku: string;
+}
+
+export interface VendorSkuResponse {
+  id: number;
+  product_id: number;
+  vendor_id: number;
+  vendor_sku: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VendorSkuDetailResponse {
+  id: number;
+  product_id: number;
+  vendor_id: number;
+  vendor_name: string;
+  vendor_sku: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// ============================================
+// Company Settings Types
+// ============================================
+
+export interface CompanySettings extends BaseEntity {
+  company_name: string;
+  seller_name: string;
+  seller_phone: string;
+  seller_email: string;
+  seller_gstin: string;
+  company_address_line1: string;
+  company_address_line2: string;
+  company_address_line3: string;
+  terms_and_conditions: string;
+  hsn_code: string;
+  is_active: boolean;
+}
+
+export interface UpdateCompanySettingsDto {
+  company_name?: string;
+  seller_name?: string;
+  seller_phone?: string;
+  seller_email?: string;
+  seller_gstin?: string;
+  company_address_line1?: string;
+  company_address_line2?: string;
+  company_address_line3?: string;
+  terms_and_conditions?: string;
+  hsn_code?: string;
 }
 
 // ============================================

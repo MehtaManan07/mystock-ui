@@ -237,7 +237,11 @@ export const CreatePurchasePage: React.FC = () => {
                     value={selectedProduct}
                     onChange={(_, value) => handleProductChange(value)}
                     options={products || []}
-                    getOptionLabel={(option) => `${option.name} (${option.size})`}
+                    getOptionLabel={(option) => 
+                      option.company_sku 
+                        ? `${option.company_sku} - ${option.name} (${option.size})`
+                        : `${option.name} (${option.size})`
+                    }
                     loading={productsLoading}
                     renderInput={(params) => (
                       <TextField
