@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { settingsApi } from '../api/settings.api';
 import type { UpdateCompanySettingsDto } from '../types';
-import { toast } from 'react-hot-toast';
 
 /**
  * Hook to fetch company settings
@@ -23,11 +22,6 @@ export const useUpdateSettings = () => {
     mutationFn: (data: UpdateCompanySettingsDto) => settingsApi.update(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
-      toast.success('Settings updated successfully');
-    },
-    onError: (error: any) => {
-      const message = error?.response?.data?.detail || 'Failed to update settings';
-      toast.error(message);
     },
   });
 };

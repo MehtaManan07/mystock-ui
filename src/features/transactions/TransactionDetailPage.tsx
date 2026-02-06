@@ -25,6 +25,7 @@ import {
   Download as DownloadIcon,
   ShoppingCart as SaleIcon,
   LocalShipping as PurchaseIcon,
+  Receipt as ReceiptIcon,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { PageHeader } from '../../components/common/PageHeader';
@@ -37,8 +38,10 @@ import {
   useDeleteTransaction,
   useRecordPayment,
   useInvoiceDownloadUrl,
+  useGenerateInvoice,
 } from '../../hooks/useTransactions';
 import { TRANSACTION_TYPES, PAYMENT_STATUS } from '../../constants';
+import { useNotificationStore } from '../../stores/notificationStore';
 import type { CreatePaymentDto } from '../../types';
 
 export const TransactionDetailPage: React.FC = () => {
@@ -49,6 +52,7 @@ export const TransactionDetailPage: React.FC = () => {
   // Dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [regenerateDialogOpen, setRegenerateDialogOpen] = useState(false);
 
   // Data fetching
   const { data: transaction, isLoading, isError, refetch } = useTransaction(transactionId);
@@ -57,6 +61,10 @@ export const TransactionDetailPage: React.FC = () => {
   const deleteMutation = useDeleteTransaction();
   const recordPaymentMutation = useRecordPayment();
   const downloadInvoiceMutation = useInvoiceDownloadUrl();
+  const generateInvoiceMutation = useGenerateInvoice();
+  
+  // Notifications
+  const { success, error: showError } = useNotificationStore();
 
   const formatCurrency = (value: number) => {
     return `₹${Math.abs(value).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
@@ -101,9 +109,36 @@ export const TransactionDetailPage: React.FC = () => {
     try {
       const result = await downloadInvoiceMutation.mutateAsync({ transactionId });
       window.open(result.download_url, '_blank');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to get invoice URL', error);
+      showError(error?.message || 'Failed to get invoice download URL');
     }
+  };
+
+  const handleGenerateInvoice = (forceRegenerate = false) => {
+    generateInvoiceMutation.mutate(
+      { transactionId, forceRegenerate },
+      {
+        onSuccess: () => {
+          success('Invoice generated successfully');
+          refetch(); // Refresh transaction data to show download button
+          if (forceRegenerate) {
+            setRegenerateDialogOpen(false);
+          }
+        },
+        onError: (err: any) => {
+          const errorMessage = err?.message || err?.response?.data?.detail || 'Failed to generate invoice';
+          showError(errorMessage);
+          if (forceRegenerate) {
+            setRegenerateDialogOpen(false);
+          }
+        },
+      }
+    );
+  };
+
+  const handleConfirmRegenerate = () => {
+    handleGenerateInvoice(true);
   };
 
   if (isLoading) {
@@ -147,15 +182,35 @@ export const TransactionDetailPage: React.FC = () => {
           </Button>
         )}
         
-        {transaction.invoice_url && (
+        {!transaction.invoice_url ? (
           <Button
-            variant="outlined"
-            startIcon={<DownloadIcon />}
-            onClick={handleDownloadInvoice}
-            disabled={downloadInvoiceMutation.isPending}
+            variant="contained"
+            color="primary"
+            startIcon={<ReceiptIcon />}
+            onClick={() => handleGenerateInvoice(false)}
+            disabled={generateInvoiceMutation.isPending}
           >
-            {downloadInvoiceMutation.isPending ? 'Loading...' : 'Download Invoice'}
+            {generateInvoiceMutation.isPending ? 'Generating...' : 'Generate Invoice'}
           </Button>
+        ) : (
+          <>
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={handleDownloadInvoice}
+              disabled={downloadInvoiceMutation.isPending}
+            >
+              {downloadInvoiceMutation.isPending ? 'Loading...' : 'Download Invoice'}
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<ReceiptIcon />}
+              onClick={() => setRegenerateDialogOpen(true)}
+              disabled={generateInvoiceMutation.isPending}
+            >
+              Regenerate Invoice
+            </Button>
+          </>
         )}
         
         <Tooltip title="Delete Transaction">
@@ -437,6 +492,18 @@ export const TransactionDetailPage: React.FC = () => {
         isLoading={recordPaymentMutation.isPending}
         onSubmit={handleRecordPayment}
         onClose={() => setPaymentDialogOpen(false)}
+      />
+
+      {/* Regenerate Invoice Confirmation Dialog */}
+      <ConfirmDialog
+        open={regenerateDialogOpen}
+        title="Regenerate Invoice"
+        message={`Are you sure you want to regenerate the invoice for "${transaction.transaction_number}"? This will replace the existing invoice.`}
+        confirmLabel="Regenerate"
+        confirmColor="primary"
+        isLoading={generateInvoiceMutation.isPending}
+        onConfirm={handleConfirmRegenerate}
+        onCancel={() => setRegenerateDialogOpen(false)}
       />
     </Box>
   );

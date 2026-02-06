@@ -304,6 +304,7 @@ export interface ProductInTransaction {
   name: string;
   size: string;
   packing: string;
+  company_sku: string | null;
 }
 
 export interface ContainerInTransaction {
