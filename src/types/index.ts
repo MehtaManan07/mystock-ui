@@ -81,6 +81,15 @@ export interface Product extends BaseEntity {
   company_sku: string | null;
   default_sale_price: number | null;
   default_purchase_price: number | null;
+  description?: string | null;
+  mrp?: number | null;
+  tags?: string[] | null;
+  product_type?: string | null;
+  dimensions?: {
+    width: number;
+    height: number;
+    length: number;
+  } | null;
   totalQuantity: number;
 }
 
@@ -118,6 +127,15 @@ export interface CreateProductDto {
   company_sku?: string;
   default_sale_price?: number;
   default_purchase_price?: number;
+  description?: string;
+  mrp?: number;
+  tags?: string[];
+  product_type?: string;
+  dimensions?: {
+    width: number;
+    height: number;
+    length: number;
+  };
 }
 
 export interface UpdateProductDto {
@@ -127,6 +145,16 @@ export interface UpdateProductDto {
   company_sku?: string;
   default_sale_price?: number;
   default_purchase_price?: number;
+  display_name?: string;
+  description?: string;
+  mrp?: number;
+  tags?: string[];
+  product_type?: string;
+  dimensions?: {
+    width: number;
+    height: number;
+    length: number;
+  };
 }
 
 // ============================================

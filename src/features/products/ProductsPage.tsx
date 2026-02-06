@@ -138,6 +138,18 @@ export const ProductsPage: React.FC = () => {
       hideOnMobile: true,
     },
     {
+      id: 'product_type',
+      label: 'Type',
+      render: (product: Product) => (
+        product.product_type ? (
+          <Chip label={product.product_type} size="small" variant="outlined" />
+        ) : (
+          <Typography variant="body2" color="text.secondary">-</Typography>
+        )
+      ),
+      hideOnMobile: true,
+    },
+    {
       id: 'size',
       label: 'Size',
       render: (product: Product) => <Typography variant="body2">{product.size || '-'}</Typography>,

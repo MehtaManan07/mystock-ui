@@ -25,6 +25,13 @@ interface ProductFormData {
   default_sale_price: string;
   default_purchase_price: string;
   display_name: string;
+  description: string;
+  mrp: string;
+  tags: string;
+  product_type: string;
+  dimension_width: string;
+  dimension_height: string;
+  dimension_length: string;
 }
 
 // Validation schema
@@ -35,7 +42,14 @@ const productSchema = z.object({
   company_sku: z.string().max(100).optional(),
   default_sale_price: z.string(),
   default_purchase_price: z.string(),
-  display_name: z.string()
+  display_name: z.string(),
+  description: z.string().optional(),
+  mrp: z.string().optional(),
+  tags: z.string().optional(),
+  product_type: z.string().max(255).optional(),
+  dimension_width: z.string().optional(),
+  dimension_height: z.string().optional(),
+  dimension_length: z.string().optional(),
 });
 
 interface ProductFormDialogProps {
@@ -72,7 +86,13 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
       default_sale_price: '',
       default_purchase_price: '',
       display_name: '',
-
+      description: '',
+      mrp: '',
+      tags: '',
+      product_type: '',
+      dimension_width: '',
+      dimension_height: '',
+      dimension_length: '',
     },
   });
 
@@ -88,6 +108,13 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
           default_sale_price: product.default_sale_price?.toString() || '',
           default_purchase_price: product.default_purchase_price?.toString() || '',
           display_name: product.display_name || '',
+          description: product.description || '',
+          mrp: product.mrp?.toString() || '',
+          tags: product.tags?.join(', ') || '',
+          product_type: product.product_type || '',
+          dimension_width: product.dimensions?.width?.toString() || '',
+          dimension_height: product.dimensions?.height?.toString() || '',
+          dimension_length: product.dimensions?.length?.toString() || '',
         });
       } else {
         reset({
@@ -98,6 +125,13 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
           default_sale_price: '',
           default_purchase_price: '',
           display_name: '',
+          description: '',
+          mrp: '',
+          tags: '',
+          product_type: '',
+          dimension_width: '',
+          dimension_height: '',
+          dimension_length: '',
         });
       }
     }
@@ -107,6 +141,14 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
     const salePrice = data.default_sale_price ? parseFloat(data.default_sale_price) : undefined;
     const purchasePrice = data.default_purchase_price ? parseFloat(data.default_purchase_price) : undefined;
     const displayName = data.display_name || '';
+    const mrp = data.mrp ? parseFloat(data.mrp) : undefined;
+    const tags = data.tags ? data.tags.split(',').map(t => t.trim()).filter(t => t.length > 0) : undefined;
+    const dimensions = (data.dimension_width && data.dimension_height && data.dimension_length) ? {
+      width: parseFloat(data.dimension_width),
+      height: parseFloat(data.dimension_height),
+      length: parseFloat(data.dimension_length),
+    } : undefined;
+    
     onSubmit({
       name: data.name,
       size: data.size,
@@ -115,6 +157,11 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
       default_sale_price: salePrice,
       default_purchase_price: purchasePrice,
       display_name: displayName,
+      description: data.description || undefined,
+      mrp: mrp,
+      tags: tags,
+      product_type: data.product_type || undefined,
+      dimensions: dimensions,
     });
   };
 
@@ -159,6 +206,18 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                 disabled={isLoading}
               />
             </Grid>
+            <Grid size={12}>
+              <TextField
+                {...register('description')}
+                label="Description (Optional)"
+                placeholder="Product description"
+                multiline
+                rows={3}
+                error={!!errors.description}
+                helperText={errors.description?.message}
+                disabled={isLoading}
+              />
+            </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 {...register('size')}
@@ -179,6 +238,62 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                 disabled={isLoading}
               />
             </Grid>
+            <Grid size={12}>
+              <TextField
+                {...register('product_type')}
+                label="Product Type (Optional)"
+                placeholder="e.g., Home Decor, Wedding Gifts"
+                error={!!errors.product_type}
+                helperText={errors.product_type?.message}
+                disabled={isLoading}
+              />
+            </Grid>
+            <Grid size={12}>
+              <TextField
+                {...register('tags')}
+                label="Tags (Optional)"
+                placeholder="Comma-separated tags, e.g., Home Decor, Wedding Gifts"
+                error={!!errors.tags}
+                helperText={errors.tags?.message || 'Separate multiple tags with commas'}
+                disabled={isLoading}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TextField
+                {...register('dimension_width')}
+                label="Width (cm)"
+                type="number"
+                inputProps={{ step: '0.01', min: 0 }}
+                placeholder="Width"
+                error={!!errors.dimension_width}
+                helperText={errors.dimension_width?.message}
+                disabled={isLoading}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TextField
+                {...register('dimension_height')}
+                label="Height (cm)"
+                type="number"
+                inputProps={{ step: '0.01', min: 0 }}
+                placeholder="Height"
+                error={!!errors.dimension_height}
+                helperText={errors.dimension_height?.message}
+                disabled={isLoading}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TextField
+                {...register('dimension_length')}
+                label="Length (cm)"
+                type="number"
+                inputProps={{ step: '0.01', min: 0 }}
+                placeholder="Length"
+                error={!!errors.dimension_length}
+                helperText={errors.dimension_length?.message}
+                disabled={isLoading}
+              />
+            </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 {...register('default_sale_price')}
@@ -193,7 +308,20 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                 disabled={isLoading}
               />
             </Grid>
-
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                {...register('mrp')}
+                label="MRP (Optional)"
+                type="number"
+                inputProps={{ step: '0.01', min: 0 }}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                }}
+                error={!!errors.mrp}
+                helperText={errors.mrp?.message || 'Maximum retail price'}
+                disabled={isLoading}
+              />
+            </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 {...register('default_purchase_price')}
