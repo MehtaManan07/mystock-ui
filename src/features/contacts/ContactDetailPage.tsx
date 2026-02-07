@@ -18,15 +18,21 @@ import {
   Phone as PhoneIcon,
   LocationOn as LocationIcon,
   Receipt as GstinIcon,
+  ShoppingCart as SaleIcon,
+  LocalShipping as PurchaseIcon,
 } from '@mui/icons-material';
+import { format } from 'date-fns';
 import { PageHeader } from '../../components/common/PageHeader';
 import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorState } from '../../components/common/ErrorState';
+import { EmptyState } from '../../components/common/EmptyState';
+import { ResponsiveTable } from '../../components/common/ResponsiveTable';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { ContactFormDialog } from './components/ContactFormDialog';
 import { useContact, useUpdateContact, useDeleteContact } from '../../hooks/useContacts';
-import { CONTACT_TYPES } from '../../constants';
-import type { CreateContactDto, UpdateContactDto } from '../../types';
+import { useTransactions } from '../../hooks/useTransactions';
+import { CONTACT_TYPES, TRANSACTION_TYPES, PAYMENT_STATUS } from '../../constants';
+import type { CreateContactDto, UpdateContactDto, Transaction } from '../../types';
 
 export const ContactDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -39,6 +45,12 @@ export const ContactDetailPage: React.FC = () => {
 
   // Data fetching
   const { data: contact, isLoading, isError, refetch } = useContact(contactId);
+  const { 
+    data: transactions, 
+    isLoading: transactionsLoading, 
+    isError: transactionsError,
+    refetch: refetchTransactions 
+  } = useTransactions({ contact_id: contactId });
 
   // Mutations
   const updateMutation = useUpdateContact();
@@ -49,6 +61,82 @@ export const ContactDetailPage: React.FC = () => {
     const formatted = `₹${absValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
     return value < 0 ? `-${formatted}` : formatted;
   };
+
+  const formatDate = (dateString: string) => {
+    return format(new Date(dateString), 'dd MMM yyyy');
+  };
+
+  const getStatusColor = (status: string): 'success' | 'warning' | 'error' => {
+    switch (status) {
+      case PAYMENT_STATUS.PAID:
+        return 'success';
+      case PAYMENT_STATUS.PARTIAL:
+        return 'warning';
+      case PAYMENT_STATUS.UNPAID:
+        return 'error';
+      default:
+        return 'warning';
+    }
+  };
+
+  // Define table columns for transaction history
+  const transactionColumns = [
+    {
+      id: 'number',
+      label: 'Transaction #',
+      mobileLabel: 'TXN #',
+      render: (transaction: Transaction) => (
+        <Typography variant="body2" fontWeight={600}>
+          {transaction.transaction_number}
+        </Typography>
+      ),
+    },
+    {
+      id: 'date',
+      label: 'Date',
+      render: (transaction: Transaction) => (
+        <Typography variant="caption">
+          {formatDate(transaction.transaction_date)}
+        </Typography>
+      ),
+      hideOnMobile: true,
+    },
+    {
+      id: 'type',
+      label: 'Type',
+      render: (transaction: Transaction) => (
+        <Chip
+          icon={transaction.type === TRANSACTION_TYPES.SALE ? <SaleIcon /> : <PurchaseIcon />}
+          label={transaction.type}
+          size="small"
+          color={transaction.type === TRANSACTION_TYPES.SALE ? 'primary' : 'secondary'}
+          variant="outlined"
+        />
+      ),
+    },
+    {
+      id: 'amount',
+      label: 'Amount',
+      align: 'right' as const,
+      render: (transaction: Transaction) => (
+        <Typography variant="body2" fontWeight={500}>
+          {formatCurrency(transaction.total_amount)}
+        </Typography>
+      ),
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      render: (transaction: Transaction) => (
+        <Chip
+          label={transaction.payment_status}
+          size="small"
+          color={getStatusColor(transaction.payment_status)}
+          variant="filled"
+        />
+      ),
+    },
+  ];
 
   const handleEditSubmit = (data: CreateContactDto) => {
     updateMutation.mutate(
@@ -214,7 +302,7 @@ export const ContactDetailPage: React.FC = () => {
           </Card>
         </Grid>
 
-        {/* Recent Transactions Card (Placeholder) */}
+        {/* Recent Transactions Card */}
         <Grid size={12}>
           <Card>
             <CardContent>
@@ -222,9 +310,24 @@ export const ContactDetailPage: React.FC = () => {
                 Recent Transactions
               </Typography>
               <Divider sx={{ mb: 2 }} />
-              <Typography variant="body2" color="text.secondary">
-                Transaction history will be displayed here once the transactions module is implemented.
-              </Typography>
+              {transactionsLoading ? (
+                <LoadingState message="Loading transactions..." />
+              ) : transactionsError ? (
+                <ErrorState onRetry={() => refetchTransactions()} />
+              ) : !transactions || transactions.length === 0 ? (
+                <EmptyState
+                  title="No transactions found"
+                  message="This contact has no transactions yet."
+                />
+              ) : (
+                <ResponsiveTable
+                  columns={transactionColumns}
+                  data={transactions}
+                  keyExtractor={(transaction) => transaction.id.toString()}
+                  onRowClick={(transaction) => navigate(`/transactions/${transaction.id}`)}
+                  emptyMessage="No transactions found"
+                />
+              )}
             </CardContent>
           </Card>
         </Grid>
