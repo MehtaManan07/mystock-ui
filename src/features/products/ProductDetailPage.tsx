@@ -22,12 +22,14 @@ import { vendorSkusApi } from '../../api/vendorSkus.api';
 import { contactsApi } from '../../api/contacts.api';
 import { productsApi } from '../../api/products.api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNotificationStore } from '../../stores/notificationStore';
 
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const productId = parseInt(id || '0', 10);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { success, error } = useNotificationStore();
 
   // Dialog states
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -105,9 +107,15 @@ export const ProductDetailPage: React.FC = () => {
 
   const uploadImagesMutation = useMutation({
     mutationFn: (files: File[]) => productsApi.uploadProductImages(productId, files),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['product', productId] });
       if (fileInputRef.current) fileInputRef.current.value = '';
+      const count = data?.length || 0;
+      success(`Successfully uploaded ${count} image${count !== 1 ? 's' : ''}`);
+    },
+    onError: (err: any) => {
+      const message = err?.response?.data?.message || err?.message || 'Failed to upload images';
+      error(message);
     },
   });
 
@@ -119,10 +127,16 @@ export const ProductDetailPage: React.FC = () => {
       sourceProductId: number;
       imageIds: number[];
     }) => productsApi.copyProductImagesFrom(productId, sourceProductId, imageIds),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['product', productId] });
       setCopyFromDialogOpen(false);
       setCopyFromProductId('');
+      const count = data?.length || 0;
+      success(`Successfully copied ${count} image${count !== 1 ? 's' : ''}`);
+    },
+    onError: (err: any) => {
+      const message = err?.response?.data?.message || err?.message || 'Failed to copy images';
+      error(message);
     },
   });
 
@@ -131,6 +145,11 @@ export const ProductDetailPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['product', productId] });
       setSelectedImageIndex((i) => Math.max(0, i - 1));
+      success('Image deleted successfully');
+    },
+    onError: (err: any) => {
+      const message = err?.response?.data?.message || err?.message || 'Failed to delete image';
+      error(message);
     },
   });
 
