@@ -93,10 +93,18 @@ export interface Product extends BaseEntity {
   totalQuantity: number;
 }
 
+export interface ProductImage {
+  id: number;
+  url: string;
+  thumb_url: string;
+  sort_order: number;
+}
+
 export interface ProductDetail extends Omit<Product, 'totalQuantity'> {
   containers: ContainerProductInfo[];
   logs: InventoryLogInfo[];
   vendor_skus: VendorSkuInfo[];
+  images?: ProductImage[];
 }
 
 export interface ContainerProductInfo {

@@ -21,6 +21,10 @@ export const API_ENDPOINTS = {
     BASE: '/products',
     BY_ID: (id: number) => `/products/${id}`,
     BULK: '/products/bulk',
+    IMAGES: (id: number) => `/products/${id}/images`,
+    IMAGES_COPY_FROM: (id: number) => `/products/${id}/images/copy-from`,
+    IMAGE_BY_ID: (productId: number, imageId: number) => `/products/${productId}/images/${imageId}`,
+    IMAGES_REORDER: (id: number) => `/products/${id}/images/reorder`,
   },
   // Containers
   CONTAINERS: {

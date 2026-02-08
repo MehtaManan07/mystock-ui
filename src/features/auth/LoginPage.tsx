@@ -96,7 +96,7 @@ export const LoginPage: React.FC = () => {
               Welcome Back
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Sign in to continue to MyStock
+              Sign in to continue to Kraft Culture
             </Typography>
           </Box>
 

@@ -115,7 +115,7 @@ export const MainLayout: React.FC = () => {
           <ProductIcon sx={{ color: 'white', fontSize: 24 }} />
         </Box>
         <Typography variant="h6" fontWeight={700} color="primary">
-          MyStock
+          Kraft Culture
         </Typography>
       </Box>
       

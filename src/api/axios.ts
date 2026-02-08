@@ -11,13 +11,17 @@ const apiClient = axios.create({
   timeout: 30000, // 30 seconds
 });
 
-// Request interceptor - Add auth token to all requests
+// Request interceptor - Add auth token; drop Content-Type for FormData so browser sets multipart boundary
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = useAuthStore.getState().token;
     
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    // FormData must send Content-Type with boundary - let browser set it by removing default
+    if (config.data instanceof FormData && config.headers) {
+      delete config.headers['Content-Type'];
     }
     
     return config;

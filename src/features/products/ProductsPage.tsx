@@ -20,7 +20,7 @@ import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { ResponsiveTable } from '../../components/common/ResponsiveTable';
-import { ProductFormDialog } from './components/ProductFormDialog';
+import { ProductFormDialog } from './components';
 import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '../../hooks/useProducts';
 import type { Product, CreateProductDto, UpdateProductDto } from '../../types';
 
