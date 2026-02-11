@@ -11,23 +11,42 @@ import {
   TableHead,
   TableRow,
   Chip,
+  Box,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
+import { Inventory as InventoryIcon } from '@mui/icons-material';
 import type { ContainerProductInfo } from '../../../types';
 
 export interface ProductStockDistributionCardProps {
   containers: ContainerProductInfo[];
   onContainerClick: (containerId: number) => void;
+  onManageClick?: () => void;
 }
 
 export const ProductStockDistributionCard: React.FC<ProductStockDistributionCardProps> = ({
   containers,
   onContainerClick,
+  onManageClick,
 }) => (
   <Card>
     <CardContent>
-      <Typography variant="h6" gutterBottom>
-        Stock Distribution ({containers.length} containers)
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+        <Typography variant="h6">
+          Stock Distribution ({containers.length} containers)
+        </Typography>
+        {onManageClick && (
+          <Tooltip title="Manage Containers">
+            <IconButton
+              color="primary"
+              size="small"
+              onClick={onManageClick}
+            >
+              <InventoryIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
       <Divider sx={{ mb: 2 }} />
 
       {containers.length > 0 ? (

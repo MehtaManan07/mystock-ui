@@ -13,3 +13,4 @@ export { VendorSkuDialog } from './VendorSkuDialog';
 export type { VendorSkuDialogProps } from './VendorSkuDialog';
 export { CopyImagesDialog } from './CopyImagesDialog';
 export type { CopyImagesDialogProps } from './CopyImagesDialog';
+export { ManageContainersDialog } from './ManageContainersDialog';

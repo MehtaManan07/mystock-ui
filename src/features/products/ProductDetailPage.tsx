@@ -15,6 +15,7 @@ import {
   ProductRecentActivityCard,
   VendorSkuDialog,
   CopyImagesDialog,
+  ManageContainersDialog,
 } from './components';
 import { useProduct, useUpdateProduct, useDeleteProduct } from '../../hooks/useProducts';
 import type { CreateProductDto, UpdateProductDto, CreateVendorSkuDto, UpdateVendorSkuDto } from '../../types';
@@ -34,6 +35,7 @@ export const ProductDetailPage: React.FC = () => {
   // Dialog states
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [manageContainersDialogOpen, setManageContainersDialogOpen] = useState(false);
   const [vendorSkuDialogOpen, setVendorSkuDialogOpen] = useState(false);
   const [editingVendorSku, setEditingVendorSku] = useState<{ vendor_id: number; vendor_sku: string } | null>(null);
   const [vendorSkuToDelete, setVendorSkuToDelete] = useState<{ vendor_id: number; vendor_name: string } | null>(null);
@@ -280,6 +282,7 @@ export const ProductDetailPage: React.FC = () => {
           <ProductStockDistributionCard
             containers={product.containers ?? []}
             onContainerClick={(containerId) => navigate(`/containers/${containerId}`)}
+            onManageClick={() => setManageContainersDialogOpen(true)}
           />
         </Grid>
 
@@ -353,6 +356,16 @@ export const ProductDetailPage: React.FC = () => {
         onCopy={(selectedImageIds) =>
           copyFromProductId && copyFromMutation.mutate({ sourceProductId: copyFromProductId, imageIds: selectedImageIds })
         }
+      />
+
+      {/* Manage Containers Dialog */}
+      <ManageContainersDialog
+        open={manageContainersDialogOpen}
+        productId={productId}
+        productName={product.name}
+        currentContainers={product.containers ?? []}
+        onClose={() => setManageContainersDialogOpen(false)}
+        onSuccess={() => refetch()}
       />
     </Box>
   );

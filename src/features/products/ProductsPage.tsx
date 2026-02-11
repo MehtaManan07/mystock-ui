@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
+  Button,
   Card,
   IconButton,
   Chip,
@@ -21,6 +22,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { ResponsiveTable } from '../../components/common/ResponsiveTable';
 import { ProductFormDialog } from './components';
+import { BulkProductFormDialog } from './components/BulkProductFormDialog';
 import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '../../hooks/useProducts';
 import type { Product, CreateProductDto, UpdateProductDto } from '../../types';
 
@@ -32,6 +34,7 @@ export const ProductsPage: React.FC = () => {
 
   // Dialog states
   const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
@@ -272,8 +275,16 @@ export const ProductsPage: React.FC = () => {
       <PageHeader
         title="Products"
         subtitle={products ? `${products.length} products in your catalog` : 'Manage your product catalog'}
-        actionLabel="Add Product"
-        onAction={handleOpenCreateDialog}
+        action={
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button variant="outlined" onClick={() => setBulkDialogOpen(true)}>
+              Bulk Create
+            </Button>
+            <Button variant="contained" onClick={handleOpenCreateDialog}>
+              Add Product
+            </Button>
+          </Box>
+        }
       />
 
       {/* Search bar - always visible */}
@@ -304,6 +315,12 @@ export const ProductsPage: React.FC = () => {
         isLoading={createMutation.isPending || updateMutation.isPending}
         onSubmit={handleFormSubmit}
         onClose={handleCloseFormDialog}
+      />
+
+      {/* Bulk Create Dialog */}
+      <BulkProductFormDialog
+        open={bulkDialogOpen}
+        onClose={() => setBulkDialogOpen(false)}
       />
 
       {/* Delete Confirmation Dialog */}
