@@ -1,20 +1,43 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { containersApi } from '../api/containers.api';
 import { QUERY_KEYS, type ContainerType } from '../constants';
 import type { CreateContainerDto, UpdateContainerDto, Container } from '../types';
 import { useNotificationStore } from '../stores/notificationStore';
 
 /**
- * Hook to fetch all containers
+ * Hook to fetch all containers (kept for backward compatibility)
  */
 export const useContainers = (search?: string) => {
   const normalizedSearch = search?.trim() || undefined;
-  
+
   return useQuery({
-    queryKey: normalizedSearch 
-      ? [...QUERY_KEYS.CONTAINERS, normalizedSearch] 
+    queryKey: normalizedSearch
+      ? [...QUERY_KEYS.CONTAINERS, normalizedSearch]
       : QUERY_KEYS.CONTAINERS,
     queryFn: () => containersApi.getAll(normalizedSearch),
+  });
+};
+
+/**
+ * Hook for infinite scroll containers list
+ */
+export const useContainersInfinite = (search?: string) => {
+  const normalizedSearch = search?.trim() || undefined;
+
+  return useInfiniteQuery({
+    queryKey: normalizedSearch
+      ? [...QUERY_KEYS.CONTAINERS, 'infinite', normalizedSearch]
+      : [...QUERY_KEYS.CONTAINERS, 'infinite'],
+
+    queryFn: ({ pageParam = 1 }) =>
+      containersApi.getPaginated(pageParam, 25, normalizedSearch),
+
+    getNextPageParam: (lastPage) => {
+      // Return next page number if there are more pages, undefined otherwise
+      return lastPage.has_more ? lastPage.page + 1 : undefined;
+    },
+
+    initialPageParam: 1,
   });
 };
 
@@ -30,140 +53,92 @@ export const useContainer = (id: number) => {
 };
 
 /**
- * Hook to create a new container with optimistic update
+ * Hook to create a new container
+ * Invalidates infinite scroll cache
  */
 export const useCreateContainer = () => {
   const queryClient = useQueryClient();
+  const { success, error } = useNotificationStore();
 
   return useMutation({
     mutationFn: (data: CreateContainerDto) => containersApi.create(data),
-    
-    onMutate: async (newContainer) => {
-      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.CONTAINERS });
-      
-      const previousContainers = queryClient.getQueryData<Container[]>(QUERY_KEYS.CONTAINERS);
-      
-      if (previousContainers) {
-        const optimisticContainer: Container = {
-          id: Date.now(),
-          name: newContainer.name,
-          type: newContainer.type as ContainerType
-          ,
-          productCount: 0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          deleted_at: null,
-        };
-        queryClient.setQueryData<Container[]>(
-          QUERY_KEYS.CONTAINERS,
-          [...previousContainers, optimisticContainer]
-        );
-      }
-      
-      return { previousContainers };
-    },
-    
-    onError: (_err, _newContainer, context) => {
-      if (context?.previousContainers) {
-        queryClient.setQueryData(QUERY_KEYS.CONTAINERS, context.previousContainers);
-      }
-    },
-    
+
     onSuccess: (serverContainer) => {
-      const containers = queryClient.getQueryData<Container[]>(QUERY_KEYS.CONTAINERS);
-      if (containers) {
-        const updated = containers.filter(c => c.id < Date.now() - 10000);
-        queryClient.setQueryData<Container[]>(QUERY_KEYS.CONTAINERS, [...updated, serverContainer]);
-      }
+      success(`Container "${serverContainer.name}" created successfully`);
+
+      // Invalidate infinite scroll queries to trigger refetch
+      queryClient.invalidateQueries({
+        queryKey: [...QUERY_KEYS.CONTAINERS, 'infinite'],
+      });
+    },
+
+    onError: (err) => {
+      error(`Failed to create container: ${(err as Error).message || 'Unknown error'}`);
     },
   });
 };
 
 /**
- * Hook to update a container with optimistic update
+ * Hook to update a container
+ * Invalidates infinite scroll cache
  */
 export const useUpdateContainer = () => {
   const queryClient = useQueryClient();
+  const { success, error } = useNotificationStore();
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateContainerDto }) =>
       containersApi.update(id, data),
-    
-    onMutate: async ({ id, data }) => {
-      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.CONTAINERS });
-      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.CONTAINER(id) });
-      
-      const previousContainers = queryClient.getQueryData<Container[]>(QUERY_KEYS.CONTAINERS);
-      const previousContainer = queryClient.getQueryData(QUERY_KEYS.CONTAINER(id));
-      
-      if (previousContainers) {
-        queryClient.setQueryData<Container[]>(
-          QUERY_KEYS.CONTAINERS,
-          previousContainers.map(c => 
-            c.id === id ? { ...c, ...data, updated_at: new Date().toISOString() } : c
-          )
-        );
-      }
-      
-      return { previousContainers, previousContainer };
-    },
-    
-    onError: (_err, { id }, context) => {
-      if (context?.previousContainers) {
-        queryClient.setQueryData(QUERY_KEYS.CONTAINERS, context.previousContainers);
-      }
-      if (context?.previousContainer) {
-        queryClient.setQueryData(QUERY_KEYS.CONTAINER(id), context.previousContainer);
-      }
-    },
-    
+
     onSuccess: (serverContainer, { id }) => {
-      const containers = queryClient.getQueryData<Container[]>(QUERY_KEYS.CONTAINERS);
-      if (containers) {
-        queryClient.setQueryData<Container[]>(
-          QUERY_KEYS.CONTAINERS,
-          containers.map(c => c.id === id ? { ...c, ...serverContainer } : c)
-        );
-      }
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONTAINER(id) });
+      success('Container updated successfully');
+
+      // Invalidate infinite scroll queries
+      queryClient.invalidateQueries({
+        queryKey: [...QUERY_KEYS.CONTAINERS, 'infinite'],
+      });
+
+      // Invalidate detail view
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CONTAINER(id),
+      });
+    },
+
+    onError: (err) => {
+      error(`Failed to update container: ${(err as Error).message || 'Unknown error'}`);
     },
   });
 };
 
 /**
- * Hook to delete a container with optimistic update
+ * Hook to delete a container
+ * Invalidates infinite scroll cache
  */
 export const useDeleteContainer = () => {
   const queryClient = useQueryClient();
+  const { success, error } = useNotificationStore();
 
   return useMutation({
     mutationFn: (id: number) => containersApi.delete(id),
-    
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.CONTAINERS });
-      
-      const previousContainers = queryClient.getQueryData<Container[]>(QUERY_KEYS.CONTAINERS);
-      
-      if (previousContainers) {
-        queryClient.setQueryData<Container[]>(
-          QUERY_KEYS.CONTAINERS,
-          previousContainers.filter(c => c.id !== id)
-        );
-      }
-      
-      return { previousContainers };
+
+    onSuccess: () => {
+      success('Container deleted successfully');
+
+      // Invalidate infinite scroll queries
+      queryClient.invalidateQueries({
+        queryKey: [...QUERY_KEYS.CONTAINERS, 'infinite'],
+      });
     },
-    
-    onError: (_err, _id, context) => {
-      if (context?.previousContainers) {
-        queryClient.setQueryData(QUERY_KEYS.CONTAINERS, context.previousContainers);
-      }
+
+    onError: (err) => {
+      error(`Failed to delete container: ${(err as Error).message || 'Unknown error'}`);
     },
   });
 };
 
 /**
- * Hook to create multiple containers in bulk with optimistic updates
+ * Hook to create multiple containers in bulk
+ * Invalidates infinite scroll cache
  */
 export const useCreateContainersBulk = () => {
   const queryClient = useQueryClient();
@@ -172,50 +147,17 @@ export const useCreateContainersBulk = () => {
   return useMutation({
     mutationFn: (data: CreateContainerDto[]) => containersApi.createBulk(data),
 
-    onMutate: async (newContainers) => {
-      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.CONTAINERS });
-
-      const previousContainers = queryClient.getQueryData<Container[]>(QUERY_KEYS.CONTAINERS);
-
-      if (previousContainers) {
-        const optimisticContainers: Container[] = newContainers.map((nc, index) => ({
-          id: Date.now() + index,
-          name: nc.name,
-          type: nc.type as ContainerType,
-          productCount: 0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          deleted_at: null,
-        }));
-
-        queryClient.setQueryData<Container[]>(
-          QUERY_KEYS.CONTAINERS,
-          [...previousContainers, ...optimisticContainers]
-        );
-      }
-
-      return { previousContainers };
-    },
-
-    onError: (err, _newContainers, context) => {
-      if (context?.previousContainers) {
-        queryClient.setQueryData(QUERY_KEYS.CONTAINERS, context.previousContainers);
-      }
-      error(`Failed to create containers: ${(err as Error).message}`);
-    },
-
     onSuccess: (serverContainers) => {
       success(`Successfully created ${serverContainers.length} container${serverContainers.length !== 1 ? 's' : ''}`);
 
-      // Replace optimistic with server data
-      const containers = queryClient.getQueryData<Container[]>(QUERY_KEYS.CONTAINERS);
-      if (containers) {
-        const updated = containers.filter(c => c.id < Date.now() - 10000);
-        queryClient.setQueryData<Container[]>(
-          QUERY_KEYS.CONTAINERS,
-          [...updated, ...serverContainers]
-        );
-      }
+      // Invalidate infinite scroll queries
+      queryClient.invalidateQueries({
+        queryKey: [...QUERY_KEYS.CONTAINERS, 'infinite'],
+      });
+    },
+
+    onError: (err) => {
+      error(`Failed to create containers: ${(err as Error).message || 'Unknown error'}`);
     },
   });
 };

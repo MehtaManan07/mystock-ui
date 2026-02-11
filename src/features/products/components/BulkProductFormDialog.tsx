@@ -47,7 +47,8 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const createBulkMutation = useCreateProductsBulk();
-  const { data: existingContainers = [] } = useContainers();
+  const { data: containersData } = useContainers();
+  const existingContainers = Array.isArray(containersData) ? containersData : [];
   const createContainerMutation = useCreateContainer();
   const setContainerProductsMutation = useSetContainerProducts();
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -8,6 +8,7 @@ import {
   Chip,
   Tooltip,
   Typography,
+  CircularProgress,
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -23,7 +24,7 @@ import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { ResponsiveTable } from '../../components/common/ResponsiveTable';
 import { ProductFormDialog } from './components';
 import { BulkProductFormDialog } from './components/BulkProductFormDialog';
-import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '../../hooks/useProducts';
+import { useProductsInfinite, useCreateProduct, useUpdateProduct, useDeleteProduct } from '../../hooks/useProducts';
 import type { Product, CreateProductDto, UpdateProductDto } from '../../types';
 
 export const ProductsPage: React.FC = () => {
@@ -39,11 +40,53 @@ export const ProductsPage: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
-  // Data fetching
-  const { data: products, isLoading, isFetching, isError, refetch } = useProducts(search || undefined);
+  // Infinite scroll ref
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  // Data fetching with infinite scroll
+  const {
+    data,
+    isLoading,
+    isFetching,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    isError,
+    refetch,
+  } = useProductsInfinite(search || undefined);
+
+  // Flatten all pages into single array for rendering
+  const products = data?.pages ? data.pages.flatMap((page) => page?.items ?? []) : [];
+
+  // Get total count from first page
+  const totalCount = data?.pages?.[0]?.total ?? 0;
 
   // Only show full loading on initial load (no data yet)
-  const showFullLoading = isLoading && !products;
+  const showFullLoading = isLoading && !data;
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Load next page when observer target is visible
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 } // Trigger when 10% visible
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   // Mutations
   const createMutation = useCreateProduct();
@@ -260,13 +303,38 @@ export const ProductsPage: React.FC = () => {
     }
 
     return (
-      <ResponsiveTable
-        columns={columns}
-        data={products}
-        keyExtractor={(product) => product.id.toString()}
-        onRowClick={handleViewProduct}
-        emptyMessage="No products found"
-      />
+      <>
+        <ResponsiveTable
+          columns={columns}
+          data={products}
+          keyExtractor={(product) => product.id.toString()}
+          onRowClick={handleViewProduct}
+          emptyMessage="No products found"
+        />
+
+        {/* Infinite scroll trigger and loading indicator */}
+        <Box sx={{ p: 2, textAlign: 'center' }}>
+          {/* Invisible div that triggers intersection observer */}
+          <div ref={observerTarget} style={{ height: '20px' }} />
+
+          {/* Loading indicator while fetching next page */}
+          {isFetchingNextPage && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
+              <CircularProgress size={24} />
+              <Typography variant="body2" color="text.secondary">
+                Loading more products...
+              </Typography>
+            </Box>
+          )}
+
+          {/* End of results indicator */}
+          {!hasNextPage && products.length > 0 && (
+            <Typography variant="caption" color="text.secondary">
+              All products loaded ({totalCount} total)
+            </Typography>
+          )}
+        </Box>
+      </>
     );
   };
 
@@ -274,7 +342,11 @@ export const ProductsPage: React.FC = () => {
     <Box>
       <PageHeader
         title="Products"
-        subtitle={products ? `${products.length} products in your catalog` : 'Manage your product catalog'}
+        subtitle={
+          totalCount > 0
+            ? `${totalCount} products in your catalog (showing ${products.length})`
+            : 'Manage your product catalog'
+        }
         action={
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button variant="outlined" onClick={() => setBulkDialogOpen(true)}>
@@ -296,7 +368,8 @@ export const ProductsPage: React.FC = () => {
             placeholder="Search by name, size, or packing..."
           />
         </Box>
-        {isFetching && !showFullLoading && (
+        {/* Show searching indicator (not for next page fetch) */}
+        {isFetching && !isFetchingNextPage && !showFullLoading && (
           <Typography variant="caption" color="text.secondary">
             Searching...
           </Typography>

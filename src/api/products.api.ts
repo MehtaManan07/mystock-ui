@@ -6,6 +6,7 @@ import type {
   ProductImage,
   CreateProductDto,
   UpdateProductDto,
+  PaginatedResponse,
 } from '../types';
 
 /**
@@ -18,6 +19,29 @@ export const productsApi = {
   getAll: async (search?: string): Promise<Product[]> => {
     const params = search ? { search } : {};
     const response = await apiClient.get<Product[]>(API_ENDPOINTS.PRODUCTS.BASE, { params });
+    return response.data;
+  },
+
+  /**
+   * Get paginated products with optional search (for infinite scroll)
+   */
+  getPaginated: async (
+    page: number = 1,
+    pageSize: number = 25,
+    search?: string
+  ): Promise<PaginatedResponse<Product>> => {
+    const params: Record<string, any> = {
+      page,
+      page_size: pageSize,
+    };
+    if (search) {
+      params.search = search;
+    }
+
+    const response = await apiClient.get<PaginatedResponse<Product>>(
+      API_ENDPOINTS.PRODUCTS.BASE,
+      { params }
+    );
     return response.data;
   },
 

@@ -5,6 +5,7 @@ import type {
   ContainerDetail,
   CreateContainerDto,
   UpdateContainerDto,
+  PaginatedResponse,
 } from '../types';
 
 /**
@@ -17,6 +18,29 @@ export const containersApi = {
   getAll: async (search?: string): Promise<Container[]> => {
     const params = search ? { search } : {};
     const response = await apiClient.get<Container[]>(API_ENDPOINTS.CONTAINERS.BASE, { params });
+    return response.data;
+  },
+
+  /**
+   * Get paginated containers with optional search (for infinite scroll)
+   */
+  getPaginated: async (
+    page: number = 1,
+    pageSize: number = 25,
+    search?: string
+  ): Promise<PaginatedResponse<Container>> => {
+    const params: Record<string, any> = {
+      page,
+      page_size: pageSize,
+    };
+    if (search) {
+      params.search = search;
+    }
+
+    const response = await apiClient.get<PaginatedResponse<Container>>(
+      API_ENDPOINTS.CONTAINERS.BASE,
+      { params }
+    );
     return response.data;
   },
 

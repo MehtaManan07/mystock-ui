@@ -20,6 +20,19 @@ export interface BaseEntity {
 }
 
 // ============================================
+// Pagination Types
+// ============================================
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  has_more: boolean;
+}
+
+// ============================================
 // User & Auth Types
 // ============================================
 

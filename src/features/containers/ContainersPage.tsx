@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -14,6 +14,7 @@ import {
   Tooltip,
   Typography,
   Button,
+  CircularProgress,
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -30,15 +31,15 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { ContainerFormDialog } from './components/ContainerFormDialog';
 import { BulkContainerFormDialog } from './components/BulkContainerFormDialog';
-import { useContainers, useCreateContainer, useUpdateContainer, useDeleteContainer, useCreateContainersBulk } from '../../hooks/useContainers';
+import { useContainersInfinite, useCreateContainer, useUpdateContainer, useDeleteContainer, useCreateContainersBulk } from '../../hooks/useContainers';
 import type { Container, CreateContainerDto, UpdateContainerDto } from '../../types';
 
 export const ContainersPage: React.FC = () => {
   const navigate = useNavigate();
-  
+
   // Search state
   const [search, setSearch] = useState('');
-  
+
   // Dialog states
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [bulkFormDialogOpen, setBulkFormDialogOpen] = useState(false);
@@ -46,12 +47,54 @@ export const ContainersPage: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [containerToDelete, setContainerToDelete] = useState<Container | null>(null);
 
-  // Data fetching
-  const { data: containers, isLoading, isFetching, isError, refetch } = useContainers(search || undefined);
-  
+  // Infinite scroll ref
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  // Data fetching with infinite scroll
+  const {
+    data,
+    isLoading,
+    isFetching,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    isError,
+    refetch,
+  } = useContainersInfinite(search || undefined);
+
+  // Flatten all pages into single array for rendering
+  const containers = data?.pages ? data.pages.flatMap((page) => page?.items ?? []) : [];
+
+  // Get total count from first page
+  const totalCount = data?.pages?.[0]?.total ?? 0;
+
   // Only show full loading on initial load (no data yet)
-  const showFullLoading = isLoading && !containers;
-  
+  const showFullLoading = isLoading && !data;
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Load next page when observer target is visible
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 } // Trigger when 10% visible
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
   // Mutations
   const createMutation = useCreateContainer();
   const updateMutation = useUpdateContainer();
@@ -130,11 +173,11 @@ export const ContainersPage: React.FC = () => {
     if (showFullLoading) {
       return <LoadingState message="Loading containers..." />;
     }
-    
+
     if (isError) {
       return <ErrorState onRetry={() => refetch()} />;
     }
-    
+
     if (!containers || containers.length === 0) {
       return (
         <EmptyState
@@ -145,79 +188,100 @@ export const ContainersPage: React.FC = () => {
         />
       );
     }
-    
+
     return (
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell align="center">Products</TableCell>
-              <TableCell align="center">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {containers.map((container) => (
-              <TableRow
-                key={container.id}
-                hover
-                sx={{ cursor: 'pointer' }}
-                onClick={() => handleViewContainer(container)}
-              >
-                <TableCell>
-                  <Typography variant="body2" fontWeight={600}>
-                    {container.name}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={container.type}
-                    size="small"
-                    color={container.type === 'mixed' ? 'secondary' : 'primary'}
-                    variant="outlined"
-                  />
-                </TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={container.productCount}
-                    size="small"
-                    color={container.productCount > 0 ? 'primary' : 'default'}
-                    variant={container.productCount > 0 ? 'filled' : 'outlined'}
-                  />
-                </TableCell>
-                <TableCell align="center" onClick={(e) => e.stopPropagation()}>
-                  <Tooltip title="View">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleViewContainer(container)}
-                    >
-                      <ViewIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Edit">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleOpenEditDialog(container)}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete">
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleOpenDeleteDialog(container)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
+      <>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Type</TableCell>
+                <TableCell align="center">Products</TableCell>
+                <TableCell align="center">Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {containers.map((container) => (
+                <TableRow
+                  key={container.id}
+                  hover
+                  sx={{ cursor: 'pointer' }}
+                  onClick={() => handleViewContainer(container)}
+                >
+                  <TableCell>
+                    <Typography variant="body2" fontWeight={600}>
+                      {container.name}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={container.type}
+                      size="small"
+                      color={container.type === 'mixed' ? 'secondary' : 'primary'}
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell align="center">
+                    <Chip
+                      label={container.productCount}
+                      size="small"
+                      color={container.productCount > 0 ? 'primary' : 'default'}
+                      variant={container.productCount > 0 ? 'filled' : 'outlined'}
+                    />
+                  </TableCell>
+                  <TableCell align="center" onClick={(e) => e.stopPropagation()}>
+                    <Tooltip title="View">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleViewContainer(container)}
+                      >
+                        <ViewIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Edit">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleOpenEditDialog(container)}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleOpenDeleteDialog(container)}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        <Box sx={{ p: 2, textAlign: 'center' }}>
+          <div ref={observerTarget} style={{ height: '20px' }} />
+
+          {isFetchingNextPage && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
+              <CircularProgress size={24} />
+              <Typography variant="body2" color="text.secondary">
+                Loading more containers...
+              </Typography>
+            </Box>
+          )}
+
+          {!hasNextPage && containers.length > 0 && (
+            <Typography variant="caption" color="text.secondary">
+              All containers loaded ({totalCount} total)
+            </Typography>
+          )}
+        </Box>
+      </>
     );
   };
 
@@ -225,7 +289,11 @@ export const ContainersPage: React.FC = () => {
     <Box>
       <PageHeader
         title="Containers"
-        subtitle={containers ? `${containers.length} containers in your inventory` : 'Manage your storage containers'}
+        subtitle={
+          totalCount > 0
+            ? `${totalCount} containers in your inventory (showing ${containers.length})`
+            : 'Manage your storage containers'
+        }
         action={
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
@@ -246,26 +314,24 @@ export const ContainersPage: React.FC = () => {
         }
       />
 
-      {/* Search bar - always visible */}
       <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
         <SearchInput
           value={search}
           onChange={setSearch}
           placeholder="Search by name..."
         />
-        {isFetching && !showFullLoading && (
+        {/* Show searching indicator (not for next page fetch) */}
+        {isFetching && !isFetchingNextPage && !showFullLoading && (
           <Typography variant="caption" color="text.secondary">
             Searching...
           </Typography>
         )}
       </Box>
 
-      {/* Containers table */}
       <Card>
         {renderTableContent()}
       </Card>
 
-      {/* Create/Edit Dialog */}
       <ContainerFormDialog
         open={formDialogOpen}
         container={selectedContainer}
@@ -274,7 +340,6 @@ export const ContainersPage: React.FC = () => {
         onClose={handleCloseFormDialog}
       />
 
-      {/* Bulk Create Dialog */}
       <BulkContainerFormDialog
         open={bulkFormDialogOpen}
         isLoading={bulkCreateMutation.isPending}
@@ -282,7 +347,6 @@ export const ContainersPage: React.FC = () => {
         onClose={handleCloseBulkDialog}
       />
 
-      {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         open={deleteDialogOpen}
         title="Delete Container"
