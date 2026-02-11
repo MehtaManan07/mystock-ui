@@ -52,7 +52,7 @@ export const ManageProductsDialog: React.FC<ManageProductsDialogProps> = ({
   onSuccess,
 }) => {
   const [items, setItems] = useState<ProductQuantityItem[]>([]);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [newQuantity, setNewQuantity] = useState<number>(1);
   const [error, setError] = useState<string | null>(null);
 
@@ -94,14 +94,30 @@ export const ManageProductsDialog: React.FC<ManageProductsDialogProps> = ({
     ) || [];
 
   const handleAddProduct = () => {
-    if (!selectedProduct) return;
+    if (!selectedProducts || selectedProducts.length === 0) {
+      setError('Please select at least one product');
+      return;
+    }
     if (newQuantity <= 0) {
       setError('Quantity must be greater than 0');
       return;
     }
 
-    setItems([...items, { product: selectedProduct, quantity: newQuantity }]);
-    setSelectedProduct(null);
+    // Filter out products already in the list
+    const newItems = selectedProducts
+      .filter((product) => !items.some((item) => item.product.id === product.id))
+      .map((product) => ({
+        product,
+        quantity: newQuantity,
+      }));
+
+    if (newItems.length === 0) {
+      setError('All selected products are already in the list');
+      return;
+    }
+
+    setItems([...items, ...newItems]);
+    setSelectedProducts([]);
     setNewQuantity(1);
     setError(null);
   };
@@ -185,19 +201,31 @@ export const ManageProductsDialog: React.FC<ManageProductsDialogProps> = ({
           }}
         >
           <Autocomplete
-            value={selectedProduct}
-            onChange={(_, value) => setSelectedProduct(value)}
+            multiple
+            value={selectedProducts}
+            onChange={(_, value) => setSelectedProducts(value)}
             options={availableProducts}
             getOptionLabel={(option) =>
               `${option.name} (${option.size} - ${option.packing})`
             }
             loading={productsLoading}
             sx={{ flex: 1 }}
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => (
+                <Chip
+                  {...getTagProps({ index })}
+                  key={option.id}
+                  label={option.name}
+                  size="small"
+                />
+              ))
+            }
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Select Product"
+                label="Select Products"
                 size="small"
+                placeholder="Select one or more products"
                 InputProps={{
                   ...params.InputProps,
                   endAdornment: (
@@ -225,9 +253,9 @@ export const ManageProductsDialog: React.FC<ManageProductsDialogProps> = ({
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleAddProduct}
-            disabled={!selectedProduct || newQuantity <= 0}
+            disabled={!selectedProducts || selectedProducts.length === 0 || newQuantity <= 0}
           >
-            Add
+            {selectedProducts.length > 1 ? `Add ${selectedProducts.length}` : 'Add'}
           </Button>
         </Box>
 

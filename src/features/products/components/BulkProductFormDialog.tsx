@@ -17,11 +17,19 @@ import {
   IconButton,
   Chip,
   Box,
+  Autocomplete,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
-import { productFormSchema, type ProductFormData } from '../schemas/productSchema';
+import { productFormSchema, type ProductFormData, type ContainerQuantity } from '../schemas/productSchema';
 import { useCreateProductsBulk } from '../../../hooks/useProducts';
+import { useContainers, useCreateContainer } from '../../../hooks/useContainers';
+import { useSetContainerProducts } from '../../../hooks/useContainerProducts';
 import { ResponsiveTable } from '../../../components/common/ResponsiveTable';
+import { CONTAINER_TYPES } from '../../../constants';
 import type { CreateProductDto } from '../../../types';
 
 interface BulkProductFormDialogProps {
@@ -31,6 +39,7 @@ interface BulkProductFormDialogProps {
 
 interface ProductInList extends CreateProductDto {
   id: string;
+  containers?: ContainerQuantity[];
 }
 
 export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ open, onClose }) => {
@@ -38,10 +47,18 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const createBulkMutation = useCreateProductsBulk();
+  const { data: existingContainers = [] } = useContainers();
+  const createContainerMutation = useCreateContainer();
+  const setContainerProductsMutation = useSetContainerProducts();
 
   // Product list state
   const [products, setProducts] = useState<ProductInList[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  // Container selection state for current product
+  const [currentContainers, setCurrentContainers] = useState<ContainerQuantity[]>([]);
+  const [newContainerName, setNewContainerName] = useState('');
+  const [newContainerType, setNewContainerType] = useState<string>('single');
 
   // Form state for adding new product
   const [formData, setFormData] = useState<ProductFormData>({
@@ -80,14 +97,69 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
         dimension_width: '',
         dimension_height: '',
         dimension_length: '',
+        containers: [],
       });
       setError(null);
+      setCurrentContainers([]);
+      setNewContainerName('');
+      setNewContainerType('single');
     }
   }, [open]);
 
   const handleInputChange = (field: keyof ProductFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setError(null);
+  };
+
+  const handleAddContainerQuantity = async () => {
+    if (!newContainerName.trim()) {
+      setError('Container name is required');
+      return;
+    }
+
+    if (!newContainerType.trim()) {
+      setError('Container type is required');
+      return;
+    }
+
+    // Check if container with this name already exists
+    const existingContainer = existingContainers.find(
+      c => c.name.toLowerCase() === newContainerName.toLowerCase()
+    );
+
+    let containerToAdd: ContainerQuantity;
+
+    if (existingContainer) {
+      // Use existing container
+      containerToAdd = {
+        container_id: existingContainer.id,
+        container_name: existingContainer.name,
+        container_type: existingContainer.type,
+        quantity: '0',
+      };
+    } else {
+      // Will create new container during product creation
+      containerToAdd = {
+        container_name: newContainerName.trim(),
+        container_type: newContainerType,
+        quantity: '0',
+      };
+    }
+
+    setCurrentContainers([...currentContainers, containerToAdd]);
+    setNewContainerName('');
+    setNewContainerType('single');
+    setError(null);
+  };
+
+  const handleRemoveContainerQuantity = (index: number) => {
+    setCurrentContainers(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateContainerQuantity = (index: number, quantity: string) => {
+    setCurrentContainers(prev =>
+      prev.map((c, i) => (i === index ? { ...c, quantity } : c))
+    );
   };
 
   const handleAddProduct = () => {
@@ -168,10 +240,11 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
       default_purchase_price: purchasePrice,
       display_name: formData.display_name.trim() || '',
       description: formData.description.trim() || undefined,
-      mrp,
+      mrp: mrp ?? salePrice * 3,
       tags,
       product_type: formData.product_type.trim() || undefined,
       dimensions,
+      containers: currentContainers.length > 0 ? currentContainers : undefined,
     };
 
     // Add to products list
@@ -193,7 +266,11 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
       dimension_width: '',
       dimension_height: '',
       dimension_length: '',
+      containers: [],
     });
+    setCurrentContainers([]);
+    setNewContainerName('');
+    setNewContainerType('single');
     setError(null);
   };
 
@@ -212,9 +289,51 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
     }
 
     try {
-      // Remove temporary IDs before submitting
-      const productsToCreate = products.map(({ id, ...product }) => product);
-      await createBulkMutation.mutateAsync(productsToCreate);
+      // Remove temporary IDs and container data before submitting
+      const productsToCreate = products.map(({ id, containers, ...product }) => product);
+
+      const createdProducts = await createBulkMutation.mutateAsync(productsToCreate);
+
+      // Handle inventory setup for products with containers
+      const productsWithContainers = products.filter(p => p.containers && p.containers.length > 0);
+
+      if (productsWithContainers.length > 0 && createdProducts.length > 0) {
+        // Create new containers if needed and link products
+        for (let i = 0; i < createdProducts.length; i++) {
+          const createdProduct = createdProducts[i];
+          const originalProduct = productsWithContainers[i];
+
+          if (!originalProduct || !originalProduct.containers) continue;
+
+          // Handle each container for this product
+          for (const containerQty of originalProduct.containers) {
+            let containerId = containerQty.container_id;
+
+            // Create new container if needed
+            if (!containerId) {
+              const newContainer = await createContainerMutation.mutateAsync({
+                name: containerQty.container_name,
+                type: containerQty.container_type as any,
+              });
+              containerId = newContainer.id;
+            }
+
+            // Parse quantity
+            const quantity = parseInt(containerQty.quantity, 10);
+            if (!isNaN(quantity) && quantity > 0 && containerId) {
+              // Set product quantity in container
+              await setContainerProductsMutation.mutateAsync({
+                containerId,
+                items: [{
+                  productId: createdProduct.id,
+                  quantity,
+                }],
+              });
+            }
+          }
+        }
+      }
+
       onClose();
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to create products');
@@ -405,6 +524,104 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
                     />
                   </Grid>
 
+                  {/* Container Section */}
+                  <Grid size={12}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                      Container & Quantity (Optional)
+                    </Typography>
+                  </Grid>
+
+                  <Grid size={12}>
+                    <Autocomplete
+                      freeSolo
+                      options={existingContainers.map(c => c.name)}
+                      value={newContainerName}
+                      onChange={(_, value) => setNewContainerName(value || '')}
+                      onInputChange={(_, value) => setNewContainerName(value)}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Container Name"
+                          placeholder="Select or type new container name"
+                        />
+                      )}
+                      size="small"
+                    />
+                  </Grid>
+
+                  <Grid size={12}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Container Type</InputLabel>
+                      <Select
+                        value={newContainerType}
+                        onChange={(e) => setNewContainerType(e.target.value)}
+                        label="Container Type"
+                      >
+                        {Object.entries(CONTAINER_TYPES).map(([key, value]) => (
+                          <MenuItem key={key} value={value}>
+                            {key.charAt(0) + key.slice(1).toLowerCase()}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid size={12}>
+                    <Button
+                      variant="outlined"
+                      onClick={handleAddContainerQuantity}
+                      fullWidth
+                      size="small"
+                    >
+                      Add Container
+                    </Button>
+                  </Grid>
+
+                  {/* Display Selected Containers */}
+                  {currentContainers.length > 0 && (
+                    <>
+                      <Grid size={12}>
+                        <Typography variant="body2" sx={{ fontWeight: 500, mb: 1 }}>
+                          Selected Containers
+                        </Typography>
+                      </Grid>
+                      {currentContainers.map((container, index) => (
+                        <Grid size={12} key={index}>
+                          <Box sx={{
+                            display: 'flex',
+                            gap: 1,
+                            p: 1,
+                            bgcolor: 'action.hover',
+                            borderRadius: 1,
+                            alignItems: 'center',
+                          }}>
+                            <Box sx={{ flex: 1 }}>
+                              <Typography variant="body2">
+                                {container.container_name} ({container.container_type})
+                              </Typography>
+                            </Box>
+                            <TextField
+                              type="number"
+                              size="small"
+                              label="Qty"
+                              value={container.quantity}
+                              onChange={(e) => handleUpdateContainerQuantity(index, e.target.value)}
+                              inputProps={{ min: 0, step: 1 }}
+                              sx={{ width: 80 }}
+                            />
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleRemoveContainerQuantity(index)}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </Grid>
+                      ))}
+                    </>
+                  )}
+
                   <Grid size={12}>
                     <Button
                       variant="contained"
@@ -457,6 +674,22 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
                           render: (row: any) => <Typography variant="body2">{row.packing}</Typography>
                         },
                         {
+                          id: 'containers',
+                          label: 'Containers',
+                          hideOnMobile: true,
+                          render: (row: any) => row.containers ? (
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                              {row.containers.map((c: any, idx: number) => (
+                                <Typography key={idx} variant="caption">
+                                  {c.container_name}: {c.quantity}
+                                </Typography>
+                              ))}
+                            </Box>
+                          ) : (
+                            <Typography variant="body2">-</Typography>
+                          )
+                        },
+                        {
                           id: 'sale_price',
                           label: 'Sale Price',
                           hideOnMobile: true,
@@ -480,6 +713,7 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
                         name: product.name,
                         size: product.size,
                         packing: product.packing,
+                        containers: product.containers,
                         sale_price: formatCurrency(product.default_sale_price),
                         purchase_price: formatCurrency(product.default_purchase_price),
                         actions: (

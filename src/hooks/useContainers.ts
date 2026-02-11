@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { containersApi } from '../api/containers.api';
 import { QUERY_KEYS, type ContainerType } from '../constants';
 import type { CreateContainerDto, UpdateContainerDto, Container } from '../types';
+import { useNotificationStore } from '../stores/notificationStore';
 
 /**
  * Hook to fetch all containers
@@ -162,15 +163,59 @@ export const useDeleteContainer = () => {
 };
 
 /**
- * Hook to create multiple containers in bulk
+ * Hook to create multiple containers in bulk with optimistic updates
  */
 export const useCreateContainersBulk = () => {
   const queryClient = useQueryClient();
+  const { success, error } = useNotificationStore();
 
   return useMutation({
     mutationFn: (data: CreateContainerDto[]) => containersApi.createBulk(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONTAINERS });
+
+    onMutate: async (newContainers) => {
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.CONTAINERS });
+
+      const previousContainers = queryClient.getQueryData<Container[]>(QUERY_KEYS.CONTAINERS);
+
+      if (previousContainers) {
+        const optimisticContainers: Container[] = newContainers.map((nc, index) => ({
+          id: Date.now() + index,
+          name: nc.name,
+          type: nc.type as ContainerType,
+          productCount: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          deleted_at: null,
+        }));
+
+        queryClient.setQueryData<Container[]>(
+          QUERY_KEYS.CONTAINERS,
+          [...previousContainers, ...optimisticContainers]
+        );
+      }
+
+      return { previousContainers };
+    },
+
+    onError: (err, _newContainers, context) => {
+      if (context?.previousContainers) {
+        queryClient.setQueryData(QUERY_KEYS.CONTAINERS, context.previousContainers);
+      }
+      error(`Failed to create containers: ${(err as Error).message}`);
+    },
+
+    onSuccess: (serverContainers) => {
+      success(`Successfully created ${serverContainers.length} container${serverContainers.length !== 1 ? 's' : ''}`);
+
+      // Replace optimistic with server data
+      const containers = queryClient.getQueryData<Container[]>(QUERY_KEYS.CONTAINERS);
+      if (containers) {
+        const updated = containers.filter(c => c.id < Date.now() - 10000);
+        queryClient.setQueryData<Container[]>(
+          QUERY_KEYS.CONTAINERS,
+          [...updated, ...serverContainers]
+        );
+      }
     },
   });
 };

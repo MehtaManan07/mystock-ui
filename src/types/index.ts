@@ -205,6 +205,13 @@ export interface UpdateContainerDto {
   type?: ContainerType;
 }
 
+export interface BulkContainerRow {
+  id: string;
+  name: string;
+  type: ContainerType;
+  error?: string;
+}
+
 // ============================================
 // Container Product (Inventory) Types
 // ============================================

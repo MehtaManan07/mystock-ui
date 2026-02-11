@@ -13,11 +13,14 @@ import {
   Chip,
   Tooltip,
   Typography,
+  Button,
 } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Visibility as ViewIcon,
+  Add as AddIcon,
+  PlaylistAdd as BulkAddIcon,
 } from '@mui/icons-material';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SearchInput } from '../../components/common/SearchInput';
@@ -26,7 +29,8 @@ import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { ContainerFormDialog } from './components/ContainerFormDialog';
-import { useContainers, useCreateContainer, useUpdateContainer, useDeleteContainer } from '../../hooks/useContainers';
+import { BulkContainerFormDialog } from './components/BulkContainerFormDialog';
+import { useContainers, useCreateContainer, useUpdateContainer, useDeleteContainer, useCreateContainersBulk } from '../../hooks/useContainers';
 import type { Container, CreateContainerDto, UpdateContainerDto } from '../../types';
 
 export const ContainersPage: React.FC = () => {
@@ -37,6 +41,7 @@ export const ContainersPage: React.FC = () => {
   
   // Dialog states
   const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [bulkFormDialogOpen, setBulkFormDialogOpen] = useState(false);
   const [selectedContainer, setSelectedContainer] = useState<Container | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [containerToDelete, setContainerToDelete] = useState<Container | null>(null);
@@ -51,6 +56,7 @@ export const ContainersPage: React.FC = () => {
   const createMutation = useCreateContainer();
   const updateMutation = useUpdateContainer();
   const deleteMutation = useDeleteContainer();
+  const bulkCreateMutation = useCreateContainersBulk();
 
   // Handlers
   const handleOpenCreateDialog = () => {
@@ -103,6 +109,20 @@ export const ContainersPage: React.FC = () => {
 
   const handleViewContainer = (container: Container) => {
     navigate(`/containers/${container.id}`);
+  };
+
+  const handleOpenBulkDialog = () => {
+    setBulkFormDialogOpen(true);
+  };
+
+  const handleCloseBulkDialog = () => {
+    setBulkFormDialogOpen(false);
+  };
+
+  const handleBulkSubmit = (data: CreateContainerDto[]) => {
+    bulkCreateMutation.mutate(data, {
+      onSuccess: () => handleCloseBulkDialog(),
+    });
   };
 
   // Render content for the table area
@@ -206,8 +226,24 @@ export const ContainersPage: React.FC = () => {
       <PageHeader
         title="Containers"
         subtitle={containers ? `${containers.length} containers in your inventory` : 'Manage your storage containers'}
-        actionLabel="Add Container"
-        onAction={handleOpenCreateDialog}
+        action={
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleOpenCreateDialog}
+            >
+              Add Container
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<BulkAddIcon />}
+              onClick={handleOpenBulkDialog}
+            >
+              Bulk Add
+            </Button>
+          </Box>
+        }
       />
 
       {/* Search bar - always visible */}
@@ -236,6 +272,14 @@ export const ContainersPage: React.FC = () => {
         isLoading={createMutation.isPending || updateMutation.isPending}
         onSubmit={handleFormSubmit}
         onClose={handleCloseFormDialog}
+      />
+
+      {/* Bulk Create Dialog */}
+      <BulkContainerFormDialog
+        open={bulkFormDialogOpen}
+        isLoading={bulkCreateMutation.isPending}
+        onSubmit={handleBulkSubmit}
+        onClose={handleCloseBulkDialog}
       />
 
       {/* Delete Confirmation Dialog */}

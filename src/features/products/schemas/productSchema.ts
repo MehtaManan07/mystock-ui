@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+// Container with optional quantity for products
+export interface ContainerQuantity {
+  container_id?: number; // ID if existing container
+  container_name: string;
+  container_type: string;
+  quantity: string;
+}
+
 // Form data type (uses strings for form inputs)
 export interface ProductFormData {
   name: string;
@@ -16,6 +24,7 @@ export interface ProductFormData {
   dimension_width: string;
   dimension_height: string;
   dimension_length: string;
+  containers?: ContainerQuantity[];
 }
 
 // Validation schema for form (string-based inputs)
@@ -34,4 +43,10 @@ export const productFormSchema = z.object({
   dimension_width: z.string().optional(),
   dimension_height: z.string().optional(),
   dimension_length: z.string().optional(),
+  containers: z.array(z.object({
+    container_id: z.number().optional(),
+    container_name: z.string().min(1, 'Container name is required'),
+    container_type: z.string().min(1, 'Container type is required'),
+    quantity: z.string().min(1, 'Quantity is required'),
+  })).optional(),
 });
