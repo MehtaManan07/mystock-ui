@@ -5,6 +5,7 @@ import type {
   CreateContactDto,
   UpdateContactDto,
   ContactFilters,
+  PaginatedResponse,
 } from '../types';
 
 /**
@@ -16,7 +17,7 @@ export const contactsApi = {
    */
   getAll: async (filters?: ContactFilters): Promise<Contact[]> => {
     const params: Record<string, string | string[]> = {};
-    
+
     if (filters?.types && filters.types.length > 0) {
       params.types = filters.types;
     }
@@ -26,9 +27,13 @@ export const contactsApi = {
     if (filters?.search) {
       params.search = filters.search;
     }
-    
-    const response = await apiClient.get<Contact[]>(API_ENDPOINTS.CONTACTS.BASE, { params });
-    return response.data;
+
+    const response = await apiClient.get<PaginatedResponse<Contact> | Contact[]>(API_ENDPOINTS.CONTACTS.BASE, { params });
+    // Handle both paginated response and direct array response
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    return (response.data as PaginatedResponse<Contact>).items;
   },
 
   /**

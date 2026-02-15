@@ -7,6 +7,7 @@ import type {
   TransactionFilters,
   InvoiceMetadata,
   Payment,
+  PaginatedResponse,
 } from '../types';
 
 /**
@@ -19,7 +20,7 @@ export const transactionsApi = {
    */
   getAll: async (filters?: TransactionFilters): Promise<Transaction[]> => {
     const params: Record<string, string | number | undefined> = {};
-    
+
     if (filters?.type) params.type = filters.type;
     if (filters?.payment_status) params.payment_status = filters.payment_status;
     if (filters?.contact_id) params.contact_id = filters.contact_id;
@@ -27,8 +28,12 @@ export const transactionsApi = {
     if (filters?.to_date) params.to_date = filters.to_date;
     if (filters?.search) params.search = filters.search;
 
-    const response = await api.get(API_ENDPOINTS.TRANSACTIONS.BASE, { params });
-    return response.data;
+    const response = await api.get<PaginatedResponse<Transaction> | Transaction[]>(API_ENDPOINTS.TRANSACTIONS.BASE, { params });
+    // Handle both paginated response and direct array response
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    return (response.data as PaginatedResponse<Transaction>).items;
   },
 
   /**
@@ -74,8 +79,12 @@ export const transactionsApi = {
    * Get all payments for a transaction
    */
   getPayments: async (transactionId: number): Promise<Payment[]> => {
-    const response = await api.get(API_ENDPOINTS.TRANSACTIONS.PAYMENTS(transactionId));
-    return response.data;
+    const response = await api.get<PaginatedResponse<Payment> | Payment[]>(API_ENDPOINTS.TRANSACTIONS.PAYMENTS(transactionId));
+    // Handle both paginated response and direct array response
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    return (response.data as PaginatedResponse<Payment>).items;
   },
 
   /**

@@ -1,7 +1,7 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { productsApi } from '../api/products.api';
 import { QUERY_KEYS } from '../constants';
-import type { CreateProductDto, UpdateProductDto, Product } from '../types';
+import type { CreateProductDto, UpdateProductDto } from '../types';
 import { useNotificationStore } from '../stores/notificationStore';
 
 /**
@@ -91,7 +91,7 @@ export const useUpdateProduct = () => {
       productsApi.update(id, data),
 
     onSuccess: (serverProduct, { id }) => {
-      success('Product updated successfully');
+      success(`Product updated successfully ${serverProduct.name}`);
 
       // Invalidate infinite scroll queries
       queryClient.invalidateQueries({

@@ -17,8 +17,12 @@ export const containersApi = {
    */
   getAll: async (search?: string): Promise<Container[]> => {
     const params = search ? { search } : {};
-    const response = await apiClient.get<Container[]>(API_ENDPOINTS.CONTAINERS.BASE, { params });
-    return response.data;
+    const response = await apiClient.get<PaginatedResponse<Container> | Container[]>(API_ENDPOINTS.CONTAINERS.BASE, { params });
+    // Handle both paginated response and direct array response
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    return (response.data as PaginatedResponse<Container>).items;
   },
 
   /**

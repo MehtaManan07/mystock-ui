@@ -7,6 +7,7 @@ import type {
   PaymentFilters,
   PaymentSummary,
   SuggestedCategories,
+  PaginatedResponse,
 } from '../types';
 
 /**
@@ -19,7 +20,7 @@ export const paymentsApi = {
    */
   getAll: async (filters?: PaymentFilters): Promise<Payment[]> => {
     const params: Record<string, string | number | boolean | undefined> = {};
-    
+
     if (filters?.type) params.type = filters.type;
     if (filters?.category) params.category = filters.category;
     if (filters?.payment_method) params.payment_method = filters.payment_method;
@@ -32,8 +33,12 @@ export const paymentsApi = {
     if (filters?.max_amount) params.max_amount = filters.max_amount;
     if (filters?.manual_only) params.manual_only = filters.manual_only;
 
-    const response = await api.get(API_ENDPOINTS.PAYMENTS.BASE, { params });
-    return response.data;
+    const response = await api.get<PaginatedResponse<Payment> | Payment[]>(API_ENDPOINTS.PAYMENTS.BASE, { params });
+    // Handle both paginated response and direct array response
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    return (response.data as PaginatedResponse<Payment>).items;
   },
 
   /**

@@ -1,7 +1,7 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { containersApi } from '../api/containers.api';
-import { QUERY_KEYS, type ContainerType } from '../constants';
-import type { CreateContainerDto, UpdateContainerDto, Container } from '../types';
+import { QUERY_KEYS } from '../constants';
+import type { CreateContainerDto, UpdateContainerDto } from '../types';
 import { useNotificationStore } from '../stores/notificationStore';
 
 /**
@@ -91,7 +91,7 @@ export const useUpdateContainer = () => {
       containersApi.update(id, data),
 
     onSuccess: (serverContainer, { id }) => {
-      success('Container updated successfully');
+      success(`Container updated successfully ${serverContainer.name}`);
 
       // Invalidate infinite scroll queries
       queryClient.invalidateQueries({

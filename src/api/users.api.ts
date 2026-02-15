@@ -1,6 +1,6 @@
 import apiClient from './axios';
 import { API_ENDPOINTS } from '../constants';
-import type { User, CreateUserDto, UpdateUserDto } from '../types';
+import type { User, CreateUserDto, UpdateUserDto, PaginatedResponse } from '../types';
 
 /**
  * Users API functions
@@ -11,8 +11,12 @@ export const usersApi = {
    */
   getAll: async (search?: string): Promise<User[]> => {
     const params = search ? { search } : {};
-    const response = await apiClient.get<User[]>(API_ENDPOINTS.USERS.BASE, { params });
-    return response.data;
+    const response = await apiClient.get<PaginatedResponse<User> | User[]>(API_ENDPOINTS.USERS.BASE, { params });
+    // Handle both paginated response and direct array response
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    return (response.data as PaginatedResponse<User>).items;
   },
 
   /**

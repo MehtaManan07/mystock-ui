@@ -18,8 +18,12 @@ export const productsApi = {
    */
   getAll: async (search?: string): Promise<Product[]> => {
     const params = search ? { search } : {};
-    const response = await apiClient.get<Product[]>(API_ENDPOINTS.PRODUCTS.BASE, { params });
-    return response.data;
+    const response = await apiClient.get<PaginatedResponse<Product> | Product[]>(API_ENDPOINTS.PRODUCTS.BASE, { params });
+    // Handle both paginated response and direct array response
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    return (response.data as PaginatedResponse<Product>).items;
   },
 
   /**
