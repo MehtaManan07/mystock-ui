@@ -188,6 +188,7 @@ export const STORAGE_KEYS = {
   ACCESS_TOKEN: 'mystock_access_token',
   USER: 'mystock_user',
   THEME_MODE: 'mystock_theme_mode',
+  TRANSACTION_DRAFTS: 'mystock_transaction_drafts',
 } as const;
 
 // Pagination defaults

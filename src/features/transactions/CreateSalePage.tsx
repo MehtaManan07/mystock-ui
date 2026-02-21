@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -21,11 +21,15 @@ import {
   MenuItem,
   Alert,
   CircularProgress,
+  Switch,
+  FormControlLabel,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
   ArrowBack as BackIcon,
+  Check as CheckIcon,
+  Drafts as DraftsIcon,
 } from '@mui/icons-material';
 import { PageHeader } from '../../components/common/PageHeader';
 import { useContacts } from '../../hooks/useContacts';
@@ -34,6 +38,10 @@ import { useProductContainers } from '../../hooks/useContainerProducts';
 import { useCreateSale } from '../../hooks/useTransactions';
 import { CONTACT_TYPES, PAYMENT_METHODS, type PaymentMethod } from '../../constants';
 import type { Contact, Product, CreateTransactionDto, CreateTransactionItemDto } from '../../types';
+import { useDraftAutoSave } from '../../hooks/useDraftAutoSave';
+import { useDraftStore } from '../../stores/draftStore';
+import type { Draft } from '../../stores/draftStore';
+import { DraftListDialog } from '../../components/drafts/DraftListDialog';
 
 interface ContainerOption {
   id: number;
@@ -66,6 +74,10 @@ export const CreateSalePage: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  // Draft state
+  const [isDraftMode, setIsDraftMode] = useState(false);
+  const [showDraftDialog, setShowDraftDialog] = useState(false);
+
   // For adding new items
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedContainer, setSelectedContainer] = useState<ContainerOption | null>(null);
@@ -84,6 +96,31 @@ export const CreateSalePage: React.FC = () => {
   );
   
   const createSaleMutation = useCreateSale();
+
+  // Draft management
+  const { listDrafts, deleteDraft } = useDraftStore();
+
+  // Auto-save hook
+  const { currentDraftId } = useDraftAutoSave(
+    'sale',
+    {
+      transactionDate,
+      contactId: selectedContact?.id || null,
+      items: items.map(item => ({
+        productId: item.product!.id,
+        containerId: item.container!.id,
+        quantity: item.quantity,
+        unitPrice: item.unit_price,
+      })),
+      taxPercent,
+      discountAmount,
+      paidAmount,
+      paymentMethod: paidAmount > 0 ? paymentMethod : undefined,
+      paymentReference: paidAmount > 0 ? paymentReference : undefined,
+      notes: notes || undefined,
+    },
+    isDraftMode
+  );
 
   // Convert ContainerProduct[] to ContainerOption[] for the dropdown
   const containerOptions: ContainerOption[] = useMemo(() => {
@@ -112,6 +149,74 @@ export const CreateSalePage: React.FC = () => {
   }, [subtotal, taxPercent]);
 
   const totalAmount = subtotal + taxAmount - discountAmount;
+
+  // Before navigation warning
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (currentDraftId || items.length > 0 || selectedContact) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [currentDraftId, items.length, selectedContact]);
+
+  // Load draft into form
+  const handleLoadDraft = async (draft: Draft) => {
+    const data = draft.data;
+    setTransactionDate(data.transactionDate);
+    setTaxPercent(data.taxPercent);
+    setDiscountAmount(data.discountAmount);
+    setPaidAmount(data.paidAmount);
+    if (data.paymentMethod) setPaymentMethod(data.paymentMethod as PaymentMethod);
+    if (data.paymentReference) setPaymentReference(data.paymentReference);
+    if (data.notes) setNotes(data.notes);
+
+    // Load contact
+    if (data.contactId && contacts) {
+      const contact = contacts.find(c => c.id === data.contactId);
+      if (contact) setSelectedContact(contact);
+    }
+
+    // Load items
+    if (data.items.length > 0 && products && productContainers) {
+      const loadedItems: LineItem[] = [];
+
+      for (const draftItem of data.items) {
+        const product = products.find(p => p.id === draftItem.productId);
+        if (!product) continue;
+
+        // Fetch containers for this product to get container details
+        const containers = productContainers.filter(
+          cp => cp.product_id === draftItem.productId
+        );
+        const containerData = containers.find(cp => cp.container_id === draftItem.containerId);
+
+        if (containerData && containerData.container) {
+          loadedItems.push({
+            id: `${Date.now()}-${draftItem.productId}-${draftItem.containerId}`,
+            product,
+            container: {
+              id: containerData.container.id,
+              name: containerData.container.name,
+              type: containerData.container.type,
+              quantity: containerData.quantity,
+            },
+            availableQty: containerData.quantity,
+            quantity: draftItem.quantity,
+            unit_price: draftItem.unitPrice,
+          });
+        }
+      }
+
+      setItems(loadedItems);
+    }
+
+    setShowDraftDialog(false);
+    setIsDraftMode(true);
+  };
 
   // Set default price when product changes and reset container
   const handleProductChange = (product: Product | null) => {
@@ -224,6 +329,12 @@ export const CreateSalePage: React.FC = () => {
 
     try {
       const result = await createSaleMutation.mutateAsync(data);
+
+      // Delete draft after successful submission
+      if (currentDraftId) {
+        deleteDraft(currentDraftId);
+      }
+
       navigate(`/transactions/${result.id}`);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create sale';
@@ -254,6 +365,48 @@ export const CreateSalePage: React.FC = () => {
           Back to Transactions
         </Button>
       </Box>
+
+      {/* Draft Controls */}
+      <Card sx={{ mb: 2 }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={isDraftMode}
+                  onChange={(e) => setIsDraftMode(e.target.checked)}
+                />
+              }
+              label="Auto-save draft"
+            />
+
+            <Button
+              variant="outlined"
+              startIcon={<DraftsIcon />}
+              onClick={() => setShowDraftDialog(true)}
+            >
+              Load Draft ({listDrafts('sale').length})
+            </Button>
+
+            {currentDraftId && isDraftMode && (
+              <Chip
+                label="Draft saved"
+                color="success"
+                size="small"
+                icon={<CheckIcon />}
+              />
+            )}
+          </Box>
+        </CardContent>
+      </Card>
+
+      {/* Draft Dialog */}
+      <DraftListDialog
+        open={showDraftDialog}
+        type="sale"
+        onClose={() => setShowDraftDialog(false)}
+        onLoadDraft={handleLoadDraft}
+      />
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>

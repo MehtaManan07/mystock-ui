@@ -1,8 +1,10 @@
+import { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { useThemeStore } from './stores/themeStore';
+import { useDraftStore } from './stores/draftStore';
 import { lightTheme, darkTheme } from './theme';
 import AppRoutes from './routes';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
@@ -29,6 +31,12 @@ const queryClient = new QueryClient({
 const ThemedApp: React.FC = () => {
   const mode = useThemeStore((state) => state.mode);
   const theme = mode === 'dark' ? darkTheme : lightTheme;
+  const { clearOldDrafts } = useDraftStore();
+
+  // Clean up old drafts on app initialization
+  useEffect(() => {
+    clearOldDrafts(30); // Remove drafts older than 30 days
+  }, [clearOldDrafts]);
 
   return (
     <ThemeProvider theme={theme}>
