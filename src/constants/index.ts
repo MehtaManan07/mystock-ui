@@ -72,6 +72,10 @@ export const API_ENDPOINTS = {
     BY_CONTAINER: (id: number) => `/inventory-logs/container/${id}`,
     BULK: '/inventory-logs/bulk',
   },
+  // Dashboard
+  DASHBOARD: {
+    BASE: '/dashboard',
+  },
 } as const;
 
 // React Query Keys
@@ -117,6 +121,9 @@ export const QUERY_KEYS = {
   INVENTORY_LOGS: ['inventoryLogs'] as const,
   PRODUCT_LOGS: (productId: number) => ['inventoryLogs', 'product', productId] as const,
   CONTAINER_LOGS: (containerId: number) => ['inventoryLogs', 'container', containerId] as const,
+  
+  // Dashboard
+  DASHBOARD: ['dashboard'] as const,
 } as const;
 
 // User Roles

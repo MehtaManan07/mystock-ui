@@ -36,6 +36,7 @@ import { useContacts } from '../../hooks/useContacts';
 import { useProducts } from '../../hooks/useProducts';
 import { useContainers } from '../../hooks/useContainers';
 import { useCreatePurchase } from '../../hooks/useTransactions';
+import { useDebounce } from '../../hooks/useDebounce';
 import { CONTACT_TYPES, PAYMENT_METHODS, type PaymentMethod } from '../../constants';
 import type { Contact, Product, Container, CreateTransactionDto, CreateTransactionItemDto } from '../../types';
 import { useDraftAutoSave } from '../../hooks/useDraftAutoSave';
@@ -76,11 +77,15 @@ export const CreatePurchasePage: React.FC = () => {
   const [newQuantity, setNewQuantity] = useState(1);
   const [newUnitPrice, setNewUnitPrice] = useState(0);
 
+  // Product search with debouncing
+  const [productSearch, setProductSearch] = useState('');
+  const debouncedProductSearch = useDebounce(productSearch, 300);
+
   // Data fetching
   const { data: contacts, isLoading: contactsLoading } = useContacts({ 
     types: [CONTACT_TYPES.SUPPLIER, CONTACT_TYPES.BOTH] 
   });
-  const { data: products, isLoading: productsLoading } = useProducts();
+  const { data: products, isLoading: productsLoading } = useProducts(debouncedProductSearch);
   const { data: containers, isLoading: containersLoading } = useContainers();
   
   const createPurchaseMutation = useCreatePurchase();
@@ -377,6 +382,7 @@ export const CreatePurchasePage: React.FC = () => {
                   <Autocomplete
                     value={selectedProduct}
                     onChange={(_, value) => handleProductChange(value)}
+                    onInputChange={(_, value) => setProductSearch(value)}
                     options={products || []}
                     getOptionLabel={(option) => 
                       option.company_sku 
@@ -384,11 +390,13 @@ export const CreatePurchasePage: React.FC = () => {
                         : `${option.name} (${option.size})`
                     }
                     loading={productsLoading}
+                    filterOptions={(x) => x}
                     renderInput={(params) => (
                       <TextField
                         {...params}
                         label="Product"
                         size="small"
+                        placeholder="Search products..."
                         InputProps={{
                           ...params.InputProps,
                           endAdornment: (

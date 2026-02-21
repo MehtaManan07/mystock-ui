@@ -36,12 +36,7 @@ import {
   LocalShipping as PurchaseIcon,
 } from '@mui/icons-material';
 import { useAuthStore } from '../../stores/authStore';
-import { useProducts } from '../../hooks/useProducts';
-import { useContainers } from '../../hooks/useContainers';
-import { useContacts } from '../../hooks/useContacts';
-import { useTransactions } from '../../hooks/useTransactions';
-import { usePaymentSummary } from '../../hooks/usePayments';
-import { useInventoryAnalytics } from '../../hooks/useContainerProducts';
+import { useDashboard } from '../../hooks/useDashboard';
 
 interface StatCardProps {
   title: string;
@@ -131,33 +126,23 @@ export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
 
-  // Fetch all data
-  const { data: products, isLoading: productsLoading } = useProducts();
-  const { data: containers, isLoading: containersLoading } = useContainers();
-  const { data: contacts, isLoading: contactsLoading } = useContacts();
-  const { data: transactions, isLoading: transactionsLoading } = useTransactions({});
-  const { data: paymentSummary, isLoading: paymentLoading } = usePaymentSummary();
-  const { data: inventoryAnalytics, isLoading: inventoryLoading } = useInventoryAnalytics();
+  // Fetch all dashboard data in a single API call
+  const { data: dashboardData, isLoading } = useDashboard();
 
-  // Compute stats
-  const totalProducts = products?.length || 0;
-  const totalContainers = containers?.length || 0;
-  const totalContacts = contacts?.length || 0;
-  const totalInventory = inventoryAnalytics?.totalQuantity || 0;
+  // Extract data with fallbacks
+  const totalProducts = dashboardData?.stats.total_products || 0;
+  const totalContainers = dashboardData?.stats.total_containers || 0;
+  const totalContacts = dashboardData?.stats.total_contacts || 0;
+  const totalInventory = dashboardData?.stats.total_inventory || 0;
 
-  // Financial stats from payment summary
-  const totalIncome = paymentSummary?.total_earnings || 0;
-  const totalExpenses = paymentSummary?.total_spends || 0;
+  // Financial stats
+  const totalIncome = dashboardData?.financial_overview.total_income || 0;
+  const totalExpenses = dashboardData?.financial_overview.total_expenses || 0;
   const netBalance = totalIncome - totalExpenses;
 
-  // Recent transactions (last 5)
-  const recentTransactions = transactions?.slice(0, 5) || [];
-
-  // Outstanding contacts (with balance != 0)
-  const outstandingContacts = contacts
-    ?.filter((c) => c.balance !== 0)
-    .sort((a, b) => Math.abs(b.balance) - Math.abs(a.balance))
-    .slice(0, 5) || [];
+  // Recent transactions and outstanding contacts
+  const recentTransactions = dashboardData?.recent_transactions || [];
+  const outstandingContacts = dashboardData?.outstanding_contacts || [];
 
   const stats = [
     {
@@ -165,7 +150,7 @@ export const DashboardPage: React.FC = () => {
       value: totalProducts,
       icon: <ProductIcon />,
       color: theme.palette.primary.main,
-      loading: productsLoading,
+      loading: isLoading,
       onClick: () => navigate('/products'),
     },
     {
@@ -173,7 +158,7 @@ export const DashboardPage: React.FC = () => {
       value: totalContainers,
       icon: <ContainerIcon />,
       color: theme.palette.secondary.main,
-      loading: containersLoading,
+      loading: isLoading,
       onClick: () => navigate('/containers'),
     },
     {
@@ -181,7 +166,7 @@ export const DashboardPage: React.FC = () => {
       value: totalContacts,
       icon: <ContactIcon />,
       color: theme.palette.info.main,
-      loading: contactsLoading,
+      loading: isLoading,
       onClick: () => navigate('/contacts'),
     },
     {
@@ -189,7 +174,7 @@ export const DashboardPage: React.FC = () => {
       value: totalInventory.toLocaleString(),
       icon: <TransactionIcon />,
       color: theme.palette.success.main,
-      loading: inventoryLoading,
+      loading: isLoading,
       onClick: () => navigate('/inventory'),
     },
   ];
@@ -236,7 +221,7 @@ export const DashboardPage: React.FC = () => {
                 <IncomeIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
                 <Typography variant="subtitle1" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>Total Income</Typography>
               </Box>
-              {paymentLoading ? (
+              {isLoading ? (
                 <Skeleton width={120} height={40} sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
               ) : (
                 <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
@@ -265,7 +250,7 @@ export const DashboardPage: React.FC = () => {
                 <ExpenseIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
                 <Typography variant="subtitle1" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>Total Expenses</Typography>
               </Box>
-              {paymentLoading ? (
+              {isLoading ? (
                 <Skeleton width={120} height={40} sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
               ) : (
                 <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
@@ -297,7 +282,7 @@ export const DashboardPage: React.FC = () => {
                 <BalanceIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
                 <Typography variant="subtitle1" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>Net Balance</Typography>
               </Box>
-              {paymentLoading ? (
+              {isLoading ? (
                 <Skeleton width={120} height={40} sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
               ) : (
                 <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
@@ -330,7 +315,7 @@ export const DashboardPage: React.FC = () => {
               sx={{ p: { xs: 2, sm: 3 }, pb: 1 }}
             />
             <Divider />
-            {transactionsLoading ? (
+            {isLoading ? (
               <Box sx={{ p: 2 }}>
                 {[1, 2, 3].map((i) => (
                   <Skeleton key={i} height={60} sx={{ mb: 1 }} />
@@ -415,7 +400,7 @@ export const DashboardPage: React.FC = () => {
               </Box>
             )}
             {/* Mobile view for transactions */}
-            {!transactionsLoading && recentTransactions.length > 0 && (
+            {!isLoading && recentTransactions.length > 0 && (
               <List sx={{ display: { xs: 'block', sm: 'none' }, p: 1 }}>
                 {recentTransactions.map((txn) => (
                   <ListItem
@@ -486,7 +471,7 @@ export const DashboardPage: React.FC = () => {
               sx={{ p: { xs: 2, sm: 3 }, pb: 1 }}
             />
             <Divider />
-            {contactsLoading ? (
+            {isLoading ? (
               <Box sx={{ p: 2 }}>
                 {[1, 2, 3].map((i) => (
                   <Skeleton key={i} height={50} sx={{ mb: 1 }} />
