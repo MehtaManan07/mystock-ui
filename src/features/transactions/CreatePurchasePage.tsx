@@ -37,11 +37,12 @@ import { useProducts } from '../../hooks/useProducts';
 import { useContainers } from '../../hooks/useContainers';
 import { useCreatePurchase } from '../../hooks/useTransactions';
 import { useDebounce } from '../../hooks/useDebounce';
+import { useDrafts, useDeleteDraft } from '../../hooks/useDrafts';
+import { useDraftAutoSaveServer } from '../../hooks/useDraftAutoSaveServer';
 import { CONTACT_TYPES, PAYMENT_METHODS, type PaymentMethod } from '../../constants';
 import type { Contact, Product, Container, CreateTransactionDto, CreateTransactionItemDto } from '../../types';
-import { useDraftAutoSave } from '../../hooks/useDraftAutoSave';
-import { useDraftStore } from '../../stores/draftStore';
-import type { Draft } from '../../stores/draftStore';
+import type { Draft } from '../../api/drafts.api';
+import { draftsApi } from '../../api/drafts.api';
 import { DraftListDialog } from '../../components/drafts/DraftListDialog';
 
 interface LineItem {
@@ -90,11 +91,12 @@ export const CreatePurchasePage: React.FC = () => {
   
   const createPurchaseMutation = useCreatePurchase();
 
-  // Draft management
-  const { listDrafts, deleteDraft } = useDraftStore();
+  // Draft management - server-based
+  const { data: drafts = [] } = useDrafts('purchase');
+  const deleteDraftMutation = useDeleteDraft();
 
-  // Auto-save hook
-  const { currentDraftId } = useDraftAutoSave(
+  // Auto-save hook - server-based
+  const { currentDraftId, deleteDraftOnUnmount } = useDraftAutoSaveServer(
     'purchase',
     {
       transactionDate,
@@ -157,26 +159,27 @@ export const CreatePurchasePage: React.FC = () => {
       if (contact) setSelectedContact(contact);
     }
 
-    // Load items
-    if (data.items.length > 0 && products && containers) {
-      const loadedItems: LineItem[] = [];
+    // Load items - use optimized endpoint with hydrated data
+    if (data.items.length > 0) {
+      try {
+        // Single API call to get draft with hydrated products and containers
+        const completeDraft = await draftsApi.getComplete(draft.id);
+        
+        // Map hydrated items directly to LineItem format
+        const loadedItems: LineItem[] = completeDraft.items.map(item => ({
+          id: `${Date.now()}-${item.productId}-${item.containerId}-${Math.random()}`,
+          product: item.product,
+          container: item.container,
+          quantity: item.quantity,
+          unit_price: typeof item.unitPrice === 'string'
+            ? parseFloat(item.unitPrice)
+            : item.unitPrice,
+        }));
 
-      for (const draftItem of data.items) {
-        const product = products.find(p => p.id === draftItem.productId);
-        const container = containers.find(c => c.id === draftItem.containerId);
-
-        if (product && container) {
-          loadedItems.push({
-            id: `${Date.now()}-${draftItem.productId}-${draftItem.containerId}`,
-            product,
-            container,
-            quantity: draftItem.quantity,
-            unit_price: draftItem.unitPrice,
-          });
-        }
+        setItems(loadedItems);
+      } catch (error) {
+        console.error('Failed to load draft items:', error);
       }
-
-      setItems(loadedItems);
     }
 
     setShowDraftDialog(false);
@@ -284,7 +287,7 @@ export const CreatePurchasePage: React.FC = () => {
 
       // Delete draft after successful submission
       if (currentDraftId) {
-        deleteDraft(currentDraftId);
+        deleteDraftOnUnmount();
       }
 
       navigate(`/transactions/${result.id}`);
@@ -337,7 +340,7 @@ export const CreatePurchasePage: React.FC = () => {
               startIcon={<DraftsIcon />}
               onClick={() => setShowDraftDialog(true)}
             >
-              Load Draft ({listDrafts('purchase').length})
+              Load Draft ({drafts.length})
             </Button>
 
             {currentDraftId && isDraftMode && (
@@ -355,9 +358,10 @@ export const CreatePurchasePage: React.FC = () => {
       {/* Draft Dialog */}
       <DraftListDialog
         open={showDraftDialog}
-        type="purchase"
+        drafts={drafts}
         onClose={() => setShowDraftDialog(false)}
         onLoadDraft={handleLoadDraft}
+        onDeleteDraft={(id) => deleteDraftMutation.mutate(id)}
       />
 
       {error && (

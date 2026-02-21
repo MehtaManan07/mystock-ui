@@ -26,6 +26,7 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useProducts } from '../../../hooks/useProducts';
+import { useDebounce } from '../../../hooks/useDebounce';
 import { useSetContainerProducts } from '../../../hooks/useContainerProducts';
 import type { Product, ProductContainerInfo, SetProductsDto } from '../../../types';
 
@@ -56,8 +57,12 @@ export const ManageProductsDialog: React.FC<ManageProductsDialogProps> = ({
   const [newQuantity, setNewQuantity] = useState<number>(1);
   const [error, setError] = useState<string | null>(null);
 
+  // Product search with debouncing
+  const [productSearch, setProductSearch] = useState('');
+  const debouncedProductSearch = useDebounce(productSearch, 300);
+
   // Fetch all products for selection
-  const { data: allProducts, isLoading: productsLoading } = useProducts();
+  const { data: allProducts, isLoading: productsLoading } = useProducts(debouncedProductSearch);
 
   // Mutation to set products
   const setProductsMutation = useSetContainerProducts();
@@ -204,11 +209,13 @@ export const ManageProductsDialog: React.FC<ManageProductsDialogProps> = ({
             multiple
             value={selectedProducts}
             onChange={(_, value) => setSelectedProducts(value)}
+            onInputChange={(_, value) => setProductSearch(value)}
             options={availableProducts}
             getOptionLabel={(option) =>
               `${option.name} (${option.size} - ${option.packing})`
             }
             loading={productsLoading}
+            filterOptions={(x) => x}
             sx={{ flex: 1 }}
             renderTags={(value, getTagProps) =>
               value.map((option, index) => (
@@ -225,7 +232,7 @@ export const ManageProductsDialog: React.FC<ManageProductsDialogProps> = ({
                 {...params}
                 label="Select Products"
                 size="small"
-                placeholder="Select one or more products"
+                placeholder="Search products..."
                 InputProps={{
                   ...params.InputProps,
                   endAdornment: (

@@ -13,28 +13,26 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { formatDistanceToNow } from 'date-fns';
-import { useDraftStore } from '../../stores/draftStore';
-import type { Draft } from '../../stores/draftStore';
+import type { Draft } from '../../api/drafts.api';
 
 interface DraftListDialogProps {
   open: boolean;
-  type: 'sale' | 'purchase';
+  drafts: Draft[];
   onClose: () => void;
   onLoadDraft: (draft: Draft) => void;
+  onDeleteDraft: (draftId: number) => void;
 }
 
 export const DraftListDialog: React.FC<DraftListDialogProps> = ({
   open,
-  type,
+  drafts,
   onClose,
   onLoadDraft,
+  onDeleteDraft,
 }) => {
-  const { listDrafts, deleteDraft } = useDraftStore();
-  const drafts = listDrafts(type);
-
-  const handleDeleteDraft = (e: React.MouseEvent, draftId: string) => {
+  const handleDeleteDraft = (e: React.MouseEvent, draftId: number) => {
     e.stopPropagation();
-    deleteDraft(draftId);
+    onDeleteDraft(draftId);
   };
 
   const handleLoadDraft = (draft: Draft) => {
@@ -44,7 +42,7 @@ export const DraftListDialog: React.FC<DraftListDialogProps> = ({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
-        Load Draft {type === 'sale' ? 'Sale' : 'Purchase'}
+        Load Draft
       </DialogTitle>
       <DialogContent>
         {drafts.length === 0 ? (
@@ -77,7 +75,7 @@ export const DraftListDialog: React.FC<DraftListDialogProps> = ({
                         {draft.data.items.length}{' '}
                         {draft.data.items.length === 1 ? 'item' : 'items'} •
                         Last edited{' '}
-                        {formatDistanceToNow(new Date(draft.updatedAt), {
+                        {formatDistanceToNow(new Date(draft.updated_at), {
                           addSuffix: true,
                         })}
                       </>

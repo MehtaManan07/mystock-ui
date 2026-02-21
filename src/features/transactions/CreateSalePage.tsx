@@ -37,11 +37,12 @@ import { useProducts } from '../../hooks/useProducts';
 import { useProductContainers } from '../../hooks/useContainerProducts';
 import { useCreateSale } from '../../hooks/useTransactions';
 import { useDebounce } from '../../hooks/useDebounce';
+import { useDrafts, useDeleteDraft } from '../../hooks/useDrafts';
+import { useDraftAutoSaveServer } from '../../hooks/useDraftAutoSaveServer';
 import { CONTACT_TYPES, PAYMENT_METHODS, type PaymentMethod } from '../../constants';
 import type { Contact, Product, CreateTransactionDto, CreateTransactionItemDto } from '../../types';
-import { useDraftAutoSave } from '../../hooks/useDraftAutoSave';
-import { useDraftStore } from '../../stores/draftStore';
-import type { Draft } from '../../stores/draftStore';
+import type { Draft } from '../../api/drafts.api';
+import { draftsApi } from '../../api/drafts.api';
 import { DraftListDialog } from '../../components/drafts/DraftListDialog';
 
 interface ContainerOption {
@@ -102,11 +103,12 @@ export const CreateSalePage: React.FC = () => {
   
   const createSaleMutation = useCreateSale();
 
-  // Draft management
-  const { listDrafts, deleteDraft } = useDraftStore();
+  // Draft management - server-based
+  const { data: drafts = [] } = useDrafts('sale');
+  const deleteDraftMutation = useDeleteDraft();
 
-  // Auto-save hook
-  const { currentDraftId } = useDraftAutoSave(
+  // Auto-save hook - server-based
+  const { currentDraftId, deleteDraftOnUnmount } = useDraftAutoSaveServer(
     'sale',
     {
       transactionDate,
@@ -185,38 +187,33 @@ export const CreateSalePage: React.FC = () => {
       if (contact) setSelectedContact(contact);
     }
 
-    // Load items
-    if (data.items.length > 0 && products && productContainers) {
-      const loadedItems: LineItem[] = [];
+    // Load items - use optimized endpoint with hydrated data
+    if (data.items.length > 0) {
+      try {
+        // Single API call to get draft with hydrated products and containers
+        const completeDraft = await draftsApi.getComplete(draft.id);
+        
+        // Map hydrated items directly to LineItem format
+        const loadedItems: LineItem[] = completeDraft.items.map(item => ({
+          id: `${Date.now()}-${item.productId}-${item.containerId}-${Math.random()}`,
+          product: item.product,
+          container: {
+            id: item.container.id,
+            name: item.container.name,
+            type: item.container.type,
+            quantity: 0, // Not needed for sales, will be refreshed from actual inventory
+          },
+          availableQty: 0, // Will be refreshed when product is selected
+          quantity: item.quantity,
+          unit_price: typeof item.unitPrice === 'string' 
+            ? parseFloat(item.unitPrice) 
+            : item.unitPrice,
+        }));
 
-      for (const draftItem of data.items) {
-        const product = products.find(p => p.id === draftItem.productId);
-        if (!product) continue;
-
-        // Fetch containers for this product to get container details
-        const containers = productContainers.filter(
-          cp => cp.product_id === draftItem.productId
-        );
-        const containerData = containers.find(cp => cp.container_id === draftItem.containerId);
-
-        if (containerData && containerData.container) {
-          loadedItems.push({
-            id: `${Date.now()}-${draftItem.productId}-${draftItem.containerId}`,
-            product,
-            container: {
-              id: containerData.container.id,
-              name: containerData.container.name,
-              type: containerData.container.type,
-              quantity: containerData.quantity,
-            },
-            availableQty: containerData.quantity,
-            quantity: draftItem.quantity,
-            unit_price: draftItem.unitPrice,
-          });
-        }
+        setItems(loadedItems);
+      } catch (error) {
+        console.error('Failed to load draft items:', error);
       }
-
-      setItems(loadedItems);
     }
 
     setShowDraftDialog(false);
@@ -337,7 +334,7 @@ export const CreateSalePage: React.FC = () => {
 
       // Delete draft after successful submission
       if (currentDraftId) {
-        deleteDraft(currentDraftId);
+        deleteDraftOnUnmount();
       }
 
       navigate(`/transactions/${result.id}`);
@@ -390,7 +387,7 @@ export const CreateSalePage: React.FC = () => {
               startIcon={<DraftsIcon />}
               onClick={() => setShowDraftDialog(true)}
             >
-              Load Draft ({listDrafts('sale').length})
+              Load Draft ({drafts.length})
             </Button>
 
             {currentDraftId && isDraftMode && (
@@ -408,9 +405,10 @@ export const CreateSalePage: React.FC = () => {
       {/* Draft Dialog */}
       <DraftListDialog
         open={showDraftDialog}
-        type="sale"
+        drafts={drafts}
         onClose={() => setShowDraftDialog(false)}
         onLoadDraft={handleLoadDraft}
+        onDeleteDraft={(id) => deleteDraftMutation.mutate(id)}
       />
 
       {error && (

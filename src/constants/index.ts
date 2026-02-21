@@ -1,6 +1,6 @@
 // API Configuration
-// export const API_BASE_URL = "http://localhost:8000/api"
-export const API_BASE_URL = "https://adminstock.duckdns.org/api"
+export const API_BASE_URL = "http://localhost:8000/api"
+// export const API_BASE_URL = "https://adminstock.duckdns.org/api"
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -76,6 +76,12 @@ export const API_ENDPOINTS = {
   DASHBOARD: {
     BASE: '/dashboard',
   },
+  // Drafts
+  DRAFTS: {
+    BASE: '/drafts',
+    BY_ID: (id: number) => `/drafts/${id}`,
+    COMPLETE: (id: number) => `/drafts/${id}/complete`,
+  },
 } as const;
 
 // React Query Keys
@@ -124,6 +130,10 @@ export const QUERY_KEYS = {
   
   // Dashboard
   DASHBOARD: ['dashboard'] as const,
+  
+  // Drafts
+  DRAFTS: ['drafts'] as const,
+  DRAFT: (id: number) => ['drafts', id] as const,
 } as const;
 
 // User Roles
