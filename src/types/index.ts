@@ -6,6 +6,7 @@ import type {
   PaymentStatus,
   PaymentMethod,
   PaymentType,
+  ProductDetailsDisplayMode,
 } from '../constants';
 
 // ============================================
@@ -103,7 +104,7 @@ export interface Product extends BaseEntity {
     height: number;
     length: number;
   } | null;
-  totalQuantity: number;
+  totalQuantity: number;  // Total quantity in items
 }
 
 export interface ProductImage {
@@ -122,7 +123,7 @@ export interface ProductDetail extends Omit<Product, 'totalQuantity'> {
 
 export interface ContainerProductInfo {
   container: ContainerInfo;
-  quantity: number;
+  quantity: number;  // Quantity in items
 }
 
 export interface ContainerInfo {
@@ -313,6 +314,7 @@ export interface Transaction extends BaseEntity {
   notes: string | null;
   invoice_url: string | null;
   invoice_checksum: string | null;
+  product_details_display_mode: ProductDetailsDisplayMode;
   payments: Payment[];
 }
 
@@ -320,7 +322,7 @@ export interface TransactionItem {
   id: number;
   product: ProductInTransaction;
   container: ContainerInTransaction | null;
-  quantity: number;
+  quantity: number;  // Quantity in items
   unit_price: number;
   line_total: number;
   created_at: string;
@@ -352,7 +354,7 @@ export interface ContactInTransaction {
 export interface CreateTransactionItemDto {
   product_id: number;
   container_id?: number;
-  quantity: number;
+  quantity: number;  // Quantity in items
   unit_price: number;
 }
 
@@ -366,6 +368,7 @@ export interface CreateTransactionDto {
   payment_method?: PaymentMethod;
   payment_reference?: string;
   notes?: string;
+  product_details_display_mode?: ProductDetailsDisplayMode;
 }
 
 export interface TransactionFilters {

@@ -39,7 +39,7 @@ import { useCreateSale } from '../../hooks/useTransactions';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useDrafts, useDeleteDraft } from '../../hooks/useDrafts';
 import { useDraftAutoSaveServer } from '../../hooks/useDraftAutoSaveServer';
-import { CONTACT_TYPES, PAYMENT_METHODS, type PaymentMethod } from '../../constants';
+import { CONTACT_TYPES, PAYMENT_METHODS, PRODUCT_DETAILS_DISPLAY_MODE, type PaymentMethod, type ProductDetailsDisplayMode } from '../../constants';
 import type { Contact, Product, CreateTransactionDto, CreateTransactionItemDto } from '../../types';
 import type { Draft } from '../../api/drafts.api';
 import { draftsApi } from '../../api/drafts.api';
@@ -49,15 +49,15 @@ interface ContainerOption {
   id: number;
   name: string;
   type: string;
-  quantity: number; // Available quantity
+  quantity: number; // Available quantity in items
 }
 
 interface LineItem {
   id: string;
   product: Product | null;
   container: ContainerOption | null;
-  availableQty: number;
-  quantity: number;
+  availableQty: number; // Available items
+  quantity: number; // Quantity in items
   unit_price: number;
 }
 
@@ -76,6 +76,7 @@ export const CreateSalePage: React.FC = () => {
   const [paymentReference, setPaymentReference] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [productDetailsDisplayMode, setProductDetailsDisplayMode] = useState<ProductDetailsDisplayMode>(PRODUCT_DETAILS_DISPLAY_MODE.CUSTOMER_SKU);
 
   // Draft state
   const [isDraftMode, setIsDraftMode] = useState(false);
@@ -126,6 +127,7 @@ export const CreateSalePage: React.FC = () => {
       paymentMethod: paidAmount > 0 ? paymentMethod : undefined,
       paymentReference: paidAmount > 0 ? paymentReference : undefined,
       notes: notes || undefined,
+      productDetailsDisplayMode,
     },
     isDraftMode
   );
@@ -170,12 +172,15 @@ export const CreateSalePage: React.FC = () => {
         id: cp.container!.id,
         name: cp.container!.name,
         type: cp.container!.type,
-        quantity: cp.quantity,
+        quantity: cp.quantity, // Already in items
       }));
   }, [productContainers]);
 
-  // Available quantity is directly from the selected container option
-  const availableQty = selectedContainer?.quantity || 0;
+  // Available quantity in items
+  const availableQtyItems = useMemo(() => {
+    if (!selectedContainer) return 0;
+    return selectedContainer.quantity;
+  }, [selectedContainer]);
 
   // Calculate totals
   const subtotal = useMemo(() => {
@@ -212,6 +217,9 @@ export const CreateSalePage: React.FC = () => {
     if (data.paymentMethod) setPaymentMethod(data.paymentMethod as PaymentMethod);
     if (data.paymentReference) setPaymentReference(data.paymentReference);
     if (data.notes) setNotes(data.notes);
+    if (data.productDetailsDisplayMode) {
+      setProductDetailsDisplayMode(data.productDetailsDisplayMode as ProductDetailsDisplayMode);
+    }
 
     // Load contact
     if (data.contactId && contacts) {
@@ -273,8 +281,8 @@ export const CreateSalePage: React.FC = () => {
       setError('Quantity must be greater than 0');
       return;
     }
-    if (newQuantity > availableQty) {
-      setError(`Only ${availableQty} units available in this container`);
+    if (newQuantity > availableQtyItems) {
+      setError(`Only ${availableQtyItems} items available in this container`);
       return;
     }
     if (newUnitPrice < 0) {
@@ -293,8 +301,8 @@ export const CreateSalePage: React.FC = () => {
       const existingItem = updatedItems[existingIndex];
       const newTotalQty = existingItem.quantity + newQuantity;
       
-      if (newTotalQty > availableQty) {
-        setError(`Only ${availableQty} units available. Already added ${existingItem.quantity}.`);
+      if (newTotalQty > availableQtyItems) {
+        setError(`Only ${availableQtyItems} items available. Already added ${existingItem.quantity}.`);
         return;
       }
       
@@ -311,7 +319,7 @@ export const CreateSalePage: React.FC = () => {
           id: `${Date.now()}`,
           product: selectedProduct,
           container: selectedContainer,
-          availableQty,
+          availableQty: availableQtyItems,
           quantity: newQuantity,
           unit_price: newUnitPrice,
         },
@@ -359,6 +367,7 @@ export const CreateSalePage: React.FC = () => {
       payment_method: paidAmount > 0 ? paymentMethod : undefined,
       payment_reference: paidAmount > 0 ? paymentReference || undefined : undefined,
       notes: notes || undefined,
+      product_details_display_mode: productDetailsDisplayMode,
     };
 
     try {
@@ -498,7 +507,7 @@ export const CreateSalePage: React.FC = () => {
                     value={selectedContainer}
                     onChange={(_, value) => setSelectedContainer(value)}
                     options={containerOptions}
-                    getOptionLabel={(option) => `${option.name} (${option.quantity} avail)`}
+                    getOptionLabel={(option) => `${option.name} (${option.quantity} items avail)`}
                     loading={containersLoading}
                     disabled={!selectedProduct}
                     noOptionsText={selectedProduct ? "No stock in any container" : "Select a product first"}
@@ -520,7 +529,12 @@ export const CreateSalePage: React.FC = () => {
                       <li {...props} key={option.id}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
                           <span>{option.name}</span>
-                          <Chip label={`${option.quantity} avail`} size="small" color="success" variant="outlined" />
+                          <Chip 
+                            label={`${option.quantity} items`}
+                            size="small" 
+                            color="success" 
+                            variant="outlined" 
+                          />
                         </Box>
                       </li>
                     )}
@@ -528,13 +542,14 @@ export const CreateSalePage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 6, sm: 2 }}>
                   <TextField
-                    label="Qty"
+                    label="Qty (items)"
                     type="number"
                     size="small"
                     fullWidth
                     value={newQuantity}
                     onChange={(e) => setNewQuantity(parseInt(e.target.value) || 0)}
-                    inputProps={{ min: 1, max: availableQty }}
+                    inputProps={{ min: 1, max: availableQtyItems }}
+                    helperText={selectedContainer && selectedProduct ? `${availableQtyItems} items available` : ''}
                   />
                 </Grid>
                 <Grid size={{ xs: 6, sm: 2 }}>
@@ -597,7 +612,7 @@ export const CreateSalePage: React.FC = () => {
                           <TableCell>
                             <Chip label={item.container?.name} size="small" variant="outlined" />
                           </TableCell>
-                          <TableCell align="right">{item.quantity}</TableCell>
+                          <TableCell align="right">{item.quantity} items</TableCell>
                           <TableCell align="right">{formatCurrency(item.unit_price)}</TableCell>
                           <TableCell align="right" sx={{ fontWeight: 500 }}>
                             {formatCurrency(item.quantity * item.unit_price)}
@@ -660,6 +675,26 @@ export const CreateSalePage: React.FC = () => {
                     />
                   )}
                 />
+
+                <TextField
+                  label="Product Details Display"
+                  select
+                  size="small"
+                  fullWidth
+                  value={productDetailsDisplayMode}
+                  onChange={(e) => setProductDetailsDisplayMode(e.target.value as ProductDetailsDisplayMode)}
+                  helperText="How products appear on invoice"
+                >
+                  <MenuItem value={PRODUCT_DETAILS_DISPLAY_MODE.CUSTOMER_SKU}>
+                    Customer SKU
+                  </MenuItem>
+                  <MenuItem value={PRODUCT_DETAILS_DISPLAY_MODE.COMPANY_SKU}>
+                    Company SKU
+                  </MenuItem>
+                  <MenuItem value={PRODUCT_DETAILS_DISPLAY_MODE.PRODUCT_NAME}>
+                    Product Name
+                  </MenuItem>
+                </TextField>
 
                 <Divider />
 

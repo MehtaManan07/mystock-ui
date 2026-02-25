@@ -40,7 +40,7 @@ import {
   useInvoiceDownloadUrl,
   useGenerateInvoice,
 } from '../../hooks/useTransactions';
-import { TRANSACTION_TYPES, PAYMENT_STATUS } from '../../constants';
+import { TRANSACTION_TYPES, PAYMENT_STATUS, PRODUCT_DETAILS_DISPLAY_MODE } from '../../constants';
 import { useNotificationStore } from '../../stores/notificationStore';
 import type { CreatePaymentDto } from '../../types';
 
@@ -84,6 +84,19 @@ export const TransactionDetailPage: React.FC = () => {
         return 'error';
       default:
         return 'warning';
+    }
+  };
+
+  const formatDisplayMode = (mode: string): string => {
+    switch (mode) {
+      case PRODUCT_DETAILS_DISPLAY_MODE.CUSTOMER_SKU:
+        return 'Customer SKU';
+      case PRODUCT_DETAILS_DISPLAY_MODE.COMPANY_SKU:
+        return 'Company SKU';
+      case PRODUCT_DETAILS_DISPLAY_MODE.PRODUCT_NAME:
+        return 'Product Name';
+      default:
+        return mode;
     }
   };
 
@@ -338,6 +351,16 @@ export const TransactionDetailPage: React.FC = () => {
                     </Box>
                   </>
                 )}
+
+                <Divider />
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Invoice Display Mode
+                  </Typography>
+                  <Typography variant="body2">
+                    {formatDisplayMode(transaction.product_details_display_mode)}
+                  </Typography>
+                </Box>
               </Box>
             </CardContent>
           </Card>
@@ -400,7 +423,7 @@ export const TransactionDetailPage: React.FC = () => {
                             '-'
                           )}
                         </TableCell>
-                        <TableCell align="right">{item.quantity}</TableCell>
+                        <TableCell align="right">{item.quantity} items</TableCell>
                         <TableCell align="right">{formatCurrency(item.unit_price)}</TableCell>
                         <TableCell align="right" sx={{ fontWeight: 500 }}>
                           {formatCurrency(item.line_total)}

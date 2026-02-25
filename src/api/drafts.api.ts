@@ -19,6 +19,7 @@ export interface DraftData {
   paymentMethod?: string;
   paymentReference?: string;
   notes?: string;
+  productDetailsDisplayMode?: string;
 }
 
 export interface Draft {
@@ -56,6 +57,7 @@ export interface CompleteDraft {
   paymentMethod?: string;
   paymentReference?: string;
   notes?: string;
+  productDetailsDisplayMode?: string;
 }
 
 export interface CreateDraftDto {

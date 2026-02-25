@@ -99,7 +99,7 @@ export const BillItemsTable: React.FC<BillItemsTableProps> = ({ rows, onContaine
 
                   <TableCell align="right">
                     <Typography variant="body2" fontWeight={500}>
-                      {row.quantity}
+                      {row.quantity} items
                     </Typography>
                   </TableCell>
 
@@ -108,6 +108,7 @@ export const BillItemsTable: React.FC<BillItemsTableProps> = ({ rows, onContaine
                       <ContainerSelector
                         productId={row.product!.id}
                         productName={row.product!.name}
+                        productPacking={row.product!.packing}
                         value={row.selectedContainer}
                         onChange={(c) => onContainerChange(idx, c)}
                       />

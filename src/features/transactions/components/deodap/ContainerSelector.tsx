@@ -3,12 +3,13 @@ import { Box, Autocomplete, TextField, Chip, CircularProgress, Button, Typograph
 import { Warehouse as AssignIcon } from '@mui/icons-material';
 import { useProductContainers } from '../../../../hooks/useContainerProducts';
 import { ManageContainersDialog } from '../../../products/components/ManageContainersDialog';
-import type { ContainerProduct, ContainerProductInfo } from '../../../../types';
+import type { ContainerProduct, ContainerProductInfo, Product } from '../../../../types';
 import type { ContainerOption } from './types';
 
 interface ContainerSelectorProps {
   productId: number;
   productName: string;
+  productPacking?: string;
   value: ContainerOption | null;
   onChange: (container: ContainerOption | null) => void;
 }
@@ -16,6 +17,7 @@ interface ContainerSelectorProps {
 export const ContainerSelector: React.FC<ContainerSelectorProps> = ({
   productId,
   productName,
+  productPacking,
   value,
   onChange,
 }) => {
@@ -28,7 +30,7 @@ export const ContainerSelector: React.FC<ContainerSelectorProps> = ({
       id: cp.container!.id,
       name: cp.container!.name,
       type: cp.container!.type,
-      availableQty: cp.quantity,
+      availableQty: cp.quantity, // Already in items
     }));
 
   // Needed by ManageContainersDialog to pre-populate its form
@@ -78,14 +80,14 @@ export const ContainerSelector: React.FC<ContainerSelectorProps> = ({
       value={value}
       onChange={(_, v) => onChange(v)}
       options={options}
-      getOptionLabel={(o) => `${o.name} (${o.availableQty} avail)`}
+      getOptionLabel={(o) => `${o.name} (${o.availableQty} items avail)`}
       noOptionsText="No stock in any container"
       isOptionEqualToValue={(a, b) => a.id === b.id}
       renderOption={(props, option) => (
         <li {...props} key={option.id}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', gap: 1 }}>
             <span>{option.name}</span>
-            <Chip label={`${option.availableQty} avail`} size="small" color="success" variant="outlined" />
+            <Chip label={`${option.availableQty} items`} size="small" color="success" variant="outlined" />
           </Box>
         </li>
       )}

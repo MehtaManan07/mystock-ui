@@ -18,6 +18,7 @@ import {
 import { PageHeader } from '../../components/common/PageHeader';
 import { SearchInput } from '../../components/common/SearchInput';
 import { LoadingState } from '../../components/common/LoadingState';
+import { formatQuantityDisplay } from '../../utils/packing';
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
@@ -223,16 +224,18 @@ export const ProductsPage: React.FC = () => {
     },
     {
       id: 'quantity',
-      label: 'Total Qty',
+      label: 'Quantity',
       mobileLabel: 'Qty',
       align: 'center' as const,
       render: (product: Product) => (
-        <Chip
-          label={product.totalQuantity}
-          size="small"
-          color={product.totalQuantity > 0 ? 'primary' : 'default'}
-          variant={product.totalQuantity > 0 ? 'filled' : 'outlined'}
-        />
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+          <Chip
+            label={formatQuantityDisplay(product.totalQuantity, product.packing)}
+            size="small"
+            color={product.totalQuantity > 0 ? 'primary' : 'default'}
+            variant={product.totalQuantity > 0 ? 'filled' : 'outlined'}
+          />
+        </Box>
       ),
     },
     {

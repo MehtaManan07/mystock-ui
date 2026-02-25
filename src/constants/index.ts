@@ -1,6 +1,6 @@
 // API Configuration
-// export const API_BASE_URL = "http://localhost:8000/api"
-export const API_BASE_URL = "https://adminstock.duckdns.org/api"
+export const API_BASE_URL = "http://localhost:8000/api"
+// export const API_BASE_URL = "https://adminstock.duckdns.org/api"
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -199,6 +199,15 @@ export const PAYMENT_TYPES = {
 } as const;
 
 export type PaymentType = (typeof PAYMENT_TYPES)[keyof typeof PAYMENT_TYPES];
+
+// Product Details Display Mode
+export const PRODUCT_DETAILS_DISPLAY_MODE = {
+  CUSTOMER_SKU: 'customer_sku',
+  COMPANY_SKU: 'company_sku',
+  PRODUCT_NAME: 'product_name',
+} as const;
+
+export type ProductDetailsDisplayMode = (typeof PRODUCT_DETAILS_DISPLAY_MODE)[keyof typeof PRODUCT_DETAILS_DISPLAY_MODE];
 
 // Local Storage Keys
 export const STORAGE_KEYS = {
