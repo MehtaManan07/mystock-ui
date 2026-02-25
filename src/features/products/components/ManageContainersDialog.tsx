@@ -30,6 +30,7 @@ import { useContainers } from '../../../hooks/useContainers';
 import { useSetContainerProducts } from '../../../hooks/useContainerProducts';
 import type { ContainerProductInfo, SetProductsDto } from '../../../types';
 import type { ContainerInfo } from '../../../types';
+import { useDebounce } from '../../../hooks/useDebounce';
 
 interface ContainerQuantityItem {
   container: ContainerInfo;
@@ -58,9 +59,11 @@ export const ManageContainersDialog: React.FC<ManageContainersDialogProps> = ({
   const [newQuantity, setNewQuantity] = useState<number>(1);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
 
   // Fetch all containers for selection
-  const { data: allContainers, isLoading: containersLoading } = useContainers();
+  const { data: allContainers, isLoading: containersLoading } = useContainers(debouncedSearch);
 
   // Mutation to set products in containers
   const setProductsMutation = useSetContainerProducts();
@@ -180,7 +183,7 @@ export const ManageContainersDialog: React.FC<ManageContainersDialogProps> = ({
     } catch (err: any) {
       setError(
         err?.response?.data?.detail ||
-          'Failed to update containers. Please try again.'
+        'Failed to update containers. Please try again.'
       );
     } finally {
       setIsSaving(false);
@@ -224,6 +227,7 @@ export const ManageContainersDialog: React.FC<ManageContainersDialogProps> = ({
           <Autocomplete
             value={selectedContainer}
             onChange={(_, value) => setSelectedContainer(value)}
+            onInputChange={(_, value) => setSearch(value)}
             options={availableContainers}
             getOptionLabel={(option) => `${option.name} (${option.type})`}
             loading={containersLoading}

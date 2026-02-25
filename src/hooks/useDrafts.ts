@@ -29,7 +29,7 @@ export const useDraft = (id: number) => {
  */
 export const useCreateDraft = () => {
   const queryClient = useQueryClient();
-  const { success, error } = useNotificationStore();
+  const { error } = useNotificationStore();
 
   return useMutation({
     mutationFn: (data: CreateDraftDto) => draftsApi.create(data),
@@ -55,13 +55,13 @@ export const useUpdateDraft = () => {
       // Only invalidate the specific draft, not the entire list
       // This prevents unnecessary refetches of the drafts list
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DRAFT(id) });
-      
+
       // Optionally update the draft in the cache without refetching
       queryClient.setQueriesData(
         { queryKey: QUERY_KEYS.DRAFTS },
         (oldData: any) => {
           if (!oldData) return oldData;
-          return oldData.map((draft: any) => 
+          return oldData.map((draft: any) =>
             draft.id === id ? updatedDraft : draft
           );
         }

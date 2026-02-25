@@ -1,7 +1,7 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { productsApi } from '../api/products.api';
 import { QUERY_KEYS } from '../constants';
-import type { CreateProductDto, UpdateProductDto } from '../types';
+import type { CreateProductDto, UpdateProductDto, Product } from '../types';
 import { useNotificationStore } from '../stores/notificationStore';
 
 /**
@@ -151,4 +151,23 @@ export const useCreateProductsBulk = () => {
       });
     },
   });
+};
+
+/**
+ * Returns an imperative lookup function that resolves a single product by exact company_sku.
+ * Results are cached via React Query (staleTime: 5 min).
+ */
+export const useProductLookup = () => {
+  const queryClient = useQueryClient();
+
+  const lookupBySku = async (sku: string): Promise<Product | null> => {
+    const results = await queryClient.fetchQuery({
+      queryKey: [...QUERY_KEYS.PRODUCTS, sku],
+      queryFn: () => productsApi.getAll(sku),
+      staleTime: 1000 * 60 * 5,
+    });
+    return results.find((p) => p.company_sku?.toLowerCase() === sku.toLowerCase()) ?? null;
+  };
+
+  return { lookupBySku };
 };

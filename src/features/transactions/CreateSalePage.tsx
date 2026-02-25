@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -63,6 +63,7 @@ interface LineItem {
 
 export const CreateSalePage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Form state
   const [transactionDate, setTransactionDate] = useState(new Date().toISOString().split('T')[0]);
@@ -128,6 +129,37 @@ export const CreateSalePage: React.FC = () => {
     },
     isDraftMode
   );
+
+  // Load prefilled items from Deodap bill flow
+  useEffect(() => {
+    const state = location.state as { prefillItems?: Array<{
+      product: Product;
+      container: ContainerOption;
+      quantity: number;
+      unit_price: number;
+    }> } | null;
+
+    if (state?.prefillItems && state.prefillItems.length > 0 && items.length === 0) {
+      // Clear any existing draft to avoid conflicts with stale draft IDs
+      deleteDraftOnUnmount();
+      
+      // Disable draft mode when prefilling from Deodap
+      setIsDraftMode(false);
+      
+      const prefillItems: LineItem[] = state.prefillItems.map((item, index) => ({
+        id: `prefill-${Date.now()}-${index}`,
+        product: item.product,
+        container: item.container,
+        availableQty: item.container.quantity,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+      }));
+      setItems(prefillItems);
+      
+      // Clear the location state to prevent re-applying on refresh
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.state, items.length, location.pathname, navigate, deleteDraftOnUnmount]);
 
   // Convert ContainerProduct[] to ContainerOption[] for the dropdown
   const containerOptions: ContainerOption[] = useMemo(() => {

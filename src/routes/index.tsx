@@ -18,6 +18,7 @@ import TransactionsPage from '../features/transactions/TransactionsPage';
 import TransactionDetailPage from '../features/transactions/TransactionDetailPage';
 import CreateSalePage from '../features/transactions/CreateSalePage';
 import CreatePurchasePage from '../features/transactions/CreatePurchasePage';
+import CreateDeodapBillPage from '../features/transactions/CreateDeodapBillPage';
 import PaymentsPage from '../features/payments/PaymentsPage';
 import UsersPage from '../features/users/UsersPage';
 import { USER_ROLES } from '../constants';
@@ -65,6 +66,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="/transactions" element={<TransactionsPage />} />
         <Route path="/transactions/new-sale" element={<CreateSalePage />} />
         <Route path="/transactions/new-purchase" element={<CreatePurchasePage />} />
+        <Route path="/transactions/new-deodap-bill" element={<CreateDeodapBillPage />} />
         <Route path="/transactions/:id" element={<TransactionDetailPage />} />
         
         {/* Payments */}

@@ -24,6 +24,7 @@ import {
   ShoppingCart as SaleIcon,
   LocalShipping as PurchaseIcon,
   KeyboardArrowDown as ArrowDownIcon,
+  Receipt as DeodapIcon,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { PageHeader } from '../../components/common/PageHeader';
@@ -304,6 +305,12 @@ export const TransactionsPage: React.FC = () => {
               <PurchaseIcon fontSize="small" color="secondary" />
             </ListItemIcon>
             <ListItemText>New Purchase</ListItemText>
+          </MenuItem>
+          <MenuItem onClick={() => { setCreateMenuAnchor(null); navigate('/transactions/new-deodap-bill'); }}>
+            <ListItemIcon>
+              <DeodapIcon fontSize="small" color="warning" />
+            </ListItemIcon>
+            <ListItemText>Create Deodap Bill</ListItemText>
           </MenuItem>
         </Menu>
       </Box>

@@ -14,7 +14,7 @@ export const vendorSkusApi = {
    * Create a new vendor SKU mapping
    */
   create: async (data: CreateVendorSkuDto): Promise<VendorSkuResponse> => {
-    const response = await apiClient.post<VendorSkuResponse>('/api/vendor-skus', data);
+    const response = await apiClient.post<VendorSkuResponse>('/vendor-skus', data);
     return response.data;
   },
 
@@ -23,7 +23,7 @@ export const vendorSkusApi = {
    */
   getForProduct: async (productId: number): Promise<VendorSkuDetailResponse[]> => {
     const response = await apiClient.get<VendorSkuDetailResponse[]>(
-      `/api/vendor-skus/products/${productId}`
+      `/vendor-skus/products/${productId}`
     );
     return response.data;
   },
@@ -33,7 +33,7 @@ export const vendorSkusApi = {
    */
   get: async (productId: number, vendorId: number): Promise<{ vendor_sku: string | null }> => {
     const response = await apiClient.get<{ vendor_sku: string | null }>(
-      `/api/vendor-skus/products/${productId}/vendors/${vendorId}`
+      `/vendor-skus/products/${productId}/vendors/${vendorId}`
     );
     return response.data;
   },
@@ -47,7 +47,7 @@ export const vendorSkusApi = {
     data: UpdateVendorSkuDto
   ): Promise<VendorSkuResponse> => {
     const response = await apiClient.patch<VendorSkuResponse>(
-      `/api/vendor-skus/products/${productId}/vendors/${vendorId}`,
+      `/vendor-skus/products/${productId}/vendors/${vendorId}`,
       data
     );
     return response.data;
@@ -57,6 +57,6 @@ export const vendorSkusApi = {
    * Delete a vendor SKU mapping (soft delete)
    */
   delete: async (productId: number, vendorId: number): Promise<void> => {
-    await apiClient.delete(`/api/vendor-skus/products/${productId}/vendors/${vendorId}`);
+    await apiClient.delete(`/vendor-skus/products/${productId}/vendors/${vendorId}`);
   },
 };

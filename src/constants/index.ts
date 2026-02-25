@@ -1,6 +1,6 @@
 // API Configuration
-export const API_BASE_URL = "http://localhost:8000/api"
-// export const API_BASE_URL = "https://adminstock.duckdns.org/api"
+// export const API_BASE_URL = "http://localhost:8000/api"
+export const API_BASE_URL = "https://adminstock.duckdns.org/api"
 
 // API Endpoints
 export const API_ENDPOINTS = {
