@@ -110,11 +110,10 @@ export const CreateDeodapBillPage: React.FC = () => {
         unit_price: r.product!.default_sale_price || 0,
       }));
 
-      console.log(saleItems);
 
-    // navigate('/transactions/new-sale', {
-    //   state: { prefillItems: saleItems },
-    // });
+    navigate('/transactions/new-sale', {
+      state: { prefillItems: saleItems },
+    });
   };
 
   return (

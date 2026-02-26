@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Autocomplete, TextField, Chip, CircularProgress, Button, Typography } from '@mui/material';
 import { Warehouse as AssignIcon } from '@mui/icons-material';
 import { useProductContainers } from '../../../../hooks/useContainerProducts';
 import { ManageContainersDialog } from '../../../products/components/ManageContainersDialog';
-import type { ContainerProduct, ContainerProductInfo, Product } from '../../../../types';
+import type { ContainerProduct, ContainerProductInfo } from '../../../../types';
 import type { ContainerOption } from './types';
 
 interface ContainerSelectorProps {
@@ -17,7 +17,6 @@ interface ContainerSelectorProps {
 export const ContainerSelector: React.FC<ContainerSelectorProps> = ({
   productId,
   productName,
-  productPacking,
   value,
   onChange,
 }) => {
@@ -32,6 +31,12 @@ export const ContainerSelector: React.FC<ContainerSelectorProps> = ({
       type: cp.container!.type,
       availableQty: cp.quantity, // Already in items
     }));
+
+  useEffect(() => {
+    if (!isLoading && options.length === 1 && !value) {
+      onChange(options[0]);
+    }
+  }, [isLoading, options, value, onChange]);
 
   // Needed by ManageContainersDialog to pre-populate its form
   const currentContainers: ContainerProductInfo[] = (containerProducts ?? [])

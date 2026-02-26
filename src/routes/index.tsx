@@ -1,27 +1,30 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthGuard, GuestGuard } from '../components/common/AuthGuard';
 import MainLayout from '../components/layout/MainLayout';
-
-// Direct imports instead of lazy loading for faster navigation
-import LoginPage from '../features/auth/LoginPage';
-import DashboardPage from '../features/dashboard/DashboardPage';
-import ProductsPage from '../features/products/ProductsPage';
-import ProductDetailPage from '../features/products/ProductDetailPage';
-import ContainersPage from '../features/containers/ContainersPage';
-import ContainerDetailPage from '../features/containers/ContainerDetailPage';
-import ContactsPage from '../features/contacts/ContactsPage';
-import ContactDetailPage from '../features/contacts/ContactDetailPage';
-import InventoryPage from '../features/inventory/InventoryPage';
-import InventoryLogsPage from '../features/inventory/InventoryLogsPage';
-import TransactionsPage from '../features/transactions/TransactionsPage';
-import TransactionDetailPage from '../features/transactions/TransactionDetailPage';
-import CreateSalePage from '../features/transactions/CreateSalePage';
-import CreatePurchasePage from '../features/transactions/CreatePurchasePage';
-import CreateDeodapBillPage from '../features/transactions/CreateDeodapBillPage';
-import PaymentsPage from '../features/payments/PaymentsPage';
-import UsersPage from '../features/users/UsersPage';
+import { LoadingState } from '../components/common/LoadingState';
 import { USER_ROLES } from '../constants';
+
+// Keep LoginPage as direct import (initial route)
+import LoginPage from '../features/auth/LoginPage';
+
+// Lazy load all page components for code splitting
+const DashboardPage = React.lazy(() => import('../features/dashboard/DashboardPage'));
+const ProductsPage = React.lazy(() => import('../features/products/ProductsPage'));
+const ProductDetailPage = React.lazy(() => import('../features/products/ProductDetailPage'));
+const ContainersPage = React.lazy(() => import('../features/containers/ContainersPage'));
+const ContainerDetailPage = React.lazy(() => import('../features/containers/ContainerDetailPage'));
+const ContactsPage = React.lazy(() => import('../features/contacts/ContactsPage'));
+const ContactDetailPage = React.lazy(() => import('../features/contacts/ContactDetailPage'));
+const InventoryPage = React.lazy(() => import('../features/inventory/InventoryPage'));
+const InventoryLogsPage = React.lazy(() => import('../features/inventory/InventoryLogsPage'));
+const TransactionsPage = React.lazy(() => import('../features/transactions/TransactionsPage'));
+const TransactionDetailPage = React.lazy(() => import('../features/transactions/TransactionDetailPage'));
+const CreateSalePage = React.lazy(() => import('../features/transactions/CreateSalePage'));
+const CreatePurchasePage = React.lazy(() => import('../features/transactions/CreatePurchasePage'));
+const CreateDeodapBillPage = React.lazy(() => import('../features/transactions/CreateDeodapBillPage'));
+const PaymentsPage = React.lazy(() => import('../features/payments/PaymentsPage'));
+const UsersPage = React.lazy(() => import('../features/users/UsersPage'));
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -44,41 +47,103 @@ export const AppRoutes: React.FC = () => {
           </AuthGuard>
         }
       >
-        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/dashboard" element={
+          <Suspense fallback={<LoadingState />}>
+            <DashboardPage />
+          </Suspense>
+        } />
         
         {/* Products */}
-        <Route path="/products" element={<ProductsPage />} />
-        <Route path="/products/:id" element={<ProductDetailPage />} />
+        <Route path="/products" element={
+          <Suspense fallback={<LoadingState />}>
+            <ProductsPage />
+          </Suspense>
+        } />
+        <Route path="/products/:id" element={
+          <Suspense fallback={<LoadingState />}>
+            <ProductDetailPage />
+          </Suspense>
+        } />
         
         {/* Containers */}
-        <Route path="/containers" element={<ContainersPage />} />
-        <Route path="/containers/:id" element={<ContainerDetailPage />} />
+        <Route path="/containers" element={
+          <Suspense fallback={<LoadingState />}>
+            <ContainersPage />
+          </Suspense>
+        } />
+        <Route path="/containers/:id" element={
+          <Suspense fallback={<LoadingState />}>
+            <ContainerDetailPage />
+          </Suspense>
+        } />
         
         {/* Contacts */}
-        <Route path="/contacts" element={<ContactsPage />} />
-        <Route path="/contacts/:id" element={<ContactDetailPage />} />
+        <Route path="/contacts" element={
+          <Suspense fallback={<LoadingState />}>
+            <ContactsPage />
+          </Suspense>
+        } />
+        <Route path="/contacts/:id" element={
+          <Suspense fallback={<LoadingState />}>
+            <ContactDetailPage />
+          </Suspense>
+        } />
         
         {/* Inventory */}
-        <Route path="/inventory" element={<InventoryPage />} />
-        <Route path="/inventory/logs" element={<InventoryLogsPage />} />
+        <Route path="/inventory" element={
+          <Suspense fallback={<LoadingState />}>
+            <InventoryPage />
+          </Suspense>
+        } />
+        <Route path="/inventory/logs" element={
+          <Suspense fallback={<LoadingState />}>
+            <InventoryLogsPage />
+          </Suspense>
+        } />
         
         {/* Transactions */}
-        <Route path="/transactions" element={<TransactionsPage />} />
-        <Route path="/transactions/new-sale" element={<CreateSalePage />} />
-        <Route path="/transactions/new-purchase" element={<CreatePurchasePage />} />
-        <Route path="/transactions/new-deodap-bill" element={<CreateDeodapBillPage />} />
-        <Route path="/transactions/:id" element={<TransactionDetailPage />} />
+        <Route path="/transactions" element={
+          <Suspense fallback={<LoadingState />}>
+            <TransactionsPage />
+          </Suspense>
+        } />
+        <Route path="/transactions/new-sale" element={
+          <Suspense fallback={<LoadingState />}>
+            <CreateSalePage />
+          </Suspense>
+        } />
+        <Route path="/transactions/new-purchase" element={
+          <Suspense fallback={<LoadingState />}>
+            <CreatePurchasePage />
+          </Suspense>
+        } />
+        <Route path="/transactions/new-deodap-bill" element={
+          <Suspense fallback={<LoadingState />}>
+            <CreateDeodapBillPage />
+          </Suspense>
+        } />
+        <Route path="/transactions/:id" element={
+          <Suspense fallback={<LoadingState />}>
+            <TransactionDetailPage />
+          </Suspense>
+        } />
         
         {/* Payments */}
-        <Route path="/payments" element={<PaymentsPage />} />
+        <Route path="/payments" element={
+          <Suspense fallback={<LoadingState />}>
+            <PaymentsPage />
+          </Suspense>
+        } />
         
         {/* Users - Admin only */}
         <Route
           path="/users"
           element={
-            <AuthGuard allowedRoles={[USER_ROLES.ADMIN]}>
-              <UsersPage />
-            </AuthGuard>
+            <Suspense fallback={<LoadingState />}>
+              <AuthGuard allowedRoles={[USER_ROLES.ADMIN]}>
+                <UsersPage />
+              </AuthGuard>
+            </Suspense>
           }
         />
       </Route>

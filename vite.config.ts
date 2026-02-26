@@ -32,6 +32,7 @@ export default defineConfig({
           // Utilities
           'vendor-utils': [
             'date-fns',
+            'xlsx',
           ],
         },
       },
