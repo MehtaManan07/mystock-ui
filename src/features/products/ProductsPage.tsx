@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUrlParam } from '../../hooks/useUrlFilters';
 import {
   Box,
   Button,
@@ -31,8 +32,8 @@ import type { Product, CreateProductDto, UpdateProductDto } from '../../types';
 export const ProductsPage: React.FC = () => {
   const navigate = useNavigate();
 
-  // Search state
-  const [search, setSearch] = useState('');
+  // Search state – synced with URL ?q=
+  const [search, setSearch] = useUrlParam('q');
 
   // Dialog states
   const [formDialogOpen, setFormDialogOpen] = useState(false);

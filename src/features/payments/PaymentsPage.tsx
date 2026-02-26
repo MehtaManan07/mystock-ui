@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useUrlParam } from '../../hooks/useUrlFilters';
 import {
   Box,
   Card,
@@ -52,13 +53,11 @@ const formatDate = (dateString: string) => {
 };
 
 export const PaymentsPage: React.FC = () => {
-  // Filter state
-  const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState<PaymentType | 'all'>('all');
-  const [dateRange, setDateRange] = useState<{ from: string; to: string }>({
-    from: '',
-    to: '',
-  });
+  // Filter state – synced with URL query params
+  const [search, setSearch] = useUrlParam('q');
+  const [typeFilter, setTypeFilter] = useUrlParam('type', 'all');
+  const [fromDate, setFromDate] = useUrlParam('from');
+  const [toDate, setToDate] = useUrlParam('to');
 
   // Dialog state
   const [formDialogOpen, setFormDialogOpen] = useState(false);
@@ -70,15 +69,15 @@ export const PaymentsPage: React.FC = () => {
   const filters: PaymentFilters = useMemo(() => {
     const f: PaymentFilters = { manual_only: true }; // Only show manual payments
     if (search) f.search = search;
-    if (typeFilter !== 'all') f.type = typeFilter;
-    if (dateRange.from) f.from_date = dateRange.from;
-    if (dateRange.to) f.to_date = dateRange.to;
+    if (typeFilter !== 'all') f.type = typeFilter as PaymentType;
+    if (fromDate) f.from_date = fromDate;
+    if (toDate) f.to_date = toDate;
     return f;
-  }, [search, typeFilter, dateRange]);
+  }, [search, typeFilter, fromDate, toDate]);
 
   // Data fetching
   const { data: payments, isLoading, isFetching, isError, refetch } = usePayments(filters);
-  const { data: summary } = usePaymentSummary(dateRange.from || undefined, dateRange.to || undefined);
+  const { data: summary } = usePaymentSummary(fromDate || undefined, toDate || undefined);
   const deleteMutation = useDeletePayment();
 
   const showFullLoading = isLoading && !payments;
@@ -118,7 +117,7 @@ export const PaymentsPage: React.FC = () => {
 
   const handleTypeFilterChange = (
     _: React.MouseEvent<HTMLElement>,
-    newType: PaymentType | 'all' | null
+    newType: string | null
   ) => {
     if (newType !== null) {
       setTypeFilter(newType);
@@ -139,17 +138,17 @@ export const PaymentsPage: React.FC = () => {
         <EmptyState
           title="No payments found"
           message={
-            search || typeFilter !== 'all' || dateRange.from || dateRange.to
+            search || typeFilter !== 'all' || fromDate || toDate
               ? 'Try different filters'
               : 'Add your first payment to get started'
           }
           actionLabel={
-            !search && typeFilter === 'all' && !dateRange.from && !dateRange.to
+            !search && typeFilter === 'all' && !fromDate && !toDate
               ? 'Add Payment'
               : undefined
           }
           onAction={
-            !search && typeFilter === 'all' && !dateRange.from && !dateRange.to
+            !search && typeFilter === 'all' && !fromDate && !toDate
               ? handleOpenCreateDialog
               : undefined
           }
@@ -339,8 +338,8 @@ export const PaymentsPage: React.FC = () => {
           label="From Date"
           type="date"
           size="small"
-          value={dateRange.from}
-          onChange={(e) => setDateRange((prev) => ({ ...prev, from: e.target.value }))}
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value || '')}
           InputLabelProps={{ shrink: true }}
           sx={{ width: 160 }}
         />
@@ -348,8 +347,8 @@ export const PaymentsPage: React.FC = () => {
           label="To Date"
           type="date"
           size="small"
-          value={dateRange.to}
-          onChange={(e) => setDateRange((prev) => ({ ...prev, to: e.target.value }))}
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value || '')}
           InputLabelProps={{ shrink: true }}
           sx={{ width: 160 }}
         />

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useUrlParam } from '../../hooks/useUrlFilters';
 import {
   Box,
   Card,
@@ -60,8 +61,8 @@ const getRoleLabel = (role: string): string => {
 export const UsersPage: React.FC = () => {
   const currentUser = useAuthStore((state) => state.user);
   
-  // Search state
-  const [search, setSearch] = useState('');
+  // Search state – synced with URL ?q=
+  const [search, setSearch] = useUrlParam('q');
   
   // Dialog states
   const [formDialogOpen, setFormDialogOpen] = useState(false);

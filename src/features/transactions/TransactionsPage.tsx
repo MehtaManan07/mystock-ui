@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUrlParam } from '../../hooks/useUrlFilters';
 import {
   Box,
   Card,
@@ -41,12 +42,12 @@ import type { Transaction, TransactionFilters } from '../../types';
 export const TransactionsPage: React.FC = () => {
   const navigate = useNavigate();
   
-  // Filter states
-  const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState<TransactionType | 'all'>('all');
-  const [statusFilter, setStatusFilter] = useState<PaymentStatus | 'all'>('all');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  // Filter states – synced with URL query params
+  const [search, setSearch] = useUrlParam('q');
+  const [typeFilter, setTypeFilter] = useUrlParam('type', 'all');
+  const [statusFilter, setStatusFilter] = useUrlParam('status', 'all');
+  const [fromDate, setFromDate] = useUrlParam('from');
+  const [toDate, setToDate] = useUrlParam('to');
   
   // Menu state for create button
   const [createMenuAnchor, setCreateMenuAnchor] = useState<null | HTMLElement>(null);
@@ -58,8 +59,8 @@ export const TransactionsPage: React.FC = () => {
   // Build filters
   const filters: TransactionFilters = {
     search: search || undefined,
-    type: typeFilter !== 'all' ? typeFilter : undefined,
-    payment_status: statusFilter !== 'all' ? statusFilter : undefined,
+    type: typeFilter !== 'all' ? (typeFilter as TransactionType) : undefined,
+    payment_status: statusFilter !== 'all' ? (statusFilter as PaymentStatus) : undefined,
     from_date: fromDate || undefined,
     to_date: toDate || undefined,
   };
@@ -333,7 +334,7 @@ export const TransactionsPage: React.FC = () => {
         <ToggleButtonGroup
           value={typeFilter}
           exclusive
-          onChange={(_, value) => value && setTypeFilter(value)}
+          onChange={(_, value) => value !== null && setTypeFilter(value as string)}
           size="small"
           sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
@@ -345,7 +346,7 @@ export const TransactionsPage: React.FC = () => {
         <ToggleButtonGroup
           value={statusFilter}
           exclusive
-          onChange={(_, value) => value && setStatusFilter(value)}
+          onChange={(_, value) => value !== null && setStatusFilter(value as string)}
           size="small"
           sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
@@ -360,7 +361,7 @@ export const TransactionsPage: React.FC = () => {
           size="small"
           label="From"
           value={fromDate}
-          onChange={(e) => setFromDate(e.target.value)}
+          onChange={(e) => setFromDate(e.target.value || '')}
           InputLabelProps={{ shrink: true }}
           sx={{ width: { xs: '100%', sm: 150 } }}
         />
@@ -369,7 +370,7 @@ export const TransactionsPage: React.FC = () => {
           size="small"
           label="To"
           value={toDate}
-          onChange={(e) => setToDate(e.target.value)}
+          onChange={(e) => setToDate(e.target.value || '')}
           InputLabelProps={{ shrink: true }}
           sx={{ width: { xs: '100%', sm: 150 } }}
         />

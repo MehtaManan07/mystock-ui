@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUrlParam } from '../../hooks/useUrlFilters';
 import {
   Box,
   Card,
@@ -34,16 +35,16 @@ import type { Contact, CreateContactDto, UpdateContactDto, ContactFilters } from
 export const ContactsPage: React.FC = () => {
   const navigate = useNavigate();
   
-  // Filter states
-  const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState<ContactType | 'all'>('all');
-  const [balanceFilter, setBalanceFilter] = useState<'all' | 'positive' | 'negative'>('all');
+  // Filter states – synced with URL query params
+  const [search, setSearch] = useUrlParam('q');
+  const [typeFilter, setTypeFilter] = useUrlParam('type', 'all');
+  const [balanceFilter, setBalanceFilter] = useUrlParam('balance', 'all');
   
   // Build filters
   const filters: ContactFilters = {
     search: search || undefined,
-    types: typeFilter !== 'all' ? [typeFilter] : undefined,
-    balance: balanceFilter !== 'all' ? balanceFilter : undefined,
+    types: typeFilter !== 'all' ? [typeFilter as ContactType] : undefined,
+    balance: balanceFilter !== 'all' ? (balanceFilter as 'positive' | 'negative') : undefined,
   };
   
   // Dialog states
@@ -313,7 +314,7 @@ export const ContactsPage: React.FC = () => {
         <ToggleButtonGroup
           value={typeFilter}
           exclusive
-          onChange={(_, value) => value && setTypeFilter(value)}
+          onChange={(_, value) => value !== null && setTypeFilter(value as string)}
           size="small"
           sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
@@ -326,7 +327,7 @@ export const ContactsPage: React.FC = () => {
         <ToggleButtonGroup
           value={balanceFilter}
           exclusive
-          onChange={(_, value) => value && setBalanceFilter(value)}
+          onChange={(_, value) => value !== null && setBalanceFilter(value as string)}
           size="small"
           sx={{ width: { xs: '100%', sm: 'auto' } }}
         >

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUrlParam } from '../../hooks/useUrlFilters';
 import {
   Box,
   Card,
@@ -77,7 +78,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color }) => (
 
 export const InventoryPage: React.FC = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useUrlParam('q');
 
   // Analytics data
   const {

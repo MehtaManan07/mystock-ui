@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUrlParam } from '../../hooks/useUrlFilters';
 import {
   Box,
   Card,
@@ -37,8 +38,8 @@ import type { Container, CreateContainerDto, UpdateContainerDto } from '../../ty
 export const ContainersPage: React.FC = () => {
   const navigate = useNavigate();
 
-  // Search state
-  const [search, setSearch] = useState('');
+  // Search state – synced with URL ?q=
+  const [search, setSearch] = useUrlParam('q');
 
   // Dialog states
   const [formDialogOpen, setFormDialogOpen] = useState(false);

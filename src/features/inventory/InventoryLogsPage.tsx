@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUrlParam } from '../../hooks/useUrlFilters';
 import {
   Box,
   Card,
@@ -32,8 +33,8 @@ type ActionFilter = 'all' | 'add' | 'remove' | 'transfer' | 'sale' | 'purchase' 
 
 export const InventoryLogsPage: React.FC = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [actionFilter, setActionFilter] = useState<ActionFilter>('all');
+  const [searchQuery, setSearchQuery] = useUrlParam('q');
+  const [actionFilter, setActionFilter] = useUrlParam('action', 'all');
 
   const {
     data: logs,
@@ -51,7 +52,7 @@ export const InventoryLogsPage: React.FC = () => {
 
     return logs.filter((log) => {
       // Action filter
-      if (actionFilter !== 'all' && log.action !== actionFilter) {
+      if (actionFilter !== 'all' && log.action !== (actionFilter as ActionFilter)) {
         return false;
       }
 
@@ -222,7 +223,7 @@ export const InventoryLogsPage: React.FC = () => {
         <ToggleButtonGroup
           value={actionFilter}
           exclusive
-          onChange={(_, value) => value && setActionFilter(value)}
+          onChange={(_, value) => value !== null && setActionFilter(value as string)}
           size="small"
         >
           <ToggleButton value="all">All</ToggleButton>
