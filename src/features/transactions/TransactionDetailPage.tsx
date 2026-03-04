@@ -179,7 +179,16 @@ export const TransactionDetailPage: React.FC = () => {
       {/* Action buttons */}
       <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
         <Tooltip title="Back to Transactions">
-          <IconButton onClick={() => navigate('/transactions')}>
+          <IconButton
+            component="a"
+            href="/transactions"
+            onClick={(e: React.MouseEvent) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                e.preventDefault();
+                navigate('/transactions');
+              }
+            }}
+          >
             <BackIcon />
           </IconButton>
         </Tooltip>

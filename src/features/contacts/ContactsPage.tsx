@@ -219,9 +219,14 @@ export const ContactsPage: React.FC = () => {
           <Tooltip title="View">
             <IconButton
               size="small"
-              onClick={(e) => {
+              component="a"
+              href={`/contacts/${contact.id}`}
+              onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
-                handleViewContact(contact);
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                  e.preventDefault();
+                  handleViewContact(contact);
+                }
               }}
             >
               <ViewIcon fontSize="small" />
@@ -282,6 +287,7 @@ export const ContactsPage: React.FC = () => {
         data={contacts}
         keyExtractor={(contact) => contact.id.toString()}
         onRowClick={handleViewContact}
+        getRowHref={(contact) => `/contacts/${contact.id}`}
         emptyMessage="No contacts found"
       />
     );

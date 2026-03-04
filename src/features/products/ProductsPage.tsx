@@ -249,9 +249,14 @@ export const ProductsPage: React.FC = () => {
           <Tooltip title="View">
             <IconButton
               size="small"
-              onClick={(e) => {
+              component="a"
+              href={`/products/${product.id}`}
+              onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
-                handleViewProduct(product);
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                  e.preventDefault();
+                  handleViewProduct(product);
+                }
               }}
             >
               <ViewIcon fontSize="small" />
@@ -313,6 +318,7 @@ export const ProductsPage: React.FC = () => {
           data={products}
           keyExtractor={(product) => product.id.toString()}
           onRowClick={handleViewProduct}
+          getRowHref={(product) => `/products/${product.id}`}
           emptyMessage="No products found"
         />
 

@@ -208,7 +208,16 @@ export const ContainersPage: React.FC = () => {
                   key={container.id}
                   hover
                   sx={{ cursor: 'pointer' }}
-                  onClick={() => handleViewContainer(container)}
+                  onClick={(e: React.MouseEvent) => {
+                    if (e.metaKey || e.ctrlKey || e.shiftKey) {
+                      window.open(`/containers/${container.id}`, '_blank');
+                      return;
+                    }
+                    handleViewContainer(container);
+                  }}
+                  onAuxClick={(e: React.MouseEvent) => {
+                    if (e.button === 1) window.open(`/containers/${container.id}`, '_blank');
+                  }}
                 >
                   <TableCell>
                     <Typography variant="body2" fontWeight={600}>
@@ -235,7 +244,14 @@ export const ContainersPage: React.FC = () => {
                     <Tooltip title="View">
                       <IconButton
                         size="small"
-                        onClick={() => handleViewContainer(container)}
+                        component="a"
+                        href={`/containers/${container.id}`}
+                        onClick={(e: React.MouseEvent) => {
+                          if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                            e.preventDefault();
+                            handleViewContainer(container);
+                          }
+                        }}
                       >
                         <ViewIcon fontSize="small" />
                       </IconButton>

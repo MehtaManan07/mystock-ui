@@ -217,9 +217,14 @@ export const TransactionsPage: React.FC = () => {
           <Tooltip title="View">
             <IconButton
               size="small"
-              onClick={(e) => {
+              component="a"
+              href={`/transactions/${transaction.id}`}
+              onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
-                navigate(`/transactions/${transaction.id}`);
+                if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                  e.preventDefault();
+                  navigate(`/transactions/${transaction.id}`);
+                }
               }}
             >
               <ViewIcon fontSize="small" />
@@ -266,6 +271,7 @@ export const TransactionsPage: React.FC = () => {
         data={transactions}
         keyExtractor={(transaction) => transaction.id.toString()}
         onRowClick={(transaction) => navigate(`/transactions/${transaction.id}`)}
+        getRowHref={(transaction) => `/transactions/${transaction.id}`}
         emptyMessage="No transactions found"
       />
     );

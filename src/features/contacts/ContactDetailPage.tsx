@@ -177,7 +177,16 @@ export const ContactDetailPage: React.FC = () => {
       {/* Action buttons */}
       <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
         <Tooltip title="Back to Contacts">
-          <IconButton onClick={() => navigate('/contacts')}>
+          <IconButton
+            component="a"
+            href="/contacts"
+            onClick={(e: React.MouseEvent) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                e.preventDefault();
+                navigate('/contacts');
+              }
+            }}
+          >
             <BackIcon />
           </IconButton>
         </Tooltip>

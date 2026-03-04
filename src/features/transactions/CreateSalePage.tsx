@@ -403,7 +403,14 @@ export const CreateSalePage: React.FC = () => {
       <Box sx={{ mb: 2 }}>
         <Button
           startIcon={<BackIcon />}
-          onClick={() => navigate('/transactions')}
+          component="a"
+          href="/transactions"
+          onClick={(e: React.MouseEvent) => {
+            if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+              e.preventDefault();
+              navigate('/transactions');
+            }
+          }}
         >
           Back to Transactions
         </Button>

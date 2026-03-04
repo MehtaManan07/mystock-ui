@@ -99,7 +99,16 @@ export const ContainerDetailPage: React.FC = () => {
       {/* Action buttons */}
       <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
         <Tooltip title="Back to Containers">
-          <IconButton onClick={() => navigate('/containers')}>
+          <IconButton
+            component="a"
+            href="/containers"
+            onClick={(e: React.MouseEvent) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                e.preventDefault();
+                navigate('/containers');
+              }
+            }}
+          >
             <BackIcon />
           </IconButton>
         </Tooltip>

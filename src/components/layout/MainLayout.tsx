@@ -130,7 +130,14 @@ export const MainLayout: React.FC = () => {
           return (
             <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
-                onClick={() => handleNavClick(item.path)}
+                component="a"
+                href={item.path}
+                onClick={(e: React.MouseEvent) => {
+                  if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                    e.preventDefault();
+                    handleNavClick(item.path);
+                  }
+                }}
                 sx={{
                   borderRadius: 2,
                   py: { xs: 1, sm: 1.5 },

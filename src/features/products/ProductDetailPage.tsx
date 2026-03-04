@@ -242,7 +242,16 @@ export const ProductDetailPage: React.FC = () => {
 
       <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
         <Tooltip title="Back to Products">
-          <IconButton onClick={() => navigate('/products')}>
+          <IconButton
+            component="a"
+            href="/products"
+            onClick={(e: React.MouseEvent) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                e.preventDefault();
+                navigate('/products');
+              }
+            }}
+          >
             <BackIcon />
           </IconButton>
         </Tooltip>

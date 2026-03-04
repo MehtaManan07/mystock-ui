@@ -30,6 +30,8 @@ interface ResponsiveTableProps<T> {
   data: T[];
   keyExtractor: (row: T) => string | number;
   onRowClick?: (row: T) => void;
+  /** When provided, Cmd/Ctrl+Click or middle-click opens the row URL in a new tab */
+  getRowHref?: (row: T) => string;
   emptyMessage?: string;
   mobileCardProps?: object; // Additional props for mobile cards
 }
@@ -39,6 +41,7 @@ export function ResponsiveTable<T>({
   data,
   keyExtractor,
   onRowClick,
+  getRowHref,
   emptyMessage = 'No data available',
   mobileCardProps = {},
 }: ResponsiveTableProps<T>) {
@@ -82,7 +85,16 @@ export function ResponsiveTable<T>({
             onClick={(e) => {
               // Don't trigger row click if clicking on action buttons
               if (!(e.target as HTMLElement).closest('button, a')) {
+                if (getRowHref && (e.metaKey || e.ctrlKey || e.shiftKey)) {
+                  window.open(getRowHref(row), '_blank');
+                  return;
+                }
                 onRowClick?.(row);
+              }
+            }}
+            onAuxClick={(e) => {
+              if (e.button === 1 && getRowHref) {
+                window.open(getRowHref(row), '_blank');
               }
             }}
           >
@@ -175,7 +187,18 @@ export function ResponsiveTable<T>({
               sx={{
                 cursor: onRowClick ? 'pointer' : 'default',
               }}
-              onClick={() => onRowClick?.(row)}
+              onClick={(e) => {
+                if (getRowHref && (e.metaKey || e.ctrlKey || e.shiftKey)) {
+                  window.open(getRowHref(row), '_blank');
+                  return;
+                }
+                onRowClick?.(row);
+              }}
+              onAuxClick={(e) => {
+                if (e.button === 1 && getRowHref) {
+                  window.open(getRowHref(row), '_blank');
+                }
+              }}
             >
               {columns.map((col) => (
                 <TableCell key={col.id} align={col.align || 'left'}>
