@@ -8,11 +8,10 @@ import { ExcelUploadCard } from './components/deodap/ExcelUploadCard';
 import { BillItemsTable } from './components/deodap/BillItemsTable';
 import { parseExcel } from './components/deodap/parseExcel';
 import type { DeodapBillRow, ContainerOption } from './components/deodap/types';
-import type { Product } from '../../types';
 
 export const CreateDeodapBillPage: React.FC = () => {
   const navigate = useNavigate();
-  const { lookupBySku } = useProductLookup();
+  const { lookupBySkus } = useProductLookup();
 
   const [fileName, setFileName] = useState<string | null>(null);
   const [rows, setRows] = useState<DeodapBillRow[]>([]);
@@ -52,17 +51,7 @@ export const CreateDeodapBillPage: React.FC = () => {
         );
 
         const uniqueSkus = [...new Set(excelRows.map((r) => r.sku))];
-        const skuProductMap = new Map<string, Product | null>();
-
-        await Promise.all(
-          uniqueSkus.map(async (sku) => {
-            try {
-              skuProductMap.set(sku, await lookupBySku(sku));
-            } catch {
-              skuProductMap.set(sku, null);
-            }
-          })
-        );
+        const skuProductMap = await lookupBySkus(uniqueSkus);
 
         setRows(
           excelRows.map((r) => {
@@ -82,7 +71,7 @@ export const CreateDeodapBillPage: React.FC = () => {
         setIsProcessing(false);
       }
     },
-    [lookupBySku]
+    [lookupBySkus]
   );
 
   const handleContainerChange = (index: number, container: ContainerOption | null) => {

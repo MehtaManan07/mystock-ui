@@ -58,6 +58,14 @@ export const productsApi = {
   },
 
   /**
+   * Batch lookup products by company SKUs (single request for all SKUs)
+   */
+  lookupBySkus: async (skus: string[]): Promise<Product[]> => {
+    const response = await apiClient.post<Product[]>(API_ENDPOINTS.PRODUCTS.LOOKUP_BY_SKUS, { skus });
+    return response.data;
+  },
+
+  /**
    * Create a new product
    */
   create: async (data: CreateProductDto): Promise<Product> => {

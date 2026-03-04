@@ -154,11 +154,27 @@ export const useCreateProductsBulk = () => {
 };
 
 /**
- * Returns an imperative lookup function that resolves a single product by exact company_sku.
- * Results are cached via React Query (staleTime: 5 min).
+ * Returns imperative lookup functions for products by company_sku.
+ * lookupBySkus: batch lookup — one request for all SKUs (use for Excel upload).
+ * lookupBySku: single SKU lookup, cached via React Query (kept for other uses).
  */
 export const useProductLookup = () => {
   const queryClient = useQueryClient();
+
+  const lookupBySkus = async (skus: string[]): Promise<Map<string, Product | null>> => {
+    if (skus.length === 0) return new Map();
+    const products = await queryClient.fetchQuery({
+      queryKey: [...QUERY_KEYS.PRODUCTS, 'batch', skus.slice().sort().join(',')],
+      queryFn: () => productsApi.lookupBySkus(skus),
+      staleTime: 1000 * 60 * 5,
+    });
+    const map = new Map<string, Product | null>(skus.map((s) => [s, null]));
+    for (const product of products) {
+      const key = skus.find((s) => s.toLowerCase() === product.company_sku?.toLowerCase());
+      if (key) map.set(key, product);
+    }
+    return map;
+  };
 
   const lookupBySku = async (sku: string): Promise<Product | null> => {
     const results = await queryClient.fetchQuery({
@@ -169,5 +185,5 @@ export const useProductLookup = () => {
     return results.find((p) => p.company_sku?.toLowerCase() === sku.toLowerCase()) ?? null;
   };
 
-  return { lookupBySku };
+  return { lookupBySku, lookupBySkus };
 };
