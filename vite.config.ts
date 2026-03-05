@@ -7,6 +7,12 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
+        // Content hashes in filenames are the primary cache-busting mechanism.
+        // Browsers cache JS/CSS assets long-term (safe because URL changes with content),
+        // while index.html is never cached (via meta tags) so new hashes are always picked up.
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash][extname]',
         manualChunks: {
           // React core
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],

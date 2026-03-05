@@ -70,6 +70,33 @@ export const useInventoryAnalytics = () => {
 };
 
 /**
+ * Returns an imperative function to batch-fetch containers for multiple products in one
+ * request and seed the React Query cache so components mount with data already available.
+ * Use this instead of calling containerProductsApi.getContainersForProductsBatch() directly.
+ */
+export const useContainersForProductsBatch = () => {
+  const queryClient = useQueryClient();
+
+  return async (productIds: number[]): Promise<ContainerProduct[]> => {
+    if (productIds.length === 0) return [];
+    const allContainers = await containerProductsApi.getContainersForProductsBatch(productIds);
+    const byProductId = new Map<number, ContainerProduct[]>();
+    for (const cp of allContainers) {
+      const list = byProductId.get(cp.product_id) ?? [];
+      list.push(cp);
+      byProductId.set(cp.product_id, list);
+    }
+    for (const productId of productIds) {
+      queryClient.setQueryData(
+        QUERY_KEYS.PRODUCT_CONTAINERS(productId),
+        byProductId.get(productId) ?? []
+      );
+    }
+    return allContainers;
+  };
+};
+
+/**
  * Hook to set products in a container with optimistic updates
  */
 export const useSetContainerProducts = () => {

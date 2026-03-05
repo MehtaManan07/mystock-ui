@@ -1,12 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
 import { Box, Button } from '@mui/material';
 import { ArrowBack as BackIcon } from '@mui/icons-material';
 import { PageHeader } from '../../components/common/PageHeader';
 import { useProductLookup } from '../../hooks/useProducts';
-import { containerProductsApi } from '../../api/containerProducts.api';
-import { QUERY_KEYS } from '../../constants';
+import { useContainersForProductsBatch } from '../../hooks/useContainerProducts';
 import { ExcelUploadCard } from './components/deodap/ExcelUploadCard';
 import { BillItemsTable } from './components/deodap/BillItemsTable';
 import { parseExcel } from './components/deodap/parseExcel';
@@ -14,8 +12,8 @@ import type { DeodapBillRow, ContainerOption } from './components/deodap/types';
 
 export const CreateDeodapBillPage: React.FC = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { lookupBySkus } = useProductLookup();
+  const fetchContainersForProductsBatch = useContainersForProductsBatch();
 
   const [fileName, setFileName] = useState<string | null>(null);
   const [rows, setRows] = useState<DeodapBillRow[]>([]);
@@ -62,20 +60,7 @@ export const CreateDeodapBillPage: React.FC = () => {
         // components mount with data already available (no N per-product calls).
         const foundProductIds = [...skuProductMap.values()].filter((p) => p != null).map((p) => p.id);
         if (foundProductIds.length > 0) {
-          const allContainers = await containerProductsApi.getContainersForProductsBatch(foundProductIds);
-          // Group flat list by product_id and seed each product's cache entry.
-          const byProductId = new Map<number, typeof allContainers>();
-          for (const cp of allContainers) {
-            const list = byProductId.get(cp.product_id) ?? [];
-            list.push(cp);
-            byProductId.set(cp.product_id, list);
-          }
-          for (const productId of foundProductIds) {
-            queryClient.setQueryData(
-              QUERY_KEYS.PRODUCT_CONTAINERS(productId),
-              byProductId.get(productId) ?? []
-            );
-          }
+          await fetchContainersForProductsBatch(foundProductIds);
         }
 
         setRows(
@@ -96,7 +81,7 @@ export const CreateDeodapBillPage: React.FC = () => {
         setIsProcessing(false);
       }
     },
-    [lookupBySkus, queryClient]
+    [lookupBySkus, fetchContainersForProductsBatch]
   );
 
   const handleContainerChange = (index: number, container: ContainerOption | null) => {

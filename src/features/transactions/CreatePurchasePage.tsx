@@ -37,12 +37,11 @@ import { useProducts } from '../../hooks/useProducts';
 import { useContainers } from '../../hooks/useContainers';
 import { useCreatePurchase } from '../../hooks/useTransactions';
 import { useDebounce } from '../../hooks/useDebounce';
-import { useDrafts, useDeleteDraft } from '../../hooks/useDrafts';
+import { useDrafts, useDeleteDraft, useCompleteDraft } from '../../hooks/useDrafts';
+import type { Draft } from '../../api/drafts.api';
 import { useDraftAutoSaveServer } from '../../hooks/useDraftAutoSaveServer';
 import { CONTACT_TYPES, PAYMENT_METHODS, type PaymentMethod } from '../../constants';
 import type { Contact, Product, Container, CreateTransactionDto, CreateTransactionItemDto } from '../../types';
-import type { Draft } from '../../api/drafts.api';
-import { draftsApi } from '../../api/drafts.api';
 import { DraftListDialog } from '../../components/drafts/DraftListDialog';
 
 interface LineItem {
@@ -94,6 +93,7 @@ export const CreatePurchasePage: React.FC = () => {
   // Draft management - server-based
   const { data: drafts = [] } = useDrafts('purchase');
   const deleteDraftMutation = useDeleteDraft();
+  const getCompleteDraft = useCompleteDraft();
 
   // Auto-save hook - server-based
   const { currentDraftId, deleteDraftOnUnmount } = useDraftAutoSaveServer(
@@ -163,7 +163,7 @@ export const CreatePurchasePage: React.FC = () => {
     if (data.items.length > 0) {
       try {
         // Single API call to get draft with hydrated products and containers
-        const completeDraft = await draftsApi.getComplete(draft.id);
+        const completeDraft = await getCompleteDraft(draft.id);
         
         // Map hydrated items directly to LineItem format
         const loadedItems: LineItem[] = completeDraft.items.map(item => ({

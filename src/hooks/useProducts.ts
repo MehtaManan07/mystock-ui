@@ -1,7 +1,7 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { productsApi } from '../api/products.api';
 import { QUERY_KEYS } from '../constants';
-import type { CreateProductDto, UpdateProductDto, Product } from '../types';
+import type { CreateProductDto, UpdateProductDto, Product, ProductImage } from '../types';
 import { useNotificationStore } from '../stores/notificationStore';
 
 /**
@@ -149,6 +149,60 @@ export const useCreateProductsBulk = () => {
       queryClient.invalidateQueries({
         queryKey: [...QUERY_KEYS.PRODUCTS, 'infinite'],
       });
+    },
+  });
+};
+
+export const useUploadProductImages = (productId: number) => {
+  const queryClient = useQueryClient();
+  const { success, error } = useNotificationStore();
+
+  return useMutation({
+    mutationFn: (files: File[]) => productsApi.uploadProductImages(productId, files),
+    onSuccess: (data: ProductImage[]) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PRODUCT(productId) });
+      const count = data?.length || 0;
+      success(`Successfully uploaded ${count} image${count !== 1 ? 's' : ''}`);
+    },
+    onError: (err: any) => {
+      const message = err?.response?.data?.message || err?.message || 'Failed to upload images';
+      error(message);
+    },
+  });
+};
+
+export const useCopyProductImages = (productId: number) => {
+  const queryClient = useQueryClient();
+  const { success, error } = useNotificationStore();
+
+  return useMutation({
+    mutationFn: ({ sourceProductId, imageIds }: { sourceProductId: number; imageIds: number[] }) =>
+      productsApi.copyProductImagesFrom(productId, sourceProductId, imageIds),
+    onSuccess: (data: ProductImage[]) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PRODUCT(productId) });
+      const count = data?.length || 0;
+      success(`Successfully copied ${count} image${count !== 1 ? 's' : ''}`);
+    },
+    onError: (err: any) => {
+      const message = err?.response?.data?.message || err?.message || 'Failed to copy images';
+      error(message);
+    },
+  });
+};
+
+export const useDeleteProductImage = (productId: number) => {
+  const queryClient = useQueryClient();
+  const { success, error } = useNotificationStore();
+
+  return useMutation({
+    mutationFn: (imageId: number) => productsApi.deleteProductImage(productId, imageId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PRODUCT(productId) });
+      success('Image deleted successfully');
+    },
+    onError: (err: any) => {
+      const message = err?.response?.data?.message || err?.message || 'Failed to delete image';
+      error(message);
     },
   });
 };

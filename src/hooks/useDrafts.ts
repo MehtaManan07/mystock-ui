@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { draftsApi, type CreateDraftDto, type UpdateDraftDto } from '../api/drafts.api';
+import { draftsApi, type CreateDraftDto, type UpdateDraftDto, type CompleteDraft } from '../api/drafts.api';
 import { QUERY_KEYS } from '../constants';
 import { useNotificationStore } from '../stores/notificationStore';
 
@@ -68,6 +68,21 @@ export const useUpdateDraft = () => {
       );
     },
   });
+};
+
+/**
+ * Returns an imperative function to fetch a draft with hydrated products and containers.
+ * Use this instead of calling draftsApi.getComplete() directly from a component.
+ */
+export const useCompleteDraft = () => {
+  const queryClient = useQueryClient();
+
+  return async (id: number): Promise<CompleteDraft> => {
+    return queryClient.fetchQuery({
+      queryKey: [...QUERY_KEYS.DRAFT(id), 'complete'],
+      queryFn: () => draftsApi.getComplete(id),
+    });
+  };
 };
 
 /**

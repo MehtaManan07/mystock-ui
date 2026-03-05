@@ -17,20 +17,16 @@ import {
   CopyImagesDialog,
   ManageContainersDialog,
 } from './components';
-import { useProduct, useUpdateProduct, useDeleteProduct } from '../../hooks/useProducts';
+import { useProduct, useProducts, useUpdateProduct, useDeleteProduct, useUploadProductImages, useCopyProductImages, useDeleteProductImage } from '../../hooks/useProducts';
+import { useContacts } from '../../hooks/useContacts';
+import { useCreateVendorSku, useUpdateVendorSku, useDeleteVendorSku } from '../../hooks/useVendorSkus';
 import type { CreateProductDto, UpdateProductDto, CreateVendorSkuDto, UpdateVendorSkuDto } from '../../types';
-import { vendorSkusApi } from '../../api/vendorSkus.api';
-import { contactsApi } from '../../api/contacts.api';
-import { productsApi } from '../../api/products.api';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNotificationStore } from '../../stores/notificationStore';
 
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const productId = parseInt(id || '0', 10);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { success, error } = useNotificationStore();
 
   // Dialog states
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -51,26 +47,14 @@ export const ProductDetailPage: React.FC = () => {
 
   // Data fetching
   const { data: product, isLoading, isError, refetch } = useProduct(productId);
-  const queryClient = useQueryClient();
 
-  const { data: contacts } = useQuery({
-    queryKey: ['contacts'],
-    queryFn: () => contactsApi.getAll(),
-  });
+  const { data: contacts } = useContacts();
   const customers = contacts?.filter((c) => c.type === 'customer' || c.type === 'both') || [];
 
-  const { data: allProducts } = useQuery({
-    queryKey: ['products', 'list-for-copy'],
-    queryFn: () => productsApi.getAll(),
-    enabled: copyFromDialogOpen,
-  });
+  const { data: allProducts } = useProducts();
   const otherProducts = (allProducts ?? []).filter((p) => p.id !== productId);
 
-  const { data: sourceProduct } = useQuery({
-    queryKey: ['product', copyFromProductId, 'copy-source'],
-    queryFn: () => productsApi.getById(Number(copyFromProductId)),
-    enabled: copyFromDialogOpen && copyFromProductId !== '',
-  });
+  const { data: sourceProduct } = useProduct(copyFromProductId !== '' ? Number(copyFromProductId) : 0);
   const sourceProductImages = sourceProduct?.images ?? [];
 
   const images = product?.images ?? [];
@@ -81,79 +65,14 @@ export const ProductDetailPage: React.FC = () => {
   }, [images.length, selectedImageIndex]);
 
   // Vendor SKU mutations
-  const createVendorSkuMutation = useMutation({
-    mutationFn: (data: CreateVendorSkuDto) => vendorSkusApi.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['product', productId] });
-      handleCloseVendorSkuDialog();
-    },
-  });
+  const createVendorSkuMutation = useCreateVendorSku(productId);
+  const updateVendorSkuMutation = useUpdateVendorSku(productId);
+  const deleteVendorSkuMutation = useDeleteVendorSku(productId);
 
-  const updateVendorSkuMutation = useMutation({
-    mutationFn: ({ productId, vendorId, data }: { productId: number; vendorId: number; data: UpdateVendorSkuDto }) =>
-      vendorSkusApi.update(productId, vendorId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['product', productId] });
-      handleCloseVendorSkuDialog();
-    },
-  });
-
-  const deleteVendorSkuMutation = useMutation({
-    mutationFn: ({ productId, vendorId }: { productId: number; vendorId: number }) =>
-      vendorSkusApi.delete(productId, vendorId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['product', productId] });
-      setVendorSkuToDelete(null);
-    },
-  });
-
-  const uploadImagesMutation = useMutation({
-    mutationFn: (files: File[]) => productsApi.uploadProductImages(productId, files),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['product', productId] });
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      const count = data?.length || 0;
-      success(`Successfully uploaded ${count} image${count !== 1 ? 's' : ''}`);
-    },
-    onError: (err: any) => {
-      const message = err?.response?.data?.message || err?.message || 'Failed to upload images';
-      error(message);
-    },
-  });
-
-  const copyFromMutation = useMutation({
-    mutationFn: ({
-      sourceProductId,
-      imageIds,
-    }: {
-      sourceProductId: number;
-      imageIds: number[];
-    }) => productsApi.copyProductImagesFrom(productId, sourceProductId, imageIds),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['product', productId] });
-      setCopyFromDialogOpen(false);
-      setCopyFromProductId('');
-      const count = data?.length || 0;
-      success(`Successfully copied ${count} image${count !== 1 ? 's' : ''}`);
-    },
-    onError: (err: any) => {
-      const message = err?.response?.data?.message || err?.message || 'Failed to copy images';
-      error(message);
-    },
-  });
-
-  const deleteImageMutation = useMutation({
-    mutationFn: (imageId: number) => productsApi.deleteProductImage(productId, imageId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['product', productId] });
-      setSelectedImageIndex((i) => Math.max(0, i - 1));
-      success('Image deleted successfully');
-    },
-    onError: (err: any) => {
-      const message = err?.response?.data?.message || err?.message || 'Failed to delete image';
-      error(message);
-    },
-  });
+  // Image mutations
+  const uploadImagesMutation = useUploadProductImages(productId);
+  const copyFromMutation = useCopyProductImages(productId);
+  const deleteImageMutation = useDeleteProductImage(productId);
 
   const updateMutation = useUpdateProduct();
   const deleteMutation = useDeleteProduct();
@@ -195,25 +114,22 @@ export const ProductDetailPage: React.FC = () => {
   const handleVendorSkuSubmit = () => {
     if (!selectedVendorId || !vendorSkuValue) return;
     if (editingVendorSku) {
-      updateVendorSkuMutation.mutate({
-        productId,
-        vendorId: editingVendorSku.vendor_id,
-        data: { vendor_sku: vendorSkuValue },
-      });
+      updateVendorSkuMutation.mutate(
+        { vendorId: editingVendorSku.vendor_id, data: { vendor_sku: vendorSkuValue } },
+        { onSuccess: handleCloseVendorSkuDialog }
+      );
     } else {
-      createVendorSkuMutation.mutate({
-        product_id: productId,
-        vendor_id: selectedVendorId as number,
-        vendor_sku: vendorSkuValue,
-      });
+      createVendorSkuMutation.mutate(
+        { product_id: productId, vendor_id: selectedVendorId as number, vendor_sku: vendorSkuValue },
+        { onSuccess: handleCloseVendorSkuDialog }
+      );
     }
   };
 
   const handleDeleteVendorSku = () => {
     if (vendorSkuToDelete) {
-      deleteVendorSkuMutation.mutate({
-        productId,
-        vendorId: vendorSkuToDelete.vendor_id,
+      deleteVendorSkuMutation.mutate(vendorSkuToDelete.vendor_id, {
+        onSuccess: () => setVendorSkuToDelete(null),
       });
     }
   };
@@ -273,9 +189,13 @@ export const ProductDetailPage: React.FC = () => {
             images={images}
             selectedImageIndex={selectedImageIndex}
             onSelectImage={setSelectedImageIndex}
-            onUpload={(files) => uploadImagesMutation.mutate(files)}
+            onUpload={(files) => uploadImagesMutation.mutate(files, {
+              onSuccess: () => { if (fileInputRef.current) fileInputRef.current.value = ''; }
+            })}
             onCopyFromClick={() => setCopyFromDialogOpen(true)}
-            onDeleteImage={(imageId) => deleteImageMutation.mutate(imageId)}
+            onDeleteImage={(imageId) => deleteImageMutation.mutate(imageId, {
+              onSuccess: () => setSelectedImageIndex((i) => Math.max(0, i - 1)),
+            })}
             uploadPending={uploadImagesMutation.isPending}
             copyPending={copyFromMutation.isPending}
             deletePending={deleteImageMutation.isPending}
@@ -363,7 +283,10 @@ export const ProductDetailPage: React.FC = () => {
         onClose={() => setCopyFromDialogOpen(false)}
         onProductSelect={setCopyFromProductId}
         onCopy={(selectedImageIds) =>
-          copyFromProductId && copyFromMutation.mutate({ sourceProductId: copyFromProductId, imageIds: selectedImageIds })
+          copyFromProductId && copyFromMutation.mutate(
+            { sourceProductId: copyFromProductId, imageIds: selectedImageIds },
+            { onSuccess: () => { setCopyFromDialogOpen(false); setCopyFromProductId(''); } }
+          )
         }
       />
 
