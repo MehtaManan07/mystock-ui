@@ -59,12 +59,15 @@ export const useCreateSale = () => {
       // Invalidate inventory (stock changed)
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.INVENTORY_ANALYTICS });
       newTransaction.items.forEach((item) => {
-        queryClient.invalidateQueries({ 
-          queryKey: QUERY_KEYS.PRODUCT(item.product.id) 
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PRODUCT(item.product.id)
+        });
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PRODUCT_CONTAINERS(item.product.id)
         });
         if (item.container) {
-          queryClient.invalidateQueries({ 
-            queryKey: QUERY_KEYS.CONTAINER(item.container.id) 
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.CONTAINER(item.container.id)
           });
         }
       });
@@ -83,22 +86,25 @@ export const useCreatePurchase = () => {
     onSuccess: (newTransaction) => {
       // Invalidate transactions list
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TRANSACTIONS });
-      
+
       // Invalidate contact (balance changed)
-      queryClient.invalidateQueries({ 
-        queryKey: QUERY_KEYS.CONTACT(newTransaction.contact.id) 
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CONTACT(newTransaction.contact.id)
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONTACTS });
-      
+
       // Invalidate inventory (stock changed)
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.INVENTORY_ANALYTICS });
       newTransaction.items.forEach((item) => {
-        queryClient.invalidateQueries({ 
-          queryKey: QUERY_KEYS.PRODUCT(item.product.id) 
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PRODUCT(item.product.id)
+        });
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PRODUCT_CONTAINERS(item.product.id)
         });
         if (item.container) {
-          queryClient.invalidateQueries({ 
-            queryKey: QUERY_KEYS.CONTAINER(item.container.id) 
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.CONTAINER(item.container.id)
           });
         }
       });
