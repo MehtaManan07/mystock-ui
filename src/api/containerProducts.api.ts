@@ -56,6 +56,15 @@ export const containerProductsApi = {
   },
 
   /**
+   * Batch fetch containers for multiple products in a single request.
+   * Returns a flat list; each item's product_id identifies which product it belongs to.
+   */
+  getContainersForProductsBatch: async (productIds: number[]): Promise<ContainerProduct[]> => {
+    const response = await api.post(API_ENDPOINTS.CONTAINER_PRODUCTS.BY_PRODUCT_IDS, { productIds });
+    return response.data;
+  },
+
+  /**
    * Get basic inventory analytics
    */
   getAnalytics: async (): Promise<InventoryAnalytics> => {

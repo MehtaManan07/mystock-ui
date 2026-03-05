@@ -42,6 +42,7 @@ export const API_ENDPOINTS = {
     SEARCH: '/container-products/search',
     ANALYTICS: '/container-products/analytics',
     MAP_PRODUCTS: '/container-products/map-products-to-ids',
+    BY_PRODUCT_IDS: '/container-products/by-product-ids',
   },
   // Contacts
   CONTACTS: {
