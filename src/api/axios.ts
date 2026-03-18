@@ -8,7 +8,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // 30 seconds
+  timeout: 60000, // 60 seconds
 });
 
 // Request interceptor - Add auth token; drop Content-Type for FormData so browser sets multipart boundary
