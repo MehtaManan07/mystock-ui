@@ -41,7 +41,8 @@ import { useDrafts, useDeleteDraft, useCompleteDraft } from '../../hooks/useDraf
 import type { Draft } from '../../api/drafts.api';
 import { useDraftAutoSaveServer } from '../../hooks/useDraftAutoSaveServer';
 import { CONTACT_TYPES, PAYMENT_METHODS, PRODUCT_DETAILS_DISPLAY_MODE, type PaymentMethod, type ProductDetailsDisplayMode } from '../../constants';
-import type { Contact, Product, CreateTransactionDto, CreateTransactionItemDto } from '../../types';
+import type { Contact, Product, CreateTransactionDto, CreateTransactionItemDto, TaxType } from '../../types';
+import { useSettings } from '../../hooks/useSettings';
 import { DraftListDialog } from '../../components/drafts/DraftListDialog';
 
 interface ContainerOption {
@@ -76,6 +77,8 @@ export const CreateSalePage: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [productDetailsDisplayMode, setProductDetailsDisplayMode] = useState<ProductDetailsDisplayMode>(PRODUCT_DETAILS_DISPLAY_MODE.CUSTOMER_SKU);
+  const [taxType, setTaxType] = useState<TaxType>('cgst_sgst');
+  const [taxTypeAutoSet, setTaxTypeAutoSet] = useState(false);
 
   // Draft state
   const [isDraftMode, setIsDraftMode] = useState(false);
@@ -102,6 +105,7 @@ export const CreateSalePage: React.FC = () => {
     selectedProduct?.id || 0
   );
   
+  const { data: companySettings } = useSettings();
   const createSaleMutation = useCreateSale();
 
   // Draft management - server-based
@@ -131,6 +135,22 @@ export const CreateSalePage: React.FC = () => {
     },
     isDraftMode
   );
+
+  // Auto-determine tax type when contact changes
+  useEffect(() => {
+    if (!selectedContact || !companySettings) return;
+    const sellerState = companySettings.seller_gstin?.substring(0, 2);
+    if (selectedContact.gstin && selectedContact.gstin.length >= 2) {
+      const buyerState = selectedContact.gstin.substring(0, 2);
+      const newTaxType: TaxType = sellerState === buyerState ? 'cgst_sgst' : 'igst';
+      setTaxType(newTaxType);
+      setTaxTypeAutoSet(true);
+    } else {
+      // No GSTIN — let user choose, default to intra-state
+      setTaxType('cgst_sgst');
+      setTaxTypeAutoSet(false);
+    }
+  }, [selectedContact, companySettings]);
 
   // Load prefilled items from Deodap bill flow
   useEffect(() => {
@@ -368,6 +388,7 @@ export const CreateSalePage: React.FC = () => {
       payment_reference: paidAmount > 0 ? paymentReference || undefined : undefined,
       notes: notes || undefined,
       product_details_display_mode: productDetailsDisplayMode,
+      tax_type: taxType,
     };
 
     try {
@@ -710,9 +731,24 @@ export const CreateSalePage: React.FC = () => {
                   <Typography variant="body2">{formatCurrency(subtotal)}</Typography>
                 </Box>
 
+                {selectedContact && !taxTypeAutoSet && (
+                  <TextField
+                    label="Tax Type"
+                    select
+                    size="small"
+                    fullWidth
+                    value={taxType}
+                    onChange={(e) => setTaxType(e.target.value as TaxType)}
+                    helperText="No GSTIN on contact — select manually"
+                  >
+                    <MenuItem value="cgst_sgst">Intra-state (CGST + SGST)</MenuItem>
+                    <MenuItem value="igst">Inter-state (IGST)</MenuItem>
+                  </TextField>
+                )}
+
                 <Box>
                   <TextField
-                    label="Tax %"
+                    label={taxType === 'cgst_sgst' ? 'CGST + SGST %' : 'IGST %'}
                     type="number"
                     size="small"
                     fullWidth
@@ -725,7 +761,9 @@ export const CreateSalePage: React.FC = () => {
                   />
                   {taxPercent > 0 && (
                     <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                      Tax: {formatCurrency(taxAmount)}
+                      {taxType === 'cgst_sgst'
+                        ? `CGST: ${formatCurrency(taxAmount / 2)} + SGST: ${formatCurrency(taxAmount / 2)}`
+                        : `IGST: ${formatCurrency(taxAmount)}`}
                     </Typography>
                   )}
                 </Box>

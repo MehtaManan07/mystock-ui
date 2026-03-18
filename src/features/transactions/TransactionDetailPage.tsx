@@ -305,12 +305,23 @@ export const TransactionDetailPage: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">Subtotal</Typography>
                   <Typography variant="body2">{formatCurrency(transaction.subtotal)}</Typography>
                 </Box>
-                {transaction.tax_amount > 0 && (
+                {transaction.tax_amount > 0 && transaction.tax_type === 'cgst_sgst' ? (
+                  <>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2" color="text.secondary">CGST</Typography>
+                      <Typography variant="body2">{formatCurrency(transaction.cgst_amount!)}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2" color="text.secondary">SGST</Typography>
+                      <Typography variant="body2">{formatCurrency(transaction.sgst_amount!)}</Typography>
+                    </Box>
+                  </>
+                ) : transaction.tax_amount > 0 ? (
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" color="text.secondary">Tax</Typography>
+                    <Typography variant="body2" color="text.secondary">IGST</Typography>
                     <Typography variant="body2">{formatCurrency(transaction.tax_amount)}</Typography>
                   </Box>
-                )}
+                ) : null}
                 {transaction.discount_amount > 0 && (
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="body2" color="text.secondary">Discount</Typography>

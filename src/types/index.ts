@@ -298,6 +298,8 @@ export interface ContactFilters {
 // Transaction Types
 // ============================================
 
+export type TaxType = 'igst' | 'cgst_sgst';
+
 export interface Transaction extends BaseEntity {
   transaction_number: string;
   transaction_date: string;
@@ -310,6 +312,9 @@ export interface Transaction extends BaseEntity {
   total_amount: number;
   paid_amount: number;
   payment_status: PaymentStatus;
+  tax_type: TaxType;
+  cgst_amount: number | null;
+  sgst_amount: number | null;
   balance_due: number;
   notes: string | null;
   invoice_url: string | null;
@@ -349,6 +354,7 @@ export interface ContactInTransaction {
   phone: string;
   type: string;
   balance: number;
+  gstin: string | null;
 }
 
 export interface CreateTransactionItemDto {
@@ -369,6 +375,7 @@ export interface CreateTransactionDto {
   payment_reference?: string;
   notes?: string;
   product_details_display_mode?: ProductDetailsDisplayMode;
+  tax_type?: TaxType;
 }
 
 export interface TransactionFilters {
