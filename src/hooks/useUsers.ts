@@ -11,9 +11,7 @@ export const useUsers = (search?: string) => {
   const normalizedSearch = search?.trim() || undefined;
   
   return useQuery({
-    queryKey: normalizedSearch 
-      ? [...QUERY_KEYS.USERS, normalizedSearch] 
-      : QUERY_KEYS.USERS,
+    queryKey: QUERY_KEYS.USERS_LIST(normalizedSearch),
     queryFn: () => usersApi.getAll(normalizedSearch),
   });
 };

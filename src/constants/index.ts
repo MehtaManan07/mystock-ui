@@ -86,57 +86,125 @@ export const API_ENDPOINTS = {
   },
 } as const;
 
+// React Query Base Keys — single source of truth for all string literals used in query keys
+export const QUERY_KEY_BASE = {
+  // Entity identifiers
+  CURRENT_USER: 'currentUser',
+  USERS: 'users',
+  PRODUCTS: 'products',
+  CONTAINERS: 'containers',
+  CONTAINER_PRODUCTS: 'containerProducts',
+  PRODUCT_CONTAINERS: 'productContainers',
+  PRODUCT_TOTAL_QTY: 'productTotalQty',
+  INVENTORY_ANALYTICS: 'inventoryAnalytics',
+  CONTAINER_SEARCH: 'containerSearch',
+  CONTACTS: 'contacts',
+  TRANSACTIONS: 'transactions',
+  TRANSACTION_PAYMENTS: 'transactionPayments',
+  INVOICE_METADATA: 'invoiceMetadata',
+  PAYMENTS: 'payments',
+  PAYMENT_SUMMARY: 'paymentSummary',
+  PAYMENT_CATEGORIES: 'paymentCategories',
+  INVENTORY_LOGS: 'inventoryLogs',
+  DASHBOARD: 'dashboard',
+  DRAFTS: 'drafts',
+  SETTINGS: 'settings',
+  // Segment qualifiers (sub-keys within an entity's key hierarchy)
+  INFINITE: 'infinite',
+  BATCH: 'batch',
+  COMPLETE: 'complete',
+  PRODUCT: 'product',
+  CONTAINER: 'container',
+} as const;
+
 // React Query Keys
 export const QUERY_KEYS = {
   // Auth
-  CURRENT_USER: ['currentUser'] as const,
-  
+  CURRENT_USER: [QUERY_KEY_BASE.CURRENT_USER] as const,
+
   // Users
-  USERS: ['users'] as const,
-  USER: (id: number) => ['users', id] as const,
-  
+  USERS: [QUERY_KEY_BASE.USERS] as const,
+  USERS_LIST: (search?: string) =>
+    search ? [QUERY_KEY_BASE.USERS, search] : [QUERY_KEY_BASE.USERS],
+  USER: (id: number) => [QUERY_KEY_BASE.USERS, id] as const,
+
   // Products
-  PRODUCTS: ['products'] as const,
-  PRODUCT: (id: number) => ['products', id] as const,
-  
+  PRODUCTS: [QUERY_KEY_BASE.PRODUCTS] as const,
+  PRODUCTS_LIST: (search?: string) =>
+    search ? [QUERY_KEY_BASE.PRODUCTS, search] : [QUERY_KEY_BASE.PRODUCTS],
+  PRODUCTS_INFINITE: (search?: string) =>
+    search
+      ? [QUERY_KEY_BASE.PRODUCTS, QUERY_KEY_BASE.INFINITE, search]
+      : [QUERY_KEY_BASE.PRODUCTS, QUERY_KEY_BASE.INFINITE],
+  PRODUCTS_BATCH: (skus: string[]) =>
+    [QUERY_KEY_BASE.PRODUCTS, QUERY_KEY_BASE.BATCH, skus.slice().sort().join(',')],
+  PRODUCT: (id: number) => [QUERY_KEY_BASE.PRODUCTS, id] as const,
+  PRODUCT_BY_SKU: (sku: string) => [QUERY_KEY_BASE.PRODUCTS, sku],
+
   // Containers
-  CONTAINERS: ['containers'] as const,
-  CONTAINER: (id: number) => ['containers', id] as const,
-  
+  CONTAINERS: [QUERY_KEY_BASE.CONTAINERS] as const,
+  CONTAINERS_LIST: (search?: string) =>
+    search ? [QUERY_KEY_BASE.CONTAINERS, search] : [QUERY_KEY_BASE.CONTAINERS],
+  CONTAINERS_INFINITE: (search?: string) =>
+    search
+      ? [QUERY_KEY_BASE.CONTAINERS, QUERY_KEY_BASE.INFINITE, search]
+      : [QUERY_KEY_BASE.CONTAINERS, QUERY_KEY_BASE.INFINITE],
+  CONTAINER: (id: number) => [QUERY_KEY_BASE.CONTAINERS, id] as const,
+
   // Container Products
-  CONTAINER_PRODUCTS: (containerId: number) => ['containerProducts', containerId] as const,
-  PRODUCT_CONTAINERS: (productId: number) => ['productContainers', productId] as const,
-  PRODUCT_TOTAL_QTY: (productId: number) => ['productTotalQty', productId] as const,
-  INVENTORY_ANALYTICS: ['inventoryAnalytics'] as const,
-  
+  CONTAINER_PRODUCTS: (containerId: number) =>
+    [QUERY_KEY_BASE.CONTAINER_PRODUCTS, containerId] as const,
+  CONTAINER_SEARCH: (sku?: string) =>
+    sku ? [QUERY_KEY_BASE.CONTAINER_SEARCH, sku] : [QUERY_KEY_BASE.CONTAINER_SEARCH],
+  PRODUCT_CONTAINERS: (productId: number) =>
+    [QUERY_KEY_BASE.PRODUCT_CONTAINERS, productId] as const,
+  PRODUCT_TOTAL_QTY: (productId: number) =>
+    [QUERY_KEY_BASE.PRODUCT_TOTAL_QTY, productId] as const,
+  INVENTORY_ANALYTICS: [QUERY_KEY_BASE.INVENTORY_ANALYTICS] as const,
+
   // Contacts
-  CONTACTS: ['contacts'] as const,
-  CONTACT: (id: number) => ['contacts', id] as const,
-  
+  CONTACTS: [QUERY_KEY_BASE.CONTACTS] as const,
+  CONTACT: (id: number) => [QUERY_KEY_BASE.CONTACTS, id] as const,
+
   // Transactions
-  TRANSACTIONS: ['transactions'] as const,
-  TRANSACTION: (id: number) => ['transactions', id] as const,
-  TRANSACTION_PAYMENTS: (id: number) => ['transactionPayments', id] as const,
-  INVOICE_METADATA: (id: number) => ['invoiceMetadata', id] as const,
-  
+  TRANSACTIONS: [QUERY_KEY_BASE.TRANSACTIONS] as const,
+  TRANSACTIONS_LIST: (filters?: object) =>
+    filters ? [QUERY_KEY_BASE.TRANSACTIONS, filters] : [QUERY_KEY_BASE.TRANSACTIONS],
+  TRANSACTION: (id: number) => [QUERY_KEY_BASE.TRANSACTIONS, id] as const,
+  TRANSACTION_PAYMENTS: (id: number) =>
+    [QUERY_KEY_BASE.TRANSACTION_PAYMENTS, id] as const,
+  INVOICE_METADATA: (id: number) => [QUERY_KEY_BASE.INVOICE_METADATA, id] as const,
+
   // Payments
-  PAYMENTS: ['payments'] as const,
-  PAYMENT: (id: number) => ['payments', id] as const,
-  PAYMENT_SUMMARY: ['paymentSummary'] as const,
-  PAYMENT_CATEGORIES: ['paymentCategories'] as const,
-  
+  PAYMENTS: [QUERY_KEY_BASE.PAYMENTS] as const,
+  PAYMENTS_LIST: (filters?: object) =>
+    filters ? [QUERY_KEY_BASE.PAYMENTS, filters] : [QUERY_KEY_BASE.PAYMENTS],
+  PAYMENT: (id: number) => [QUERY_KEY_BASE.PAYMENTS, id] as const,
+  PAYMENT_SUMMARY: [QUERY_KEY_BASE.PAYMENT_SUMMARY] as const,
+  PAYMENT_SUMMARY_RANGE: (fromDate?: string, toDate?: string) =>
+    [QUERY_KEY_BASE.PAYMENT_SUMMARY, fromDate, toDate],
+  PAYMENT_CATEGORIES: [QUERY_KEY_BASE.PAYMENT_CATEGORIES] as const,
+
   // Inventory Logs
-  INVENTORY_LOGS: ['inventoryLogs'] as const,
-  PRODUCT_LOGS: (productId: number) => ['inventoryLogs', 'product', productId] as const,
-  CONTAINER_LOGS: (containerId: number) => ['inventoryLogs', 'container', containerId] as const,
-  
+  INVENTORY_LOGS: [QUERY_KEY_BASE.INVENTORY_LOGS] as const,
+  PRODUCT_LOGS: (productId: number) =>
+    [QUERY_KEY_BASE.INVENTORY_LOGS, QUERY_KEY_BASE.PRODUCT, productId] as const,
+  CONTAINER_LOGS: (containerId: number) =>
+    [QUERY_KEY_BASE.INVENTORY_LOGS, QUERY_KEY_BASE.CONTAINER, containerId] as const,
+
   // Dashboard
-  DASHBOARD: ['dashboard'] as const,
-  
+  DASHBOARD: [QUERY_KEY_BASE.DASHBOARD] as const,
+
+  // Settings
+  SETTINGS: [QUERY_KEY_BASE.SETTINGS] as const,
+
   // Drafts
-  DRAFTS: ['drafts'] as const,
-  DRAFT: (id: number) => ['drafts', id] as const,
-} as const;
+  DRAFTS: [QUERY_KEY_BASE.DRAFTS] as const,
+  DRAFTS_LIST: (type?: 'sale' | 'purchase') =>
+    type ? [QUERY_KEY_BASE.DRAFTS, type] : [QUERY_KEY_BASE.DRAFTS],
+  DRAFT: (id: number) => [QUERY_KEY_BASE.DRAFTS, id] as const,
+  DRAFT_COMPLETE: (id: number) => [QUERY_KEY_BASE.DRAFTS, id, QUERY_KEY_BASE.COMPLETE],
+};
 
 // User Roles
 export const USER_ROLES = {

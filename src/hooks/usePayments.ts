@@ -8,12 +8,8 @@ import { useNotificationStore } from '../stores/notificationStore';
  * Hook to get all payments with optional filters
  */
 export const usePayments = (filters?: PaymentFilters) => {
-  const queryKey = filters 
-    ? [...QUERY_KEYS.PAYMENTS, filters] 
-    : QUERY_KEYS.PAYMENTS;
-
   return useQuery({
-    queryKey,
+    queryKey: QUERY_KEYS.PAYMENTS_LIST(filters),
     queryFn: () => paymentsApi.getAll(filters),
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnMount: false,
@@ -38,7 +34,7 @@ export const usePayment = (id: number) => {
  */
 export const usePaymentSummary = (fromDate?: string, toDate?: string) => {
   return useQuery({
-    queryKey: [...QUERY_KEYS.PAYMENT_SUMMARY, fromDate, toDate],
+    queryKey: QUERY_KEYS.PAYMENT_SUMMARY_RANGE(fromDate, toDate),
     queryFn: () => paymentsApi.getSummary(fromDate, toDate),
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,

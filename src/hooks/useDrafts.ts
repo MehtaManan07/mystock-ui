@@ -8,7 +8,7 @@ import { useNotificationStore } from '../stores/notificationStore';
  */
 export const useDrafts = (type?: 'sale' | 'purchase') => {
   return useQuery({
-    queryKey: type ? [...QUERY_KEYS.DRAFTS, type] : QUERY_KEYS.DRAFTS,
+    queryKey: QUERY_KEYS.DRAFTS_LIST(type),
     queryFn: () => draftsApi.getAll(type),
   });
 };
@@ -79,7 +79,7 @@ export const useCompleteDraft = () => {
 
   return async (id: number): Promise<CompleteDraft> => {
     return queryClient.fetchQuery({
-      queryKey: [...QUERY_KEYS.DRAFT(id), 'complete'],
+      queryKey: QUERY_KEYS.DRAFT_COMPLETE(id),
       queryFn: () => draftsApi.getComplete(id),
     });
   };

@@ -20,7 +20,7 @@ import {
 import { useProduct, useProducts, useUpdateProduct, useDeleteProduct, useUploadProductImages, useCopyProductImages, useDeleteProductImage } from '../../hooks/useProducts';
 import { useContacts } from '../../hooks/useContacts';
 import { useCreateVendorSku, useUpdateVendorSku, useDeleteVendorSku } from '../../hooks/useVendorSkus';
-import type { CreateProductDto, UpdateProductDto, CreateVendorSkuDto, UpdateVendorSkuDto } from '../../types';
+import type { CreateProductDto, UpdateProductDto } from '../../types';
 
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

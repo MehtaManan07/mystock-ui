@@ -1,24 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { transactionsApi } from '../api/transactions.api';
 import { QUERY_KEYS } from '../constants';
-import type { 
-  Transaction, 
-  CreateTransactionDto, 
-  CreatePaymentDto, 
-  TransactionFilters 
+import type {
+  Transaction,
+  CreateTransactionDto,
+  CreatePaymentDto,
+  TransactionFilters
 } from '../types';
+import { useNotificationStore } from '../stores/notificationStore';
 
 /**
  * Hook to get all transactions with optional filters
  */
 export const useTransactions = (filters?: TransactionFilters) => {
-  // Create a stable query key based on filters
-  const queryKey = filters 
-    ? [...QUERY_KEYS.TRANSACTIONS, filters] 
-    : QUERY_KEYS.TRANSACTIONS;
-
   return useQuery({
-    queryKey,
+    queryKey: QUERY_KEYS.TRANSACTIONS_LIST(filters),
     queryFn: () => transactionsApi.getAll(filters),
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnMount: false,
@@ -43,47 +39,13 @@ export const useTransaction = (id: number) => {
  */
 export const useCreateSale = () => {
   const queryClient = useQueryClient();
+  const { success, error } = useNotificationStore();
 
   return useMutation({
     mutationFn: (data: CreateTransactionDto) => transactionsApi.createSale(data),
     onSuccess: (newTransaction) => {
-      // Invalidate transactions list
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TRANSACTIONS });
-      
-      // Invalidate contact (balance changed)
-      queryClient.invalidateQueries({ 
-        queryKey: QUERY_KEYS.CONTACT(newTransaction.contact.id) 
-      });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONTACTS });
-      
-      // Invalidate inventory (stock changed)
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.INVENTORY_ANALYTICS });
-      newTransaction.items.forEach((item) => {
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.PRODUCT(item.product.id)
-        });
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.PRODUCT_CONTAINERS(item.product.id)
-        });
-        if (item.container) {
-          queryClient.invalidateQueries({
-            queryKey: QUERY_KEYS.CONTAINER(item.container.id)
-          });
-        }
-      });
-    },
-  });
-};
+      success('Sale recorded successfully');
 
-/**
- * Hook to create a purchase transaction
- */
-export const useCreatePurchase = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: CreateTransactionDto) => transactionsApi.createPurchase(data),
-    onSuccess: (newTransaction) => {
       // Invalidate transactions list
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TRANSACTIONS });
 
@@ -109,6 +71,52 @@ export const useCreatePurchase = () => {
         }
       });
     },
+    onError: (err) => {
+      error(`Failed to record sale: ${(err as Error).message || 'Unknown error'}`);
+    },
+  });
+};
+
+/**
+ * Hook to create a purchase transaction
+ */
+export const useCreatePurchase = () => {
+  const queryClient = useQueryClient();
+  const { success, error } = useNotificationStore();
+
+  return useMutation({
+    mutationFn: (data: CreateTransactionDto) => transactionsApi.createPurchase(data),
+    onSuccess: (newTransaction) => {
+      success('Purchase recorded successfully');
+
+      // Invalidate transactions list
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TRANSACTIONS });
+
+      // Invalidate contact (balance changed)
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CONTACT(newTransaction.contact.id)
+      });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONTACTS });
+
+      // Invalidate inventory (stock changed)
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.INVENTORY_ANALYTICS });
+      newTransaction.items.forEach((item) => {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PRODUCT(item.product.id)
+        });
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PRODUCT_CONTAINERS(item.product.id)
+        });
+        if (item.container) {
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.CONTAINER(item.container.id)
+          });
+        }
+      });
+    },
+    onError: (err) => {
+      error(`Failed to record purchase: ${(err as Error).message || 'Unknown error'}`);
+    },
   });
 };
 
@@ -117,12 +125,13 @@ export const useCreatePurchase = () => {
  */
 export const useDeleteTransaction = () => {
   const queryClient = useQueryClient();
+  const { success, error } = useNotificationStore();
 
   return useMutation({
     mutationFn: (id: number) => transactionsApi.delete(id),
     onMutate: async (deletedId) => {
       await queryClient.cancelQueries({ queryKey: QUERY_KEYS.TRANSACTIONS });
-      
+
       const previousTransactions = queryClient.getQueryData<Transaction[]>(
         QUERY_KEYS.TRANSACTIONS
       );
@@ -135,14 +144,16 @@ export const useDeleteTransaction = () => {
       return { previousTransactions };
     },
     onSuccess: () => {
+      success('Transaction deleted successfully');
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TRANSACTIONS });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONTACTS });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.INVENTORY_ANALYTICS });
     },
-    onError: (_, __, context) => {
+    onError: (err, __, context) => {
       if (context?.previousTransactions) {
         queryClient.setQueryData(QUERY_KEYS.TRANSACTIONS, context.previousTransactions);
       }
+      error(`Failed to delete transaction: ${(err as Error).message || 'Unknown error'}`);
     },
   });
 };

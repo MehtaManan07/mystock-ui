@@ -1,8 +1,11 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { InfiniteData } from '@tanstack/react-query';
 import { containersApi } from '../api/containers.api';
 import { QUERY_KEYS } from '../constants';
-import type { CreateContainerDto, UpdateContainerDto } from '../types';
+import type { Container, CreateContainerDto, UpdateContainerDto, PaginatedResponse } from '../types';
 import { useNotificationStore } from '../stores/notificationStore';
+
+const INFINITE_FILTER = { queryKey: QUERY_KEYS.CONTAINERS_INFINITE() };
 
 /**
  * Hook to fetch all containers (kept for backward compatibility)
@@ -11,9 +14,7 @@ export const useContainers = (search?: string) => {
   const normalizedSearch = search?.trim() || undefined;
 
   return useQuery({
-    queryKey: normalizedSearch
-      ? [...QUERY_KEYS.CONTAINERS, normalizedSearch]
-      : QUERY_KEYS.CONTAINERS,
+    queryKey: QUERY_KEYS.CONTAINERS_LIST(normalizedSearch),
     queryFn: () => containersApi.getAll(normalizedSearch),
   });
 };
@@ -25,9 +26,7 @@ export const useContainersInfinite = (search?: string) => {
   const normalizedSearch = search?.trim() || undefined;
 
   return useInfiniteQuery({
-    queryKey: normalizedSearch
-      ? [...QUERY_KEYS.CONTAINERS, 'infinite', normalizedSearch]
-      : [...QUERY_KEYS.CONTAINERS, 'infinite'],
+    queryKey: QUERY_KEYS.CONTAINERS_INFINITE(normalizedSearch),
 
     queryFn: ({ pageParam = 1 }) =>
       containersApi.getPaginated(pageParam, 25, normalizedSearch),
@@ -54,7 +53,6 @@ export const useContainer = (id: number) => {
 
 /**
  * Hook to create a new container
- * Invalidates infinite scroll cache
  */
 export const useCreateContainer = () => {
   const queryClient = useQueryClient();
@@ -63,16 +61,71 @@ export const useCreateContainer = () => {
   return useMutation({
     mutationFn: (data: CreateContainerDto) => containersApi.create(data),
 
-    onSuccess: (serverContainer) => {
-      success(`Container "${serverContainer.name}" created successfully`);
+    onMutate: async (newData) => {
+      await queryClient.cancelQueries(INFINITE_FILTER);
 
-      // Invalidate infinite scroll queries to trigger refetch
-      queryClient.invalidateQueries({
-        queryKey: [...QUERY_KEYS.CONTAINERS, 'infinite'],
-      });
+      const previousQueriesData = queryClient.getQueriesData<InfiniteData<PaginatedResponse<Container>>>(INFINITE_FILTER);
+
+      const tempId = Date.now();
+      const optimisticContainer: Container = {
+        id: tempId,
+        name: newData.name,
+        type: newData.type,
+        productCount: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        deleted_at: null,
+      };
+
+      queryClient.setQueriesData<InfiniteData<PaginatedResponse<Container>>>(
+        INFINITE_FILTER,
+        (old) => {
+          if (!old) return old;
+          const firstPage = old.pages[0];
+          return {
+            ...old,
+            pages: [
+              {
+                ...firstPage,
+                items: [optimisticContainer, ...firstPage.items],
+                total: firstPage.total + 1,
+              },
+              ...old.pages.slice(1),
+            ],
+          };
+        }
+      );
+
+      return { previousQueriesData, tempId };
     },
 
-    onError: (err) => {
+    onSuccess: (serverContainer, _, context) => {
+      success(`Container "${serverContainer.name}" created successfully`);
+
+      // Replace optimistic entry with real server data
+      queryClient.setQueriesData<InfiniteData<PaginatedResponse<Container>>>(
+        INFINITE_FILTER,
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.map((c) =>
+                c.id === context?.tempId ? serverContainer : c
+              ),
+            })),
+          };
+        }
+      );
+    },
+
+    onError: (err, _, context) => {
+      if (context?.previousQueriesData) {
+        context.previousQueriesData.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
       error(`Failed to create container: ${(err as Error).message || 'Unknown error'}`);
     },
   });
@@ -80,7 +133,6 @@ export const useCreateContainer = () => {
 
 /**
  * Hook to update a container
- * Invalidates infinite scroll cache
  */
 export const useUpdateContainer = () => {
   const queryClient = useQueryClient();
@@ -90,21 +142,59 @@ export const useUpdateContainer = () => {
     mutationFn: ({ id, data }: { id: number; data: UpdateContainerDto }) =>
       containersApi.update(id, data),
 
-    onSuccess: (serverContainer, { id }) => {
-      success(`Container updated successfully ${serverContainer.name}`);
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries(INFINITE_FILTER);
 
-      // Invalidate infinite scroll queries
-      queryClient.invalidateQueries({
-        queryKey: [...QUERY_KEYS.CONTAINERS, 'infinite'],
-      });
+      const previousQueriesData = queryClient.getQueriesData<InfiniteData<PaginatedResponse<Container>>>(INFINITE_FILTER);
 
-      // Invalidate detail view
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.CONTAINER(id),
-      });
+      queryClient.setQueriesData<InfiniteData<PaginatedResponse<Container>>>(
+        INFINITE_FILTER,
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.map((c) =>
+                c.id === id ? { ...c, ...data } : c
+              ),
+            })),
+          };
+        }
+      );
+
+      return { previousQueriesData };
     },
 
-    onError: (err) => {
+    onSuccess: (serverContainer, { id }) => {
+      success(`Container "${serverContainer.name}" updated successfully`);
+
+      // Update with confirmed server data
+      queryClient.setQueriesData<InfiniteData<PaginatedResponse<Container>>>(
+        INFINITE_FILTER,
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.map((c) =>
+                c.id === id ? { ...c, ...serverContainer } : c
+              ),
+            })),
+          };
+        }
+      );
+
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONTAINER(id) });
+    },
+
+    onError: (err, _, context) => {
+      if (context?.previousQueriesData) {
+        context.previousQueriesData.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
       error(`Failed to update container: ${(err as Error).message || 'Unknown error'}`);
     },
   });
@@ -112,7 +202,6 @@ export const useUpdateContainer = () => {
 
 /**
  * Hook to delete a container
- * Invalidates infinite scroll cache
  */
 export const useDeleteContainer = () => {
   const queryClient = useQueryClient();
@@ -121,16 +210,40 @@ export const useDeleteContainer = () => {
   return useMutation({
     mutationFn: (id: number) => containersApi.delete(id),
 
-    onSuccess: () => {
-      success('Container deleted successfully');
+    onMutate: async (id) => {
+      await queryClient.cancelQueries(INFINITE_FILTER);
 
-      // Invalidate infinite scroll queries
-      queryClient.invalidateQueries({
-        queryKey: [...QUERY_KEYS.CONTAINERS, 'infinite'],
-      });
+      const previousQueriesData = queryClient.getQueriesData<InfiniteData<PaginatedResponse<Container>>>(INFINITE_FILTER);
+
+      queryClient.setQueriesData<InfiniteData<PaginatedResponse<Container>>>(
+        INFINITE_FILTER,
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.filter((c) => c.id !== id),
+              total: Math.max(0, page.total - 1),
+            })),
+          };
+        }
+      );
+
+      return { previousQueriesData };
     },
 
-    onError: (err) => {
+    onSuccess: () => {
+      success('Container deleted successfully');
+      queryClient.invalidateQueries(INFINITE_FILTER);
+    },
+
+    onError: (err, _, context) => {
+      if (context?.previousQueriesData) {
+        context.previousQueriesData.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
       error(`Failed to delete container: ${(err as Error).message || 'Unknown error'}`);
     },
   });
@@ -138,7 +251,6 @@ export const useDeleteContainer = () => {
 
 /**
  * Hook to create multiple containers in bulk
- * Invalidates infinite scroll cache
  */
 export const useCreateContainersBulk = () => {
   const queryClient = useQueryClient();
@@ -151,9 +263,7 @@ export const useCreateContainersBulk = () => {
       success(`Successfully created ${serverContainers.length} container${serverContainers.length !== 1 ? 's' : ''}`);
 
       // Invalidate infinite scroll queries
-      queryClient.invalidateQueries({
-        queryKey: [...QUERY_KEYS.CONTAINERS, 'infinite'],
-      });
+      queryClient.invalidateQueries(INFINITE_FILTER);
     },
 
     onError: (err) => {

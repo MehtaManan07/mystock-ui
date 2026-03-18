@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { containerProductsApi } from '../api/containerProducts.api';
 import { QUERY_KEYS } from '../constants';
-import type { SetProductsDto, ContainerProduct } from '../types';
+import type { SetProductsDto, ContainerProduct, ContainerDetail } from '../types';
+import { useNotificationStore } from '../stores/notificationStore';
 
 /**
  * Hook to get all products in a specific container
@@ -49,7 +50,7 @@ export const useContainerSearch = (sku: string) => {
   const normalizedSku = sku.trim();
   
   return useQuery({
-    queryKey: normalizedSku ? ['containerSearch', normalizedSku] : ['containerSearch'],
+    queryKey: QUERY_KEYS.CONTAINER_SEARCH(normalizedSku || undefined),
     queryFn: () => containerProductsApi.searchBySku(normalizedSku),
     enabled: normalizedSku.length > 0,
     staleTime: 1000 * 60 * 5,
@@ -101,13 +102,14 @@ export const useContainersForProductsBatch = () => {
  */
 export const useSetContainerProducts = () => {
   const queryClient = useQueryClient();
+  const { success, error } = useNotificationStore();
 
   return useMutation({
     mutationFn: (data: SetProductsDto) => containerProductsApi.setProducts(data),
     onMutate: async (newData) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ 
-        queryKey: QUERY_KEYS.CONTAINER_PRODUCTS(newData.containerId) 
+      await queryClient.cancelQueries({
+        queryKey: QUERY_KEYS.CONTAINER_PRODUCTS(newData.containerId)
       });
 
       // Snapshot current data
@@ -120,14 +122,14 @@ export const useSetContainerProducts = () => {
         QUERY_KEYS.CONTAINER_PRODUCTS(newData.containerId),
         (old) => {
           if (!old) return old;
-          
+
           const updatedProducts = [...old];
-          
+
           newData.items.forEach((item) => {
             const existingIndex = updatedProducts.findIndex(
               (p) => p.product_id === item.productId
             );
-            
+
             if (item.quantity === 0) {
               // Remove if quantity is 0
               if (existingIndex >= 0) {
@@ -142,7 +144,7 @@ export const useSetContainerProducts = () => {
             }
             // Note: We can't add new products optimistically without product details
           });
-          
+
           return updatedProducts;
         }
       );
@@ -150,27 +152,47 @@ export const useSetContainerProducts = () => {
       return { previousProducts };
     },
     onSuccess: (_, variables) => {
-      // Invalidate related queries to refetch fresh data
-      queryClient.invalidateQueries({ 
-        queryKey: QUERY_KEYS.CONTAINER_PRODUCTS(variables.containerId) 
+      success('Container products updated successfully');
+
+      // Directly update the container detail cache so the page reflects changes
+      // immediately without waiting for a background refetch
+      queryClient.setQueryData<ContainerDetail>(
+        QUERY_KEYS.CONTAINER(variables.containerId),
+        (old) => {
+          if (!old) return old;
+          const updatedProducts = old.products
+            .map((cp) => {
+              const update = variables.items.find((i) => i.productId === cp.product.id);
+              if (!update) return cp;
+              if (update.quantity === 0) return null;
+              return { ...cp, quantity: update.quantity };
+            })
+            .filter((cp): cp is NonNullable<typeof cp> => cp !== null);
+          return { ...old, products: updatedProducts };
+        }
+      );
+
+      // Invalidate for background sync to pick up any server-side changes
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CONTAINER_PRODUCTS(variables.containerId)
       });
-      queryClient.invalidateQueries({ 
-        queryKey: QUERY_KEYS.CONTAINER(variables.containerId) 
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CONTAINER(variables.containerId)
       });
-      queryClient.invalidateQueries({ 
-        queryKey: QUERY_KEYS.INVENTORY_ANALYTICS 
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.INVENTORY_ANALYTICS
       });
-      
+
       // Invalidate product-related queries for affected products
       variables.items.forEach((item) => {
-        queryClient.invalidateQueries({ 
-          queryKey: QUERY_KEYS.PRODUCT_CONTAINERS(item.productId) 
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PRODUCT_CONTAINERS(item.productId)
         });
-        queryClient.invalidateQueries({ 
-          queryKey: QUERY_KEYS.PRODUCT_TOTAL_QTY(item.productId) 
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PRODUCT_TOTAL_QTY(item.productId)
         });
-        queryClient.invalidateQueries({ 
-          queryKey: QUERY_KEYS.PRODUCT(item.productId) 
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PRODUCT(item.productId)
         });
       });
     },
@@ -182,6 +204,7 @@ export const useSetContainerProducts = () => {
           context.previousProducts
         );
       }
+      error('Failed to update container products. Please try again.');
     },
   });
 };

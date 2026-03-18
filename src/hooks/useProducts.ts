@@ -1,8 +1,11 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { InfiniteData } from '@tanstack/react-query';
 import { productsApi } from '../api/products.api';
 import { QUERY_KEYS } from '../constants';
-import type { CreateProductDto, UpdateProductDto, Product, ProductImage } from '../types';
+import type { CreateProductDto, UpdateProductDto, Product, ProductImage, PaginatedResponse } from '../types';
 import { useNotificationStore } from '../stores/notificationStore';
+
+const INFINITE_FILTER = { queryKey: QUERY_KEYS.PRODUCTS_INFINITE() };
 
 /**
  * Hook to fetch all products (kept for backward compatibility)
@@ -11,9 +14,7 @@ export const useProducts = (search?: string) => {
   const normalizedSearch = search?.trim() || undefined;
 
   return useQuery({
-    queryKey: normalizedSearch
-      ? [...QUERY_KEYS.PRODUCTS, normalizedSearch]
-      : QUERY_KEYS.PRODUCTS,
+    queryKey: QUERY_KEYS.PRODUCTS_LIST(normalizedSearch),
     queryFn: () => productsApi.getAll(normalizedSearch),
   });
 };
@@ -25,9 +26,7 @@ export const useProductsInfinite = (search?: string) => {
   const normalizedSearch = search?.trim() || undefined;
 
   return useInfiniteQuery({
-    queryKey: normalizedSearch
-      ? [...QUERY_KEYS.PRODUCTS, 'infinite', normalizedSearch]
-      : [...QUERY_KEYS.PRODUCTS, 'infinite'],
+    queryKey: QUERY_KEYS.PRODUCTS_INFINITE(normalizedSearch),
 
     queryFn: ({ pageParam = 1 }) =>
       productsApi.getPaginated(pageParam, 25, normalizedSearch),
@@ -54,7 +53,6 @@ export const useProduct = (id: number) => {
 
 /**
  * Hook to create a new product
- * Invalidates infinite scroll cache
  */
 export const useCreateProduct = () => {
   const queryClient = useQueryClient();
@@ -63,16 +61,81 @@ export const useCreateProduct = () => {
   return useMutation({
     mutationFn: (data: CreateProductDto) => productsApi.create(data),
 
-    onSuccess: (serverProduct) => {
-      success(`Product "${serverProduct.name}" created successfully`);
+    onMutate: async (newData) => {
+      await queryClient.cancelQueries(INFINITE_FILTER);
 
-      // Invalidate infinite scroll queries to trigger refetch
-      queryClient.invalidateQueries({
-        queryKey: [...QUERY_KEYS.PRODUCTS, 'infinite'],
-      });
+      const previousQueriesData = queryClient.getQueriesData<InfiniteData<PaginatedResponse<Product>>>(INFINITE_FILTER);
+
+      const tempId = Date.now();
+      const optimisticProduct: Product = {
+        id: tempId,
+        name: newData.name,
+        display_name: newData.display_name ?? null,
+        size: newData.size,
+        packing: newData.packing,
+        company_sku: newData.company_sku ?? null,
+        default_sale_price: newData.default_sale_price ?? null,
+        default_purchase_price: newData.default_purchase_price ?? null,
+        description: newData.description ?? null,
+        mrp: newData.mrp ?? null,
+        tags: newData.tags ?? null,
+        product_type: newData.product_type ?? null,
+        dimensions: newData.dimensions ?? null,
+        totalQuantity: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        deleted_at: null,
+      };
+
+      queryClient.setQueriesData<InfiniteData<PaginatedResponse<Product>>>(
+        INFINITE_FILTER,
+        (old) => {
+          if (!old) return old;
+          const firstPage = old.pages[0];
+          return {
+            ...old,
+            pages: [
+              {
+                ...firstPage,
+                items: [optimisticProduct, ...firstPage.items],
+                total: firstPage.total + 1,
+              },
+              ...old.pages.slice(1),
+            ],
+          };
+        }
+      );
+
+      return { previousQueriesData, tempId };
     },
 
-    onError: (err) => {
+    onSuccess: (serverProduct, _, context) => {
+      success(`Product "${serverProduct.name}" created successfully`);
+
+      // Replace optimistic entry with real server data
+      queryClient.setQueriesData<InfiniteData<PaginatedResponse<Product>>>(
+        INFINITE_FILTER,
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.map((p) =>
+                p.id === context?.tempId ? serverProduct : p
+              ),
+            })),
+          };
+        }
+      );
+    },
+
+    onError: (err, _, context) => {
+      if (context?.previousQueriesData) {
+        context.previousQueriesData.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
       error(`Failed to create product: ${(err as Error).message || 'Unknown error'}`);
     },
   });
@@ -80,7 +143,6 @@ export const useCreateProduct = () => {
 
 /**
  * Hook to update a product
- * Invalidates infinite scroll cache
  */
 export const useUpdateProduct = () => {
   const queryClient = useQueryClient();
@@ -90,21 +152,59 @@ export const useUpdateProduct = () => {
     mutationFn: ({ id, data }: { id: number; data: UpdateProductDto }) =>
       productsApi.update(id, data),
 
-    onSuccess: (serverProduct, { id }) => {
-      success(`Product updated successfully ${serverProduct.name}`);
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries(INFINITE_FILTER);
 
-      // Invalidate infinite scroll queries
-      queryClient.invalidateQueries({
-        queryKey: [...QUERY_KEYS.PRODUCTS, 'infinite'],
-      });
+      const previousQueriesData = queryClient.getQueriesData<InfiniteData<PaginatedResponse<Product>>>(INFINITE_FILTER);
 
-      // Invalidate detail view
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.PRODUCT(id),
-      });
+      queryClient.setQueriesData<InfiniteData<PaginatedResponse<Product>>>(
+        INFINITE_FILTER,
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.map((p) =>
+                p.id === id ? { ...p, ...data } : p
+              ),
+            })),
+          };
+        }
+      );
+
+      return { previousQueriesData };
     },
 
-    onError: (err) => {
+    onSuccess: (serverProduct, { id }) => {
+      success(`Product "${serverProduct.name}" updated successfully`);
+
+      // Update with confirmed server data
+      queryClient.setQueriesData<InfiniteData<PaginatedResponse<Product>>>(
+        INFINITE_FILTER,
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.map((p) =>
+                p.id === id ? { ...p, ...serverProduct } : p
+              ),
+            })),
+          };
+        }
+      );
+
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PRODUCT(id) });
+    },
+
+    onError: (err, _, context) => {
+      if (context?.previousQueriesData) {
+        context.previousQueriesData.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
       error(`Failed to update product: ${(err as Error).message || 'Unknown error'}`);
     },
   });
@@ -112,7 +212,6 @@ export const useUpdateProduct = () => {
 
 /**
  * Hook to delete a product
- * Invalidates infinite scroll cache
  */
 export const useDeleteProduct = () => {
   const queryClient = useQueryClient();
@@ -121,16 +220,40 @@ export const useDeleteProduct = () => {
   return useMutation({
     mutationFn: (id: number) => productsApi.delete(id),
 
-    onSuccess: () => {
-      success('Product deleted successfully');
+    onMutate: async (id) => {
+      await queryClient.cancelQueries(INFINITE_FILTER);
 
-      // Invalidate infinite scroll queries
-      queryClient.invalidateQueries({
-        queryKey: [...QUERY_KEYS.PRODUCTS, 'infinite'],
-      });
+      const previousQueriesData = queryClient.getQueriesData<InfiniteData<PaginatedResponse<Product>>>(INFINITE_FILTER);
+
+      queryClient.setQueriesData<InfiniteData<PaginatedResponse<Product>>>(
+        INFINITE_FILTER,
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.filter((p) => p.id !== id),
+              total: Math.max(0, page.total - 1),
+            })),
+          };
+        }
+      );
+
+      return { previousQueriesData };
     },
 
-    onError: (err) => {
+    onSuccess: () => {
+      success('Product deleted successfully');
+      queryClient.invalidateQueries(INFINITE_FILTER);
+    },
+
+    onError: (err, _, context) => {
+      if (context?.previousQueriesData) {
+        context.previousQueriesData.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
       error(`Failed to delete product: ${(err as Error).message || 'Unknown error'}`);
     },
   });
@@ -138,7 +261,6 @@ export const useDeleteProduct = () => {
 
 /**
  * Hook to create multiple products in bulk
- * Invalidates infinite scroll cache
  */
 export const useCreateProductsBulk = () => {
   const queryClient = useQueryClient();
@@ -146,9 +268,7 @@ export const useCreateProductsBulk = () => {
   return useMutation({
     mutationFn: (data: CreateProductDto[]) => productsApi.createBulk(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [...QUERY_KEYS.PRODUCTS, 'infinite'],
-      });
+      queryClient.invalidateQueries(INFINITE_FILTER);
     },
   });
 };
@@ -218,7 +338,7 @@ export const useProductLookup = () => {
   const lookupBySkus = async (skus: string[]): Promise<Map<string, Product | null>> => {
     if (skus.length === 0) return new Map();
     const products = await queryClient.fetchQuery({
-      queryKey: [...QUERY_KEYS.PRODUCTS, 'batch', skus.slice().sort().join(',')],
+      queryKey: QUERY_KEYS.PRODUCTS_BATCH(skus),
       queryFn: () => productsApi.lookupBySkus(skus),
       staleTime: 1000 * 60 * 5,
     });
@@ -232,7 +352,7 @@ export const useProductLookup = () => {
 
   const lookupBySku = async (sku: string): Promise<Product | null> => {
     const results = await queryClient.fetchQuery({
-      queryKey: [...QUERY_KEYS.PRODUCTS, sku],
+      queryKey: QUERY_KEYS.PRODUCT_BY_SKU(sku),
       queryFn: () => productsApi.getAll(sku),
       staleTime: 1000 * 60 * 5,
     });
