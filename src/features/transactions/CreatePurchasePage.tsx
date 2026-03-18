@@ -618,7 +618,7 @@ export const CreatePurchasePage: React.FC = () => {
 
                 <Box>
                   <TextField
-                    label={taxType === 'cgst_sgst' ? 'CGST + SGST %' : 'IGST %'}
+                    label="GST %"
                     type="number"
                     size="small"
                     fullWidth
