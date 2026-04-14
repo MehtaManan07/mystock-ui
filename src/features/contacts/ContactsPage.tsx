@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUrlParam } from '../../hooks/useUrlFilters';
 import {
@@ -11,6 +11,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Stack,
+  CircularProgress,
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -28,7 +29,7 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { ResponsiveTable } from '../../components/common/ResponsiveTable';
 import { ContactFormDialog } from './components/ContactFormDialog';
-import { useContacts, useCreateContact, useUpdateContact, useDeleteContact } from '../../hooks/useContacts';
+import { useContactsInfinite, useCreateContact, useUpdateContact, useDeleteContact } from '../../hooks/useContacts';
 import { CONTACT_TYPES, type ContactType } from '../../constants';
 import type { Contact, CreateContactDto, UpdateContactDto, ContactFilters } from '../../types';
 
@@ -53,12 +54,43 @@ export const ContactsPage: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contactToDelete, setContactToDelete] = useState<Contact | null>(null);
 
-  // Data fetching
-  const { data: contacts, isLoading, isFetching, isError, refetch } = useContacts(filters);
-  
-  // Only show full loading on initial load (no data yet)
-  const showFullLoading = isLoading && !contacts;
-  
+  // Infinite scroll ref
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  // Data fetching with infinite scroll
+  const {
+    data,
+    isLoading,
+    isFetching,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    isError,
+    refetch,
+  } = useContactsInfinite(filters);
+
+  // Flatten all pages into single array for rendering
+  const contacts = data?.pages ? data.pages.flatMap((page) => page?.items ?? []) : [];
+  const totalCount = data?.pages?.[0]?.total ?? 0;
+  const showFullLoading = isLoading && !data;
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    const currentTarget = observerTarget.current;
+    if (currentTarget) observer.observe(currentTarget);
+    return () => {
+      if (currentTarget) observer.unobserve(currentTarget);
+    };
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
   // Mutations
   const createMutation = useCreateContact();
   const updateMutation = useUpdateContact();
@@ -280,16 +312,36 @@ export const ContactsPage: React.FC = () => {
         />
       );
     }
-    
+
     return (
-      <ResponsiveTable
-        columns={columns}
-        data={contacts}
-        keyExtractor={(contact) => contact.id.toString()}
-        onRowClick={handleViewContact}
-        getRowHref={(contact) => `/contacts/${contact.id}`}
-        emptyMessage="No contacts found"
-      />
+      <>
+        <ResponsiveTable
+          columns={columns}
+          data={contacts}
+          keyExtractor={(contact) => contact.id.toString()}
+          onRowClick={handleViewContact}
+          getRowHref={(contact) => `/contacts/${contact.id}`}
+          emptyMessage="No contacts found"
+        />
+
+        {/* Infinite scroll trigger and loading indicator */}
+        <Box sx={{ p: 2, textAlign: 'center' }}>
+          <div ref={observerTarget} style={{ height: '20px' }} />
+          {isFetchingNextPage && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
+              <CircularProgress size={24} />
+              <Typography variant="body2" color="text.secondary">
+                Loading more contacts...
+              </Typography>
+            </Box>
+          )}
+          {!hasNextPage && contacts.length > 0 && (
+            <Typography variant="caption" color="text.secondary">
+              All contacts loaded ({totalCount} total)
+            </Typography>
+          )}
+        </Box>
+      </>
     );
   };
 
@@ -297,7 +349,7 @@ export const ContactsPage: React.FC = () => {
     <Box>
       <PageHeader
         title="Contacts"
-        subtitle={contacts ? `${contacts.length} contacts` : 'Manage your customers and suppliers'}
+        subtitle={totalCount > 0 ? `${totalCount} contacts (showing ${contacts.length})` : 'Manage your customers and suppliers'}
         actionLabel="Add Contact"
         onAction={handleOpenCreateDialog}
       />
@@ -342,7 +394,7 @@ export const ContactsPage: React.FC = () => {
           <ToggleButton value="negative" sx={{ flex: { xs: 1, sm: 'initial' } }}>Payables</ToggleButton>
         </ToggleButtonGroup>
         
-        {isFetching && !showFullLoading && (
+        {isFetching && !isFetchingNextPage && !showFullLoading && (
           <Typography variant="caption" color="text.secondary" sx={{ alignSelf: 'center' }}>
             Searching...
           </Typography>

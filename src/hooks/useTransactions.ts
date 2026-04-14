@@ -1,11 +1,12 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { transactionsApi } from '../api/transactions.api';
 import { QUERY_KEYS } from '../constants';
 import type {
   Transaction,
   CreateTransactionDto,
   CreatePaymentDto,
-  TransactionFilters
+  TransactionFilters,
+  PaginatedResponse,
 } from '../types';
 import { useNotificationStore } from '../stores/notificationStore';
 
@@ -18,6 +19,24 @@ export const useTransactions = (filters?: TransactionFilters) => {
     queryFn: () => transactionsApi.getAll(filters),
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnMount: false,
+  });
+};
+
+/**
+ * Hook for infinite scroll transactions list
+ */
+export const useTransactionsInfinite = (filters?: TransactionFilters) => {
+  const cleanFilters = filters ? Object.fromEntries(
+    Object.entries(filters).filter(([_, v]) => v !== undefined)
+  ) : undefined;
+
+  return useInfiniteQuery({
+    queryKey: QUERY_KEYS.TRANSACTIONS_INFINITE(cleanFilters),
+    queryFn: ({ pageParam = 1 }) =>
+      transactionsApi.getPaginated(pageParam, 25, filters),
+    getNextPageParam: (lastPage) =>
+      lastPage.has_more ? lastPage.page + 1 : undefined,
+    initialPageParam: 1,
   });
 };
 
@@ -48,6 +67,7 @@ export const useCreateSale = () => {
 
       // Invalidate transactions list
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TRANSACTIONS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TRANSACTIONS_INFINITE() });
 
       // Invalidate contact (balance changed)
       queryClient.invalidateQueries({
@@ -91,6 +111,7 @@ export const useCreatePurchase = () => {
 
       // Invalidate transactions list
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TRANSACTIONS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TRANSACTIONS_INFINITE() });
 
       // Invalidate contact (balance changed)
       queryClient.invalidateQueries({
@@ -146,6 +167,7 @@ export const useDeleteTransaction = () => {
     onSuccess: () => {
       success('Transaction deleted successfully');
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TRANSACTIONS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TRANSACTIONS_INFINITE() });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONTACTS });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.INVENTORY_ANALYTICS });
     },

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useUrlParam } from '../../hooks/useUrlFilters';
 import {
   Box,
@@ -25,13 +25,14 @@ import {
   TrendingUp as IncomeIcon,
   TrendingDown as ExpenseIcon,
 } from '@mui/icons-material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SearchInput } from '../../components/common/SearchInput';
 import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
-import { usePayments, usePaymentSummary, useDeletePayment } from '../../hooks/usePayments';
+import { usePaymentsInfinite, usePaymentSummary, useDeletePayment } from '../../hooks/usePayments';
 import { PaymentFormDialog } from './components/PaymentFormDialog';
 import type { Payment, PaymentFilters } from '../../types';
 import { PAYMENT_TYPES, type PaymentType } from '../../constants';
@@ -75,12 +76,44 @@ export const PaymentsPage: React.FC = () => {
     return f;
   }, [search, typeFilter, fromDate, toDate]);
 
-  // Data fetching
-  const { data: payments, isLoading, isFetching, isError, refetch } = usePayments(filters);
+  // Infinite scroll ref
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  // Data fetching with infinite scroll
+  const {
+    data,
+    isLoading,
+    isFetching,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    isError,
+    refetch,
+  } = usePaymentsInfinite(filters);
   const { data: summary } = usePaymentSummary(fromDate || undefined, toDate || undefined);
   const deleteMutation = useDeletePayment();
 
-  const showFullLoading = isLoading && !payments;
+  // Flatten all pages into single array for rendering
+  const payments = data?.pages ? data.pages.flatMap((page) => page?.items ?? []) : [];
+  const totalCount = data?.pages?.[0]?.total ?? 0;
+  const showFullLoading = isLoading && !data;
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    const currentTarget = observerTarget.current;
+    if (currentTarget) observer.observe(currentTarget);
+    return () => {
+      if (currentTarget) observer.unobserve(currentTarget);
+    };
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   // Handlers
   const handleOpenCreateDialog = () => {
@@ -157,95 +190,115 @@ export const PaymentsPage: React.FC = () => {
     }
 
     return (
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Date</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Category</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell>Method</TableCell>
-              <TableCell align="right">Amount</TableCell>
-              <TableCell align="center">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {payments.map((payment) => (
-              <TableRow key={payment.id} hover>
-                <TableCell>
-                  <Typography variant="body2">
-                    {formatDate(payment.payment_date)}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    icon={payment.type === 'income' ? <IncomeIcon /> : <ExpenseIcon />}
-                    label={payment.type}
-                    size="small"
-                    color={payment.type === 'income' ? 'success' : 'error'}
-                    variant="outlined"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={payment.category || 'Uncategorized'}
-                    size="small"
-                    variant="outlined"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      maxWidth: 200,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {payment.description || '-'}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
-                    {payment.payment_method.replace(/_/g, ' ')}
-                  </Typography>
-                </TableCell>
-                <TableCell align="right">
-                  <Typography
-                    variant="body2"
-                    fontWeight={600}
-                    color={payment.type === 'income' ? 'success.main' : 'error.main'}
-                  >
-                    {payment.type === 'income' ? '+' : '-'}
-                    {formatCurrency(payment.amount)}
-                  </Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Tooltip title="Edit">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleOpenEditDialog(payment)}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete">
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleOpenDeleteDialog(payment)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
+      <>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Date</TableCell>
+                <TableCell>Type</TableCell>
+                <TableCell>Category</TableCell>
+                <TableCell>Description</TableCell>
+                <TableCell>Method</TableCell>
+                <TableCell align="right">Amount</TableCell>
+                <TableCell align="center">Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {payments.map((payment) => (
+                <TableRow key={payment.id} hover>
+                  <TableCell>
+                    <Typography variant="body2">
+                      {formatDate(payment.payment_date)}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      icon={payment.type === 'income' ? <IncomeIcon /> : <ExpenseIcon />}
+                      label={payment.type}
+                      size="small"
+                      color={payment.type === 'income' ? 'success' : 'error'}
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={payment.category || 'Uncategorized'}
+                      size="small"
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        maxWidth: 200,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {payment.description || '-'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
+                      {payment.payment_method.replace(/_/g, ' ')}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="right">
+                    <Typography
+                      variant="body2"
+                      fontWeight={600}
+                      color={payment.type === 'income' ? 'success.main' : 'error.main'}
+                    >
+                      {payment.type === 'income' ? '+' : '-'}
+                      {formatCurrency(payment.amount)}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Tooltip title="Edit">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleOpenEditDialog(payment)}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleOpenDeleteDialog(payment)}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        {/* Infinite scroll trigger and loading indicator */}
+        <Box sx={{ p: 2, textAlign: 'center' }}>
+          <div ref={observerTarget} style={{ height: '20px' }} />
+          {isFetchingNextPage && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
+              <CircularProgress size={24} />
+              <Typography variant="body2" color="text.secondary">
+                Loading more payments...
+              </Typography>
+            </Box>
+          )}
+          {!hasNextPage && payments.length > 0 && (
+            <Typography variant="caption" color="text.secondary">
+              All payments loaded ({totalCount} total)
+            </Typography>
+          )}
+        </Box>
+      </>
     );
   };
 
@@ -253,7 +306,7 @@ export const PaymentsPage: React.FC = () => {
     <Box>
       <PageHeader
         title="Payments"
-        subtitle="Manage your income and expenses"
+        subtitle={totalCount > 0 ? `${totalCount} payments (showing ${payments.length})` : 'Manage your income and expenses'}
         action={
           <Button
             variant="contained"
@@ -319,7 +372,7 @@ export const PaymentsPage: React.FC = () => {
           onChange={setSearch}
           placeholder="Search by description..."
         />
-        {isFetching && !showFullLoading && (
+        {isFetching && !isFetchingNextPage && !showFullLoading && (
           <Typography variant="caption" color="text.secondary">
             Searching...
           </Typography>

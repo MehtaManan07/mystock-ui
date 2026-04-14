@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { paymentsApi } from '../api/payments.api';
 import { QUERY_KEYS } from '../constants';
-import type { Payment, CreatePaymentDto, UpdatePaymentDto, PaymentFilters } from '../types';
+import type { Payment, CreatePaymentDto, UpdatePaymentDto, PaymentFilters, PaginatedResponse } from '../types';
 import { useNotificationStore } from '../stores/notificationStore';
 
 /**
@@ -13,6 +13,24 @@ export const usePayments = (filters?: PaymentFilters) => {
     queryFn: () => paymentsApi.getAll(filters),
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnMount: false,
+  });
+};
+
+/**
+ * Hook for infinite scroll payments list
+ */
+export const usePaymentsInfinite = (filters?: PaymentFilters) => {
+  const cleanFilters = filters ? Object.fromEntries(
+    Object.entries(filters).filter(([_, v]) => v !== undefined)
+  ) : undefined;
+
+  return useInfiniteQuery({
+    queryKey: QUERY_KEYS.PAYMENTS_INFINITE(cleanFilters),
+    queryFn: ({ pageParam = 1 }) =>
+      paymentsApi.getPaginated(pageParam, 25, filters),
+    getNextPageParam: (lastPage) =>
+      lastPage.has_more ? lastPage.page + 1 : undefined,
+    initialPageParam: 1,
   });
 };
 
@@ -92,6 +110,7 @@ export const useCreatePayment = () => {
     onSuccess: () => {
       success('Payment recorded successfully');
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PAYMENTS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PAYMENTS_INFINITE() });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PAYMENT_SUMMARY });
     },
     onError: (err, _, context) => {
@@ -136,6 +155,7 @@ export const useUpdatePayment = () => {
       success('Payment updated successfully');
       queryClient.setQueryData(QUERY_KEYS.PAYMENT(updatedPayment.id), updatedPayment);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PAYMENTS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PAYMENTS_INFINITE() });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PAYMENT_SUMMARY });
     },
     onError: (err, _, context) => {
@@ -170,6 +190,7 @@ export const useDeletePayment = () => {
     onSuccess: () => {
       success('Payment deleted successfully');
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PAYMENTS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PAYMENTS_INFINITE() });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PAYMENT_SUMMARY });
     },
     onError: (err, _, context) => {

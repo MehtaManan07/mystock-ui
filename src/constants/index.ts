@@ -164,12 +164,20 @@ export const QUERY_KEYS = {
 
   // Contacts
   CONTACTS: [QUERY_KEY_BASE.CONTACTS] as const,
+  CONTACTS_INFINITE: (filters?: object) =>
+    filters
+      ? [QUERY_KEY_BASE.CONTACTS, QUERY_KEY_BASE.INFINITE, filters]
+      : [QUERY_KEY_BASE.CONTACTS, QUERY_KEY_BASE.INFINITE],
   CONTACT: (id: number) => [QUERY_KEY_BASE.CONTACTS, id] as const,
 
   // Transactions
   TRANSACTIONS: [QUERY_KEY_BASE.TRANSACTIONS] as const,
   TRANSACTIONS_LIST: (filters?: object) =>
     filters ? [QUERY_KEY_BASE.TRANSACTIONS, filters] : [QUERY_KEY_BASE.TRANSACTIONS],
+  TRANSACTIONS_INFINITE: (filters?: object) =>
+    filters
+      ? [QUERY_KEY_BASE.TRANSACTIONS, QUERY_KEY_BASE.INFINITE, filters]
+      : [QUERY_KEY_BASE.TRANSACTIONS, QUERY_KEY_BASE.INFINITE],
   TRANSACTION: (id: number) => [QUERY_KEY_BASE.TRANSACTIONS, id] as const,
   TRANSACTION_PAYMENTS: (id: number) =>
     [QUERY_KEY_BASE.TRANSACTION_PAYMENTS, id] as const,
@@ -179,6 +187,10 @@ export const QUERY_KEYS = {
   PAYMENTS: [QUERY_KEY_BASE.PAYMENTS] as const,
   PAYMENTS_LIST: (filters?: object) =>
     filters ? [QUERY_KEY_BASE.PAYMENTS, filters] : [QUERY_KEY_BASE.PAYMENTS],
+  PAYMENTS_INFINITE: (filters?: object) =>
+    filters
+      ? [QUERY_KEY_BASE.PAYMENTS, QUERY_KEY_BASE.INFINITE, filters]
+      : [QUERY_KEY_BASE.PAYMENTS, QUERY_KEY_BASE.INFINITE],
   PAYMENT: (id: number) => [QUERY_KEY_BASE.PAYMENTS, id] as const,
   PAYMENT_SUMMARY: [QUERY_KEY_BASE.PAYMENT_SUMMARY] as const,
   PAYMENT_SUMMARY_RANGE: (fromDate?: string, toDate?: string) =>

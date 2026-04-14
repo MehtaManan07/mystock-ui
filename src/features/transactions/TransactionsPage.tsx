@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUrlParam } from '../../hooks/useUrlFilters';
 import {
@@ -17,6 +17,7 @@ import {
   ListItemText,
   TextField,
   Stack,
+  CircularProgress,
 } from '@mui/material';
 import {
   Visibility as ViewIcon,
@@ -35,7 +36,7 @@ import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { ResponsiveTable } from '../../components/common/ResponsiveTable';
-import { useTransactions, useDeleteTransaction } from '../../hooks/useTransactions';
+import { useTransactionsInfinite, useDeleteTransaction } from '../../hooks/useTransactions';
 import { TRANSACTION_TYPES, PAYMENT_STATUS, type TransactionType, type PaymentStatus } from '../../constants';
 import type { Transaction, TransactionFilters } from '../../types';
 
@@ -65,12 +66,44 @@ export const TransactionsPage: React.FC = () => {
     to_date: toDate || undefined,
   };
 
-  // Data fetching
-  const { data: transactions, isLoading, isFetching, isError, refetch } = useTransactions(filters);
+  // Infinite scroll ref
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  // Data fetching with infinite scroll
+  const {
+    data,
+    isLoading,
+    isFetching,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    isError,
+    refetch,
+  } = useTransactionsInfinite(filters);
   const deleteMutation = useDeleteTransaction();
 
-  const showFullLoading = isLoading && !transactions;
+  // Flatten all pages into single array for rendering
+  const transactions = data?.pages ? data.pages.flatMap((page) => page?.items ?? []) : [];
+  const totalCount = data?.pages?.[0]?.total ?? 0;
+  const showFullLoading = isLoading && !data;
   const hasActiveFilters = search || typeFilter !== 'all' || statusFilter !== 'all' || fromDate || toDate;
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    const currentTarget = observerTarget.current;
+    if (currentTarget) observer.observe(currentTarget);
+    return () => {
+      if (currentTarget) observer.unobserve(currentTarget);
+    };
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   const formatCurrency = (value: number) => {
     return `₹${Math.abs(value).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
@@ -266,14 +299,34 @@ export const TransactionsPage: React.FC = () => {
     }
 
     return (
-      <ResponsiveTable
-        columns={columns}
-        data={transactions}
-        keyExtractor={(transaction) => transaction.id.toString()}
-        onRowClick={(transaction) => navigate(`/transactions/${transaction.id}`)}
-        getRowHref={(transaction) => `/transactions/${transaction.id}`}
-        emptyMessage="No transactions found"
-      />
+      <>
+        <ResponsiveTable
+          columns={columns}
+          data={transactions}
+          keyExtractor={(transaction) => transaction.id.toString()}
+          onRowClick={(transaction) => navigate(`/transactions/${transaction.id}`)}
+          getRowHref={(transaction) => `/transactions/${transaction.id}`}
+          emptyMessage="No transactions found"
+        />
+
+        {/* Infinite scroll trigger and loading indicator */}
+        <Box sx={{ p: 2, textAlign: 'center' }}>
+          <div ref={observerTarget} style={{ height: '20px' }} />
+          {isFetchingNextPage && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
+              <CircularProgress size={24} />
+              <Typography variant="body2" color="text.secondary">
+                Loading more transactions...
+              </Typography>
+            </Box>
+          )}
+          {!hasNextPage && transactions.length > 0 && (
+            <Typography variant="caption" color="text.secondary">
+              All transactions loaded ({totalCount} total)
+            </Typography>
+          )}
+        </Box>
+      </>
     );
   };
 
@@ -281,7 +334,7 @@ export const TransactionsPage: React.FC = () => {
     <Box>
       <PageHeader
         title="Transactions"
-        subtitle={transactions ? `${transactions.length} transactions` : 'Sales and purchases'}
+        subtitle={totalCount > 0 ? `${totalCount} transactions (showing ${transactions.length})` : 'Sales and purchases'}
       />
 
       {/* Action Button */}
@@ -381,7 +434,7 @@ export const TransactionsPage: React.FC = () => {
           sx={{ width: { xs: '100%', sm: 150 } }}
         />
 
-        {isFetching && !showFullLoading && (
+        {isFetching && !isFetchingNextPage && !showFullLoading && (
           <Typography variant="caption" color="text.secondary" sx={{ alignSelf: 'center' }}>
             Loading...
           </Typography>

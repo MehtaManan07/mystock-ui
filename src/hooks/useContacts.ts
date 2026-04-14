@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { contactsApi } from '../api/contacts.api';
 import { QUERY_KEYS, type ContactType } from '../constants';
-import type { CreateContactDto, UpdateContactDto, ContactFilters, Contact } from '../types';
+import type { CreateContactDto, UpdateContactDto, ContactFilters, Contact, PaginatedResponse } from '../types';
 
 /**
  * Hook to fetch all contacts with optional filters
@@ -23,6 +23,24 @@ export const useContacts = (filters?: ContactFilters) => {
   return useQuery({
     queryKey,
     queryFn: () => contactsApi.getAll(filters),
+  });
+};
+
+/**
+ * Hook for infinite scroll contacts list
+ */
+export const useContactsInfinite = (filters?: ContactFilters) => {
+  const cleanFilters = filters ? Object.fromEntries(
+    Object.entries(filters).filter(([_, v]) => v !== undefined)
+  ) : undefined;
+
+  return useInfiniteQuery({
+    queryKey: QUERY_KEYS.CONTACTS_INFINITE(cleanFilters),
+    queryFn: ({ pageParam = 1 }) =>
+      contactsApi.getPaginated(pageParam, 25, filters),
+    getNextPageParam: (lastPage) =>
+      lastPage.has_more ? lastPage.page + 1 : undefined,
+    initialPageParam: 1,
   });
 };
 
@@ -85,6 +103,7 @@ export const useCreateContact = () => {
         const updated = contacts.filter(c => c.id < Date.now() - 10000);
         queryClient.setQueryData<Contact[]>(QUERY_KEYS.CONTACTS, [...updated, serverContact]);
       }
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONTACTS_INFINITE() });
     },
   });
 };
@@ -136,6 +155,7 @@ export const useUpdateContact = () => {
         );
       }
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONTACT(id) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONTACTS_INFINITE() });
     },
   });
 };
@@ -164,6 +184,10 @@ export const useDeleteContact = () => {
       return { previousContacts };
     },
     
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONTACTS_INFINITE() });
+    },
+
     onError: (_err, _id, context) => {
       if (context?.previousContacts) {
         queryClient.setQueryData(QUERY_KEYS.CONTACTS, context.previousContacts);

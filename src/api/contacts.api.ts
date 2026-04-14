@@ -37,6 +37,29 @@ export const contactsApi = {
   },
 
   /**
+   * Get paginated contacts with optional filters (for infinite scroll)
+   */
+  getPaginated: async (
+    page: number = 1,
+    pageSize: number = 25,
+    filters?: ContactFilters
+  ): Promise<PaginatedResponse<Contact>> => {
+    const params: Record<string, string | string[] | number | undefined> = {
+      page,
+      page_size: pageSize,
+    };
+    if (filters?.types && filters.types.length > 0) params.types = filters.types;
+    if (filters?.balance) params.balance = filters.balance;
+    if (filters?.search) params.search = filters.search;
+
+    const response = await apiClient.get<PaginatedResponse<Contact>>(
+      API_ENDPOINTS.CONTACTS.BASE,
+      { params }
+    );
+    return response.data;
+  },
+
+  /**
    * Get single contact by ID
    */
   getById: async (id: number): Promise<Contact> => {

@@ -292,6 +292,16 @@ export const ProductsPage: React.FC = () => {
 
   // Render content for the table area
   const renderTableContent = () => {
+    // No search term — prompt user to search
+    if (!search?.trim()) {
+      return (
+        <EmptyState
+          title="Search to find products"
+          message="Enter a product name, SKU, size, or packing in the search bar above to get started."
+        />
+      );
+    }
+
     if (showFullLoading) {
       return <LoadingState message="Loading products..." />;
     }
@@ -304,9 +314,7 @@ export const ProductsPage: React.FC = () => {
       return (
         <EmptyState
           title="No products found"
-          message={search ? 'Try a different search term' : 'Add your first product to get started'}
-          actionLabel={!search ? 'Add Product' : undefined}
-          onAction={!search ? handleOpenCreateDialog : undefined}
+          message="Try a different search term"
         />
       );
     }
@@ -353,9 +361,9 @@ export const ProductsPage: React.FC = () => {
       <PageHeader
         title="Products"
         subtitle={
-          totalCount > 0
-            ? `${totalCount} products in your catalog (showing ${products.length})`
-            : 'Manage your product catalog'
+          search?.trim() && totalCount > 0
+            ? `${totalCount} results (showing ${products.length})`
+            : 'Search to browse your product catalog'
         }
         action={
           <Box sx={{ display: 'flex', gap: 1 }}>

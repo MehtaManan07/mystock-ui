@@ -42,6 +42,37 @@ export const paymentsApi = {
   },
 
   /**
+   * Get paginated payments with optional filters (for infinite scroll)
+   */
+  getPaginated: async (
+    page: number = 1,
+    pageSize: number = 25,
+    filters?: PaymentFilters
+  ): Promise<PaginatedResponse<Payment>> => {
+    const params: Record<string, string | number | boolean | undefined> = {
+      page,
+      page_size: pageSize,
+    };
+    if (filters?.type) params.type = filters.type;
+    if (filters?.category) params.category = filters.category;
+    if (filters?.payment_method) params.payment_method = filters.payment_method;
+    if (filters?.contact_id) params.contact_id = filters.contact_id;
+    if (filters?.transaction_id) params.transaction_id = filters.transaction_id;
+    if (filters?.from_date) params.from_date = filters.from_date;
+    if (filters?.to_date) params.to_date = filters.to_date;
+    if (filters?.search) params.search = filters.search;
+    if (filters?.min_amount) params.min_amount = filters.min_amount;
+    if (filters?.max_amount) params.max_amount = filters.max_amount;
+    if (filters?.manual_only) params.manual_only = filters.manual_only;
+
+    const response = await api.get<PaginatedResponse<Payment>>(
+      API_ENDPOINTS.PAYMENTS.BASE,
+      { params }
+    );
+    return response.data;
+  },
+
+  /**
    * Get a single payment by ID
    */
   getById: async (id: number): Promise<Payment> => {

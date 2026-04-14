@@ -37,6 +37,9 @@ export const useProductsInfinite = (search?: string) => {
     },
 
     initialPageParam: 1,
+
+    // Only fetch when there's a search term
+    enabled: !!normalizedSearch,
   });
 };
 

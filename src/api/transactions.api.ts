@@ -37,6 +37,32 @@ export const transactionsApi = {
   },
 
   /**
+   * Get paginated transactions with optional filters (for infinite scroll)
+   */
+  getPaginated: async (
+    page: number = 1,
+    pageSize: number = 25,
+    filters?: TransactionFilters
+  ): Promise<PaginatedResponse<Transaction>> => {
+    const params: Record<string, string | number | undefined> = {
+      page,
+      page_size: pageSize,
+    };
+    if (filters?.type) params.type = filters.type;
+    if (filters?.payment_status) params.payment_status = filters.payment_status;
+    if (filters?.contact_id) params.contact_id = filters.contact_id;
+    if (filters?.from_date) params.from_date = filters.from_date;
+    if (filters?.to_date) params.to_date = filters.to_date;
+    if (filters?.search) params.search = filters.search;
+
+    const response = await api.get<PaginatedResponse<Transaction>>(
+      API_ENDPOINTS.TRANSACTIONS.BASE,
+      { params }
+    );
+    return response.data;
+  },
+
+  /**
    * Get a single transaction by ID
    */
   getById: async (id: number): Promise<Transaction> => {
