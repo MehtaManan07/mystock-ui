@@ -6,7 +6,6 @@ import type {
   CreateTransactionDto,
   CreatePaymentDto,
   TransactionFilters,
-  PaginatedResponse,
 } from '../types';
 import { useNotificationStore } from '../stores/notificationStore';
 

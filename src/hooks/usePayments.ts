@@ -1,7 +1,7 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { paymentsApi } from '../api/payments.api';
 import { QUERY_KEYS } from '../constants';
-import type { Payment, CreatePaymentDto, UpdatePaymentDto, PaymentFilters, PaginatedResponse } from '../types';
+import type { Payment, CreatePaymentDto, UpdatePaymentDto, PaymentFilters } from '../types';
 import { useNotificationStore } from '../stores/notificationStore';
 
 /**

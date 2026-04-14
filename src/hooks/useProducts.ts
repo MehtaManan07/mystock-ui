@@ -10,12 +10,14 @@ const INFINITE_FILTER = { queryKey: QUERY_KEYS.PRODUCTS_INFINITE() };
 /**
  * Hook to fetch all products (kept for backward compatibility)
  */
-export const useProducts = (search?: string) => {
+export const useProducts = (search?: string, options?: { enabled?: boolean }) => {
   const normalizedSearch = search?.trim() || undefined;
 
   return useQuery({
     queryKey: QUERY_KEYS.PRODUCTS_LIST(normalizedSearch),
     queryFn: () => productsApi.getAll(normalizedSearch),
+    // Default: only fetch when there's a search term. Callers can override.
+    enabled: options?.enabled ?? !!normalizedSearch,
   });
 };
 

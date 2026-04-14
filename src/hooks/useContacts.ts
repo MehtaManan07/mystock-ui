@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { contactsApi } from '../api/contacts.api';
 import { QUERY_KEYS, type ContactType } from '../constants';
-import type { CreateContactDto, UpdateContactDto, ContactFilters, Contact, PaginatedResponse } from '../types';
+import type { CreateContactDto, UpdateContactDto, ContactFilters, Contact } from '../types';
 
 /**
  * Hook to fetch all contacts with optional filters

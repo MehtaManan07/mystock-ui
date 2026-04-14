@@ -48,10 +48,12 @@ export const ProductDetailPage: React.FC = () => {
   // Data fetching
   const { data: product, isLoading, isError, refetch } = useProduct(productId);
 
-  const { data: contacts } = useContacts();
-  const customers = contacts?.filter((c) => c.type === 'customer' || c.type === 'both') || [];
+  // Fetch only customers/both (for vendor SKU dialog) — filtered server-side
+  const { data: contacts } = useContacts({ types: ['customer', 'both'] });
+  const customers = contacts ?? [];
 
-  const { data: allProducts } = useProducts();
+  // Only fetch products when copy-from dialog is open (avoids loading entire catalog on page load)
+  const { data: allProducts } = useProducts(undefined, { enabled: copyFromDialogOpen });
   const otherProducts = (allProducts ?? []).filter((p) => p.id !== productId);
 
   const { data: sourceProduct } = useProduct(copyFromProductId !== '' ? Number(copyFromProductId) : 0);
