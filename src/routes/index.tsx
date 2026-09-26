@@ -25,6 +25,7 @@ const CreatePurchasePage = React.lazy(() => import('../features/transactions/Cre
 const CreateDeodapBillPage = React.lazy(() => import('../features/transactions/CreateDeodapBillPage'));
 const PaymentsPage = React.lazy(() => import('../features/payments/PaymentsPage'));
 const UsersPage = React.lazy(() => import('../features/users/UsersPage'));
+const PdfInvoicesPage = React.lazy(() => import('../features/pdf-invoices/PdfInvoicesPage'));
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -128,6 +129,12 @@ export const AppRoutes: React.FC = () => {
           </Suspense>
         } />
         
+        <Route path="/pdf-invoices" element={
+          <Suspense fallback={<LoadingState />}>
+            <PdfInvoicesPage />
+          </Suspense>
+        } />
+
         {/* Payments */}
         <Route path="/payments" element={
           <Suspense fallback={<LoadingState />}>

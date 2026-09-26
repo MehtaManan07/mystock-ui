@@ -51,6 +51,8 @@ interface LineItem {
   container: Container | null;
   quantity: number;
   unit_price: number;
+  /** Per-line GST %. null means "no rate set" — falls back to the invoice-level GST %. */
+  tax_rate: number | null;
 }
 
 export const CreatePurchasePage: React.FC = () => {
@@ -141,10 +143,40 @@ export const CreatePurchasePage: React.FC = () => {
     return items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
   }, [items]);
 
-  // Calculate tax amount from percentage
+  // A line's own GST % wins. If at least one line has one, the bill is taxed line
+  // by line and the invoice-level GST % is ignored, so a mixed-slab purchase stays
+  // correct instead of being averaged.
+  const hasPerLineRates = useMemo(
+    () => items.some(item => item.tax_rate !== null && item.tax_rate !== undefined),
+    [items]
+  );
+
+  const round2 = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
+
+  // One entry per distinct GST %, so the summary can show a real slab breakup.
+  const rateBreakdown = useMemo(() => {
+    const buckets = new Map<number, { taxable: number; tax: number }>();
+    if (!hasPerLineRates) return buckets;
+    for (const item of items) {
+      const rate = item.tax_rate ?? 0;
+      const taxable = item.quantity * item.unit_price;
+      const bucket = buckets.get(rate) ?? { taxable: 0, tax: 0 };
+      bucket.taxable += taxable;
+      bucket.tax += round2((taxable * rate) / 100);
+      buckets.set(rate, bucket);
+    }
+    return buckets;
+  }, [items, hasPerLineRates]);
+
+  // Calculate tax amount: per line when rates exist, else the invoice-level GST %
   const taxAmount = useMemo(() => {
+    if (hasPerLineRates) {
+      let total = 0;
+      for (const bucket of rateBreakdown.values()) total += bucket.tax;
+      return round2(total);
+    }
     return subtotal * (taxPercent / 100);
-  }, [subtotal, taxPercent]);
+  }, [hasPerLineRates, rateBreakdown, subtotal, taxPercent]);
 
   const totalAmount = subtotal + taxAmount - discountAmount;
 
@@ -193,6 +225,7 @@ export const CreatePurchasePage: React.FC = () => {
           unit_price: typeof item.unitPrice === 'string'
             ? parseFloat(item.unitPrice)
             : item.unitPrice,
+          tax_rate: item.product.gst_rate ?? null,
         }));
 
         setItems(loadedItems);
@@ -254,6 +287,7 @@ export const CreatePurchasePage: React.FC = () => {
           container: selectedContainer,
           quantity: newQuantity,
           unit_price: newUnitPrice,
+          tax_rate: selectedProduct.gst_rate ?? null,
         },
       ]);
     }
@@ -269,6 +303,18 @@ export const CreatePurchasePage: React.FC = () => {
   // Remove item
   const handleRemoveItem = (id: string) => {
     setItems(items.filter(i => i.id !== id));
+  };
+
+  // Change a single line's GST %. Blank clears it back to the invoice-level rate.
+  const handleChangeItemTaxRate = (id: string, raw: string) => {
+    const trimmed = raw.trim();
+    let nextRate: number | null = null;
+    if (trimmed !== '') {
+      const parsed = parseFloat(trimmed);
+      if (Number.isNaN(parsed) || parsed < 0 || parsed > 100) return;
+      nextRate = parsed;
+    }
+    setItems(items.map(i => (i.id === id ? { ...i, tax_rate: nextRate } : i)));
   };
 
   // Submit form
@@ -287,6 +333,9 @@ export const CreatePurchasePage: React.FC = () => {
       container_id: item.container!.id,
       quantity: item.quantity,
       unit_price: item.unit_price,
+      ...(item.tax_rate !== null && item.tax_rate !== undefined
+        ? { tax_rate: item.tax_rate }
+        : {}),
     }));
 
     const data: CreateTransactionDto = {
@@ -512,6 +561,7 @@ export const CreatePurchasePage: React.FC = () => {
                         <TableCell>Store In</TableCell>
                         <TableCell align="right">Qty</TableCell>
                         <TableCell align="right">Price</TableCell>
+                        <TableCell align="right">GST %</TableCell>
                         <TableCell align="right">Total</TableCell>
                         <TableCell align="center">Actions</TableCell>
                       </TableRow>
@@ -532,8 +582,24 @@ export const CreatePurchasePage: React.FC = () => {
                           </TableCell>
                           <TableCell align="right">{item.quantity}</TableCell>
                           <TableCell align="right">{formatCurrency(item.unit_price)}</TableCell>
+                          <TableCell align="right">
+                            <TextField
+                              size="small"
+                              type="number"
+                              placeholder="—"
+                              value={item.tax_rate ?? ''}
+                              onChange={(e) => handleChangeItemTaxRate(item.id, e.target.value)}
+                              inputProps={{ min: 0, max: 100, step: 0.5, style: { textAlign: 'right' } }}
+                              sx={{ width: 84 }}
+                            />
+                          </TableCell>
                           <TableCell align="right" sx={{ fontWeight: 500 }}>
-                            {formatCurrency(item.quantity * item.unit_price)}
+                            {formatCurrency(
+                              item.quantity * item.unit_price +
+                                (item.tax_rate
+                                  ? round2((item.quantity * item.unit_price * item.tax_rate) / 100)
+                                  : 0)
+                            )}
                           </TableCell>
                           <TableCell align="center">
                             <IconButton
@@ -622,19 +688,44 @@ export const CreatePurchasePage: React.FC = () => {
                     type="number"
                     size="small"
                     fullWidth
+                    disabled={hasPerLineRates}
                     value={taxPercent}
                     onChange={(e) => setTaxPercent(parseFloat(e.target.value) || 0)}
                     inputProps={{ min: 0, max: 100, step: 0.5 }}
                     InputProps={{
                       endAdornment: <Typography sx={{ ml: 0.5, color: 'text.secondary' }}>%</Typography>,
                     }}
+                    helperText={
+                      hasPerLineRates
+                        ? 'Each item is taxed at its own GST % (set in the items table)'
+                        : undefined
+                    }
                   />
-                  {taxPercent > 0 && (
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                      {taxType === 'cgst_sgst'
-                        ? `CGST: ${formatCurrency(taxAmount / 2)} + SGST: ${formatCurrency(taxAmount / 2)}`
-                        : `IGST: ${formatCurrency(taxAmount)}`}
-                    </Typography>
+                  {hasPerLineRates ? (
+                    <Box sx={{ mt: 0.5 }}>
+                      {[...rateBreakdown.entries()]
+                        .sort((a, b) => b[0] - a[0])
+                        .map(([rate, bucket]) => (
+                          <Typography
+                            key={rate}
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: 'block' }}
+                          >
+                            {taxType === 'cgst_sgst'
+                              ? `CGST ${(rate / 2).toFixed(2)}% + SGST ${(rate / 2).toFixed(2)}% on ${formatCurrency(bucket.taxable)}: ${formatCurrency(bucket.tax)}`
+                              : `IGST ${rate.toFixed(2)}% on ${formatCurrency(bucket.taxable)}: ${formatCurrency(bucket.tax)}`}
+                          </Typography>
+                        ))}
+                    </Box>
+                  ) : (
+                    taxPercent > 0 && (
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                        {taxType === 'cgst_sgst'
+                          ? `CGST: ${formatCurrency(taxAmount / 2)} + SGST: ${formatCurrency(taxAmount / 2)}`
+                          : `IGST: ${formatCurrency(taxAmount)}`}
+                      </Typography>
+                    )
                   )}
                 </Box>
 

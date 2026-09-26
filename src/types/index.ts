@@ -104,6 +104,8 @@ export interface Product extends BaseEntity {
     height: number;
     length: number;
   } | null;
+  gst_rate?: number | null;
+  hsn_code?: string | null;
   totalQuantity: number;  // Total quantity in items
 }
 
@@ -362,6 +364,8 @@ export interface CreateTransactionItemDto {
   container_id?: number;
   quantity: number;  // Quantity in items
   unit_price: number;
+  /** Total GST % for this line (e.g. 18 or 5). Falls back to the product's gst_rate. */
+  tax_rate?: number;
 }
 
 export interface CreateTransactionDto {

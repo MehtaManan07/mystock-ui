@@ -61,6 +61,10 @@ export const API_ENDPOINTS = {
     INVOICE_DOWNLOAD: (id: number) => `/transactions/${id}/invoice/download`,
   },
   // Payments
+  PDF_INVOICES: {
+    BASE: '/pdf-invoices',
+    FILE: (id: number) => `/pdf-invoices/${id}/file`,
+  },
   PAYMENTS: {
     BASE: '/payments',
     BY_ID: (id: number) => `/payments/${id}`,
@@ -108,6 +112,7 @@ export const QUERY_KEY_BASE = {
   INVENTORY_LOGS: 'inventoryLogs',
   DASHBOARD: 'dashboard',
   DRAFTS: 'drafts',
+  PDF_INVOICES: 'pdfInvoices',
   SETTINGS: 'settings',
   // Segment qualifiers (sub-keys within an entity's key hierarchy)
   INFINITE: 'infinite',
@@ -119,6 +124,7 @@ export const QUERY_KEY_BASE = {
 
 // React Query Keys
 export const QUERY_KEYS = {
+  PDF_INVOICES: [QUERY_KEY_BASE.PDF_INVOICES] as const,
   // Auth
   CURRENT_USER: [QUERY_KEY_BASE.CURRENT_USER] as const,
 

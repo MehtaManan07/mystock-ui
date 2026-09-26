@@ -26,6 +26,7 @@ import {
   Warehouse as ContainerIcon,
   People as ContactIcon,
   Receipt as TransactionIcon,
+  PictureAsPdf as PdfIcon,
   Payments as PaymentIcon,
   DarkMode as DarkModeIcon,
   LightMode as LightModeIcon,
@@ -55,6 +56,7 @@ const navItems: NavItem[] = [
   { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
   { text: 'Contacts', icon: <ContactIcon />, path: '/contacts' },
   { text: 'Transactions', icon: <TransactionIcon />, path: '/transactions' },
+  { text: 'PDF Bills', icon: <PdfIcon />, path: '/pdf-invoices' },
   { text: 'Payments', icon: <PaymentIcon />, path: '/payments' },
   { text: 'Users', icon: <UsersIcon />, path: '/users', adminOnly: true },
 ];
