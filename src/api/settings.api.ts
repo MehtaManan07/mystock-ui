@@ -9,7 +9,7 @@ export const settingsApi = {
    * Get active company settings
    */
   get: async (): Promise<CompanySettings> => {
-    const response = await apiClient.get<CompanySettings>('/api/settings');
+    const response = await apiClient.get<CompanySettings>('/api/settings/company');
     return response.data;
   },
 
@@ -17,7 +17,7 @@ export const settingsApi = {
    * Update company settings
    */
   update: async (data: UpdateCompanySettingsDto): Promise<CompanySettings> => {
-    const response = await apiClient.patch<CompanySettings>('/api/settings', data);
+    const response = await apiClient.put<CompanySettings>('/api/settings/company', data);
     return response.data;
   },
 };

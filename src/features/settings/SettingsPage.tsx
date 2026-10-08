@@ -16,7 +16,6 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorState } from '../../components/common/ErrorState';
 import { useSettings, useUpdateSettings } from '../../hooks/useSettings';
-import type { UpdateCompanySettingsDto } from '../../types';
 
 // Form data type
 interface SettingsFormData {
@@ -30,6 +29,10 @@ interface SettingsFormData {
   company_address_line3: string;
   hsn_code: string;
   terms_and_conditions: string;
+  bank_name: string;
+  bank_account_number: string;
+  bank_branch: string;
+  bank_ifsc: string;
 }
 
 // Validation schema
@@ -44,6 +47,18 @@ const settingsSchema = z.object({
   company_address_line3: z.string().max(255),
   hsn_code: z.string().max(15),
   terms_and_conditions: z.string(),
+  bank_name: z.string().trim().max(255),
+  bank_account_number: z.string().trim().max(50).regex(/^[0-9]*$/, 'Use digits only'),
+  bank_branch: z.string().trim().max(255),
+  bank_ifsc: z.string().trim().toUpperCase().regex(/^([A-Z]{4}0[A-Z0-9]{6})?$/, 'Enter a valid 11-character IFSC'),
+}).superRefine((data, context) => {
+  if (data.bank_name || data.bank_account_number || data.bank_branch || data.bank_ifsc) {
+    for (const field of ['bank_name', 'bank_account_number', 'bank_ifsc'] as const) {
+      if (!data[field]) {
+        context.addIssue({ code: 'custom', path: [field], message: 'Required when bank details are provided' });
+      }
+    }
+  }
 });
 
 export const SettingsPage: React.FC = () => {
@@ -69,6 +84,10 @@ export const SettingsPage: React.FC = () => {
       company_address_line3: '',
       hsn_code: '44111200',
       terms_and_conditions: '',
+      bank_name: '',
+      bank_account_number: '',
+      bank_branch: '',
+      bank_ifsc: '',
     },
   });
 
@@ -86,12 +105,22 @@ export const SettingsPage: React.FC = () => {
         company_address_line3: settings.company_address_line3,
         hsn_code: settings.hsn_code,
         terms_and_conditions: settings.terms_and_conditions,
+        bank_name: settings.bank_name ?? '',
+        bank_account_number: settings.bank_account_number ?? '',
+        bank_branch: settings.bank_branch ?? '',
+        bank_ifsc: settings.bank_ifsc ?? '',
       });
     }
   }, [settings, reset]);
 
   const handleFormSubmit = (data: SettingsFormData) => {
-    updateMutation.mutate(data as UpdateCompanySettingsDto);
+    updateMutation.mutate({
+      ...data,
+      bank_name: data.bank_name || null,
+      bank_account_number: data.bank_account_number || null,
+      bank_branch: data.bank_branch || null,
+      bank_ifsc: data.bank_ifsc || null,
+    });
   };
 
   if (isLoading) {
@@ -238,6 +267,59 @@ export const SettingsPage: React.FC = () => {
                       helperText={errors.terms_and_conditions?.message || 'Appears at the bottom of invoices'}
                       multiline
                       rows={4}
+                      fullWidth
+                    />
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid size={12}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Company Bank Details
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Printed on newly generated invoices. Existing archived PDFs are not changed.
+                  Leave all fields blank to omit bank details.
+                </Typography>
+                <Divider sx={{ mb: 3 }} />
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      {...register('bank_name')}
+                      label="Bank Name"
+                      error={!!errors.bank_name}
+                      helperText={errors.bank_name?.message}
+                      fullWidth
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      {...register('bank_account_number')}
+                      label="Account Number"
+                      error={!!errors.bank_account_number}
+                      helperText={errors.bank_account_number?.message}
+                      fullWidth
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      {...register('bank_branch')}
+                      label="Branch / Code (optional)"
+                      error={!!errors.bank_branch}
+                      helperText={errors.bank_branch?.message}
+                      fullWidth
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      {...register('bank_ifsc')}
+                      label="IFSC"
+                      error={!!errors.bank_ifsc}
+                      helperText={errors.bank_ifsc?.message}
                       fullWidth
                     />
                   </Grid>

@@ -558,6 +558,10 @@ export interface CompanySettings extends BaseEntity {
   company_address_line3: string;
   terms_and_conditions: string;
   hsn_code: string;
+  bank_name: string | null;
+  bank_account_number: string | null;
+  bank_branch: string | null;
+  bank_ifsc: string | null;
   is_active: boolean;
 }
 
@@ -572,6 +576,10 @@ export interface UpdateCompanySettingsDto {
   company_address_line3?: string;
   terms_and_conditions?: string;
   hsn_code?: string;
+  bank_name?: string | null;
+  bank_account_number?: string | null;
+  bank_branch?: string | null;
+  bank_ifsc?: string | null;
 }
 
 // ============================================
