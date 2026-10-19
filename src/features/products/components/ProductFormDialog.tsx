@@ -1,18 +1,17 @@
 import React, { useEffect } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Grid,
-  InputAdornment,
-  useTheme,
-  useMediaQuery,
-} from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import type { Product, CreateProductDto } from '../../../types';
 import { productFormSchema, type ProductFormData } from '../schemas/productSchema';
 
@@ -31,8 +30,6 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   onSubmit,
   onClose,
 }) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isEditing = !!product;
 
   const {
@@ -112,7 +109,7 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
       height: parseFloat(data.dimension_height),
       length: parseFloat(data.dimension_length),
     } : undefined;
-    
+
     onSubmit({
       name: data.name,
       size: data.size,
@@ -130,187 +127,274 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      fullScreen={isMobile}
-    >
-      <form onSubmit={handleSubmit(handleFormSubmit)}>
-        <DialogTitle>{isEditing ? 'Edit Product' : 'Add New Product'}</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid size={12}>
-              <TextField
-                {...register('name')}
-                label="Product Name"
-                error={!!errors.name}
-                helperText={errors.name?.message}
-                disabled={isLoading}
-                autoFocus
-              />
-            </Grid>
-            <Grid size={12}>
-              <TextField
-                {...register('company_sku')}
-                label="Company SKU (Optional)"
-                placeholder="e.g., SKU-001, PROD-ABC"
-                error={!!errors.company_sku}
-                helperText={errors.company_sku?.message || 'Unique identifier for this product'}
-                disabled={isLoading}
-              />
-            </Grid>
-            <Grid size={12}>
-              <TextField
-                {...register('display_name')}
-                label="Display Name"
-                error={!!errors.display_name}
-                helperText={errors.display_name?.message}
-                disabled={isLoading}
-              />
-            </Grid>
-            <Grid size={12}>
-              <TextField
-                {...register('description')}
-                label="Description (Optional)"
-                placeholder="Product description"
-                multiline
-                rows={3}
-                error={!!errors.description}
-                helperText={errors.description?.message}
-                disabled={isLoading}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                {...register('size')}
-                label="Size"
-                placeholder="e.g., 25kg, 1L, 500g"
-                error={!!errors.size}
-                helperText={errors.size?.message}
-                disabled={isLoading}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                {...register('packing')}
-                label="Packing"
-                placeholder="e.g., Bag, Box, Bottle"
-                error={!!errors.packing}
-                helperText={errors.packing?.message}
-                disabled={isLoading}
-              />
-            </Grid>
-            <Grid size={12}>
-              <TextField
-                {...register('product_type')}
-                label="Product Type (Optional)"
-                placeholder="e.g., Home Decor, Wedding Gifts"
-                error={!!errors.product_type}
-                helperText={errors.product_type?.message}
-                disabled={isLoading}
-              />
-            </Grid>
-            <Grid size={12}>
-              <TextField
-                {...register('tags')}
-                label="Tags (Optional)"
-                placeholder="Comma-separated tags, e.g., Home Decor, Wedding Gifts"
-                error={!!errors.tags}
-                helperText={errors.tags?.message || 'Separate multiple tags with commas'}
-                disabled={isLoading}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <TextField
-                {...register('dimension_width')}
-                label="Width (cm)"
-                type="number"
-                inputProps={{ step: '0.01', min: 0 }}
-                placeholder="Width"
-                error={!!errors.dimension_width}
-                helperText={errors.dimension_width?.message}
-                disabled={isLoading}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <TextField
-                {...register('dimension_height')}
-                label="Height (cm)"
-                type="number"
-                inputProps={{ step: '0.01', min: 0 }}
-                placeholder="Height"
-                error={!!errors.dimension_height}
-                helperText={errors.dimension_height?.message}
-                disabled={isLoading}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <TextField
-                {...register('dimension_length')}
-                label="Length (cm)"
-                type="number"
-                inputProps={{ step: '0.01', min: 0 }}
-                placeholder="Length"
-                error={!!errors.dimension_length}
-                helperText={errors.dimension_length?.message}
-                disabled={isLoading}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                {...register('default_sale_price')}
-                label="Default Sale Price"
-                type="number"
-                inputProps={{ step: '0.01', min: 0 }}
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                }}
-                error={!!errors.default_sale_price}
-                helperText={errors.default_sale_price?.message}
-                disabled={isLoading}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                {...register('mrp')}
-                label="MRP (Optional)"
-                type="number"
-                inputProps={{ step: '0.01', min: 0 }}
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                }}
-                error={!!errors.mrp}
-                helperText={errors.mrp?.message || 'Maximum retail price'}
-                disabled={isLoading}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                {...register('default_purchase_price')}
-                label="Default Purchase Price"
-                type="number"
-                inputProps={{ step: '0.01', min: 0 }}
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                }}
-                error={!!errors.default_purchase_price}
-                helperText={errors.default_purchase_price?.message}
-                disabled={isLoading}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: 2, gap: 1 }}>
-          <Button onClick={onClose} disabled={isLoading} fullWidth={isMobile}>
-            Cancel
-          </Button>
-          <Button type="submit" variant="contained" disabled={isLoading} fullWidth={isMobile}>
-            {isLoading ? 'Saving...' : isEditing ? 'Update' : 'Create'}
-          </Button>
-        </DialogActions>
-      </form>
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="flex max-h-[90dvh] flex-col max-sm:inset-0 max-sm:h-full max-sm:max-h-full max-sm:max-w-full max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none sm:max-w-xl">
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="flex min-h-0 flex-1 flex-col gap-4">
+          <DialogHeader>
+            <DialogTitle>{isEditing ? 'Edit Product' : 'Add New Product'}</DialogTitle>
+          </DialogHeader>
+
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="mt-1 grid grid-cols-12 gap-4 px-1">
+              <div className="col-span-12 grid gap-2">
+                <Label htmlFor="product-name">Product Name</Label>
+                <Input
+                  id="product-name"
+                  {...register('name')}
+                  aria-invalid={!!errors.name}
+                  disabled={isLoading}
+                  autoFocus
+                />
+                {errors.name && (
+                  <p className="text-sm text-destructive">{errors.name.message}</p>
+                )}
+              </div>
+
+              <div className="col-span-12 grid gap-2">
+                <Label htmlFor="product-company-sku">Company SKU (Optional)</Label>
+                <Input
+                  id="product-company-sku"
+                  {...register('company_sku')}
+                  placeholder="e.g., SKU-001, PROD-ABC"
+                  aria-invalid={!!errors.company_sku}
+                  disabled={isLoading}
+                />
+                {errors.company_sku ? (
+                  <p className="text-sm text-destructive">{errors.company_sku.message}</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Unique identifier for this product
+                  </p>
+                )}
+              </div>
+
+              <div className="col-span-12 grid gap-2">
+                <Label htmlFor="product-display-name">Display Name</Label>
+                <Input
+                  id="product-display-name"
+                  {...register('display_name')}
+                  aria-invalid={!!errors.display_name}
+                  disabled={isLoading}
+                />
+                {errors.display_name && (
+                  <p className="text-sm text-destructive">{errors.display_name.message}</p>
+                )}
+              </div>
+
+              <div className="col-span-12 grid gap-2">
+                <Label htmlFor="product-description">Description (Optional)</Label>
+                <Textarea
+                  id="product-description"
+                  {...register('description')}
+                  placeholder="Product description"
+                  rows={3}
+                  aria-invalid={!!errors.description}
+                  disabled={isLoading}
+                />
+                {errors.description && (
+                  <p className="text-sm text-destructive">{errors.description.message}</p>
+                )}
+              </div>
+
+              <div className="col-span-12 grid gap-2 sm:col-span-6">
+                <Label htmlFor="product-size">Size</Label>
+                <Input
+                  id="product-size"
+                  {...register('size')}
+                  placeholder="e.g., 25kg, 1L, 500g"
+                  aria-invalid={!!errors.size}
+                  disabled={isLoading}
+                />
+                {errors.size && (
+                  <p className="text-sm text-destructive">{errors.size.message}</p>
+                )}
+              </div>
+
+              <div className="col-span-12 grid gap-2 sm:col-span-6">
+                <Label htmlFor="product-packing">Packing</Label>
+                <Input
+                  id="product-packing"
+                  {...register('packing')}
+                  placeholder="e.g., Bag, Box, Bottle"
+                  aria-invalid={!!errors.packing}
+                  disabled={isLoading}
+                />
+                {errors.packing && (
+                  <p className="text-sm text-destructive">{errors.packing.message}</p>
+                )}
+              </div>
+
+              <div className="col-span-12 grid gap-2">
+                <Label htmlFor="product-type">Product Type (Optional)</Label>
+                <Input
+                  id="product-type"
+                  {...register('product_type')}
+                  placeholder="e.g., Home Decor, Wedding Gifts"
+                  aria-invalid={!!errors.product_type}
+                  disabled={isLoading}
+                />
+                {errors.product_type && (
+                  <p className="text-sm text-destructive">{errors.product_type.message}</p>
+                )}
+              </div>
+
+              <div className="col-span-12 grid gap-2">
+                <Label htmlFor="product-tags">Tags (Optional)</Label>
+                <Input
+                  id="product-tags"
+                  {...register('tags')}
+                  placeholder="Comma-separated tags, e.g., Home Decor, Wedding Gifts"
+                  aria-invalid={!!errors.tags}
+                  disabled={isLoading}
+                />
+                {errors.tags ? (
+                  <p className="text-sm text-destructive">{errors.tags.message}</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Separate multiple tags with commas
+                  </p>
+                )}
+              </div>
+
+              <div className="col-span-12 grid gap-2 sm:col-span-4">
+                <Label htmlFor="product-dimension-width">Width (cm)</Label>
+                <Input
+                  id="product-dimension-width"
+                  {...register('dimension_width')}
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  placeholder="Width"
+                  aria-invalid={!!errors.dimension_width}
+                  disabled={isLoading}
+                />
+                {errors.dimension_width && (
+                  <p className="text-sm text-destructive">{errors.dimension_width.message}</p>
+                )}
+              </div>
+
+              <div className="col-span-12 grid gap-2 sm:col-span-4">
+                <Label htmlFor="product-dimension-height">Height (cm)</Label>
+                <Input
+                  id="product-dimension-height"
+                  {...register('dimension_height')}
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  placeholder="Height"
+                  aria-invalid={!!errors.dimension_height}
+                  disabled={isLoading}
+                />
+                {errors.dimension_height && (
+                  <p className="text-sm text-destructive">{errors.dimension_height.message}</p>
+                )}
+              </div>
+
+              <div className="col-span-12 grid gap-2 sm:col-span-4">
+                <Label htmlFor="product-dimension-length">Length (cm)</Label>
+                <Input
+                  id="product-dimension-length"
+                  {...register('dimension_length')}
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  placeholder="Length"
+                  aria-invalid={!!errors.dimension_length}
+                  disabled={isLoading}
+                />
+                {errors.dimension_length && (
+                  <p className="text-sm text-destructive">{errors.dimension_length.message}</p>
+                )}
+              </div>
+
+              <div className="col-span-12 grid gap-2 sm:col-span-6">
+                <Label htmlFor="product-sale-price">Default Sale Price</Label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
+                    ₹
+                  </span>
+                  <Input
+                    id="product-sale-price"
+                    {...register('default_sale_price')}
+                    type="number"
+                    step="0.01"
+                    min={0}
+                    className="pl-7"
+                    aria-invalid={!!errors.default_sale_price}
+                    disabled={isLoading}
+                  />
+                </div>
+                {errors.default_sale_price && (
+                  <p className="text-sm text-destructive">{errors.default_sale_price.message}</p>
+                )}
+              </div>
+
+              <div className="col-span-12 grid gap-2 sm:col-span-6">
+                <Label htmlFor="product-mrp">MRP (Optional)</Label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
+                    ₹
+                  </span>
+                  <Input
+                    id="product-mrp"
+                    {...register('mrp')}
+                    type="number"
+                    step="0.01"
+                    min={0}
+                    className="pl-7"
+                    aria-invalid={!!errors.mrp}
+                    disabled={isLoading}
+                  />
+                </div>
+                {errors.mrp ? (
+                  <p className="text-sm text-destructive">{errors.mrp.message}</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Maximum retail price</p>
+                )}
+              </div>
+
+              <div className="col-span-12 grid gap-2 sm:col-span-6">
+                <Label htmlFor="product-purchase-price">Default Purchase Price</Label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
+                    ₹
+                  </span>
+                  <Input
+                    id="product-purchase-price"
+                    {...register('default_purchase_price')}
+                    type="number"
+                    step="0.01"
+                    min={0}
+                    className="pl-7"
+                    aria-invalid={!!errors.default_purchase_price}
+                    disabled={isLoading}
+                  />
+                </div>
+                {errors.default_purchase_price && (
+                  <p className="text-sm text-destructive">
+                    {errors.default_purchase_price.message}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isLoading}
+              className="max-sm:w-full"
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading} className="max-sm:w-full">
+              {isLoading ? 'Saving...' : isEditing ? 'Update' : 'Create'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
     </Dialog>
   );
 };

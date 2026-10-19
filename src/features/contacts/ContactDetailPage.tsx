@@ -1,27 +1,22 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Box,
-  Card,
-  CardContent,
-  Grid,
-  Typography,
-  Chip,
-  IconButton,
-  Tooltip,
-  Divider,
-} from '@mui/material';
-import {
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  ArrowBack as BackIcon,
+  Pencil,
+  Trash2,
+  ArrowLeft,
   Phone as PhoneIcon,
-  LocationOn as LocationIcon,
+  MapPin as LocationIcon,
   Receipt as GstinIcon,
   ShoppingCart as SaleIcon,
-  LocalShipping as PurchaseIcon,
-} from '@mui/icons-material';
+  Truck as PurchaseIcon,
+} from 'lucide-react';
 import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from 'cn';
 import { PageHeader } from '../../components/common/PageHeader';
 import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorState } from '../../components/common/ErrorState';
@@ -79,6 +74,25 @@ export const ContactDetailPage: React.FC = () => {
     }
   };
 
+  // Filled badge styling for each payment status colour.
+  const statusBadgeClass = {
+    success: 'bg-success text-success-foreground',
+    warning: 'bg-warning text-warning-foreground',
+    error: 'bg-destructive text-white',
+  } as const;
+
+  // Tint standing in for the MUI chip `color` prop on contact type.
+  const getTypeBadgeClass = (type: string) => {
+    switch (type) {
+      case CONTACT_TYPES.CUSTOMER:
+        return 'bg-primary text-primary-foreground';
+      case CONTACT_TYPES.SUPPLIER:
+        return 'bg-secondary text-secondary-foreground';
+      default:
+        return 'bg-muted text-muted-foreground';
+    }
+  };
+
   // Define table columns for transaction history
   const transactionColumns = [
     {
@@ -86,18 +100,16 @@ export const ContactDetailPage: React.FC = () => {
       label: 'Transaction #',
       mobileLabel: 'TXN #',
       render: (transaction: Transaction) => (
-        <Typography variant="body2" fontWeight={600}>
-          {transaction.transaction_number}
-        </Typography>
+        <p className="text-sm font-semibold">{transaction.transaction_number}</p>
       ),
     },
     {
       id: 'date',
       label: 'Date',
       render: (transaction: Transaction) => (
-        <Typography variant="caption">
+        <span className="text-xs text-muted-foreground">
           {formatDate(transaction.transaction_date)}
-        </Typography>
+        </span>
       ),
       hideOnMobile: true,
     },
@@ -105,13 +117,18 @@ export const ContactDetailPage: React.FC = () => {
       id: 'type',
       label: 'Type',
       render: (transaction: Transaction) => (
-        <Chip
-          icon={transaction.type === TRANSACTION_TYPES.SALE ? <SaleIcon /> : <PurchaseIcon />}
-          label={transaction.type}
-          size="small"
-          color={transaction.type === TRANSACTION_TYPES.SALE ? 'primary' : 'secondary'}
-          variant="outlined"
-        />
+        <Badge
+          variant="outline"
+          className={cn(
+            'capitalize',
+            transaction.type === TRANSACTION_TYPES.SALE
+              ? 'border-primary/50 text-primary'
+              : 'border-secondary-foreground/40 text-secondary-foreground'
+          )}
+        >
+          {transaction.type === TRANSACTION_TYPES.SALE ? <SaleIcon /> : <PurchaseIcon />}
+          {transaction.type}
+        </Badge>
       ),
     },
     {
@@ -119,21 +136,16 @@ export const ContactDetailPage: React.FC = () => {
       label: 'Amount',
       align: 'right' as const,
       render: (transaction: Transaction) => (
-        <Typography variant="body2" fontWeight={500}>
-          {formatCurrency(transaction.total_amount)}
-        </Typography>
+        <p className="text-sm font-medium">{formatCurrency(transaction.total_amount)}</p>
       ),
     },
     {
       id: 'status',
       label: 'Status',
       render: (transaction: Transaction) => (
-        <Chip
-          label={transaction.payment_status}
-          size="small"
-          color={getStatusColor(transaction.payment_status)}
-          variant="filled"
-        />
+        <Badge className={cn('capitalize', statusBadgeClass[getStatusColor(transaction.payment_status)])}>
+          {transaction.payment_status}
+        </Badge>
       ),
     },
   ];
@@ -164,7 +176,7 @@ export const ContactDetailPage: React.FC = () => {
   }
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title={contact.name}
         subtitle={contact.type.charAt(0).toUpperCase() + contact.type.slice(1)}
@@ -175,150 +187,147 @@ export const ContactDetailPage: React.FC = () => {
       />
 
       {/* Action buttons */}
-      <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
-        <Tooltip title="Back to Contacts">
-          <IconButton
-            component="a"
-            href="/contacts"
-            onClick={(e: React.MouseEvent) => {
-              if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
-                e.preventDefault();
-                navigate('/contacts');
-              }
-            }}
-          >
-            <BackIcon />
-          </IconButton>
+      <div className="mb-6 flex gap-2">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Back to Contacts" asChild>
+              <a
+                href="/contacts"
+                onClick={(e: React.MouseEvent) => {
+                  if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                    e.preventDefault();
+                    navigate('/contacts');
+                  }
+                }}
+              >
+                <ArrowLeft />
+              </a>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Back to Contacts</TooltipContent>
         </Tooltip>
-        <Tooltip title="Edit Contact">
-          <IconButton onClick={() => setEditDialogOpen(true)}>
-            <EditIcon />
-          </IconButton>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Edit Contact"
+              onClick={() => setEditDialogOpen(true)}
+            >
+              <Pencil />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Edit Contact</TooltipContent>
         </Tooltip>
-        <Tooltip title="Delete Contact">
-          <IconButton color="error" onClick={() => setDeleteDialogOpen(true)}>
-            <DeleteIcon />
-          </IconButton>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Delete Contact"
+              className="text-destructive hover:text-destructive"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              <Trash2 />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Delete Contact</TooltipContent>
         </Tooltip>
-      </Box>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-12 gap-6">
         {/* Contact Info Card */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <div className="col-span-12 md:col-span-6">
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Contact Information
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
+              <h3 className="mb-2 text-base font-semibold">Contact Information</h3>
+              <Separator className="mb-4" />
               
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                  <PhoneIcon color="action" sx={{ mt: 0.5 }} />
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
-                      Phone
-                    </Typography>
-                    <Typography variant="body1">{contact.phone}</Typography>
-                  </Box>
-                </Box>
+              <div className="flex flex-col gap-5">
+                <div className="flex items-start gap-4">
+                  <PhoneIcon className="mt-1 size-5 shrink-0 text-muted-foreground" />
+                  <div>
+                    <span className="text-xs text-muted-foreground">Phone</span>
+                    <p>{contact.phone}</p>
+                  </div>
+                </div>
                 
                 {contact.address && (
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                    <LocationIcon color="action" sx={{ mt: 0.5 }} />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        Address
-                      </Typography>
-                      <Typography variant="body1">{contact.address}</Typography>
-                    </Box>
-                  </Box>
+                  <div className="flex items-start gap-4">
+                    <LocationIcon className="mt-1 size-5 shrink-0 text-muted-foreground" />
+                    <div>
+                      <span className="text-xs text-muted-foreground">Address</span>
+                      <p>{contact.address}</p>
+                    </div>
+                  </div>
                 )}
                 
                 {contact.gstin && (
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                    <GstinIcon color="action" sx={{ mt: 0.5 }} />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        GSTIN
-                      </Typography>
-                      <Typography variant="body1" fontFamily="monospace">
-                        {contact.gstin}
-                      </Typography>
-                    </Box>
-                  </Box>
+                  <div className="flex items-start gap-4">
+                    <GstinIcon className="mt-1 size-5 shrink-0 text-muted-foreground" />
+                    <div>
+                      <span className="text-xs text-muted-foreground">GSTIN</span>
+                      <p className="font-mono">{contact.gstin}</p>
+                    </div>
+                  </div>
                 )}
-              </Box>
+              </div>
             </CardContent>
           </Card>
-        </Grid>
+        </div>
 
         {/* Balance Card */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <div className="col-span-12 md:col-span-6">
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Account Summary
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
+              <h3 className="mb-2 text-base font-semibold">Account Summary</h3>
+              <Separator className="mb-4" />
               
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Contact Type
-                  </Typography>
-                  <Box sx={{ mt: 0.5 }}>
-                    <Chip
-                      label={contact.type}
-                      color={
-                        contact.type === CONTACT_TYPES.CUSTOMER
-                          ? 'primary'
-                          : contact.type === CONTACT_TYPES.SUPPLIER
-                          ? 'secondary'
-                          : 'default'
-                      }
-                    />
-                  </Box>
-                </Box>
+              <div className="flex flex-col gap-4">
+                <div>
+                  <span className="text-xs text-muted-foreground">Contact Type</span>
+                  <div className="mt-1">
+                    <Badge className={cn('px-3 py-1 text-sm capitalize', getTypeBadgeClass(contact.type))}>
+                      {contact.type}
+                    </Badge>
+                  </div>
+                </div>
                 
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Current Balance
-                  </Typography>
-                  <Box sx={{ mt: 0.5 }}>
-                    <Chip
-                      label={formatCurrency(contact.balance)}
-                      color={
+                <div>
+                  <span className="text-xs text-muted-foreground">Current Balance</span>
+                  <div className="mt-1">
+                    <Badge
+                      className={cn(
+                        'px-3 py-2 text-[1.1rem]',
                         contact.balance > 0
-                          ? 'success'
+                          ? 'bg-success text-success-foreground'
                           : contact.balance < 0
-                          ? 'error'
-                          : 'default'
-                      }
-                      sx={{ fontSize: '1.1rem', py: 2.5, px: 1 }}
-                    />
-                  </Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                          ? 'bg-destructive text-white'
+                          : 'bg-muted text-muted-foreground'
+                      )}
+                    >
+                      {formatCurrency(contact.balance)}
+                    </Badge>
+                  </div>
+                  <span className="mt-2 block text-xs text-muted-foreground">
                     {contact.balance > 0
                       ? 'They owe you this amount'
                       : contact.balance < 0
                       ? 'You owe them this amount'
                       : 'Account is settled'}
-                  </Typography>
-                </Box>
-              </Box>
+                  </span>
+                </div>
+              </div>
             </CardContent>
           </Card>
-        </Grid>
+        </div>
 
         {/* Recent Transactions Card */}
-        <Grid size={12}>
+        <div className="col-span-12">
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Recent Transactions
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
+              <h3 className="mb-2 text-base font-semibold">Recent Transactions</h3>
+              <Separator className="mb-4" />
               {transactionsLoading ? (
                 <LoadingState message="Loading transactions..." />
               ) : transactionsError ? (
@@ -339,8 +348,8 @@ export const ContactDetailPage: React.FC = () => {
               )}
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
       {/* Edit Dialog */}
       <ContactFormDialog
@@ -362,7 +371,7 @@ export const ContactDetailPage: React.FC = () => {
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteDialogOpen(false)}
       />
-    </Box>
+    </div>
   );
 };
 

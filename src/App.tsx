@@ -2,10 +2,8 @@ import { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { ThemeProvider, CssBaseline } from '@mui/material';
 import { useThemeStore } from './stores/themeStore';
 import { useDraftStore } from './stores/draftStore';
-import { lightTheme, darkTheme } from './theme';
 import AppRoutes from './routes';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { NotificationProvider } from './components/common/NotificationProvider';
@@ -27,11 +25,15 @@ const queryClient = new QueryClient({
   },
 });
 
-// Theme wrapper component
 const ThemedApp: React.FC = () => {
   const mode = useThemeStore((state) => state.mode);
-  const theme = mode === 'dark' ? darkTheme : lightTheme;
   const { clearOldDrafts } = useDraftStore();
+
+  // Drive Tailwind's dark mode from the persisted theme store. `index.html`
+  // applies the same class before first paint to avoid a light flash.
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', mode === 'dark');
+  }, [mode]);
 
   // Clean up old drafts on app initialization
   useEffect(() => {
@@ -39,15 +41,12 @@ const ThemedApp: React.FC = () => {
   }, [clearOldDrafts]);
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <ErrorBoundary>
-        <BrowserRouter>
-          <AppRoutes />
-          <NotificationProvider />
-        </BrowserRouter>
-      </ErrorBoundary>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AppRoutes />
+        <NotificationProvider />
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 };
 

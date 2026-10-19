@@ -2,33 +2,29 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUrlParam } from '../../hooks/useUrlFilters';
 import {
-  Box,
-  Card,
-  Chip,
-  Typography,
-  ToggleButton,
-  ToggleButtonGroup,
-  IconButton,
-  Tooltip,
-  Button,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-  TextField,
-  Stack,
-  CircularProgress,
-} from '@mui/material';
-import {
-  Visibility as ViewIcon,
-  Delete as DeleteIcon,
-  Add as AddIcon,
-  ShoppingCart as SaleIcon,
-  LocalShipping as PurchaseIcon,
-  KeyboardArrowDown as ArrowDownIcon,
-  Receipt as DeodapIcon,
-} from '@mui/icons-material';
+  Eye,
+  Trash2,
+  Plus,
+  ShoppingCart,
+  Truck,
+  ChevronDown,
+  Receipt,
+  Loader2,
+} from 'lucide-react';
 import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SearchInput } from '../../components/common/SearchInput';
 import { LoadingState } from '../../components/common/LoadingState';
@@ -49,10 +45,7 @@ export const TransactionsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useUrlParam('status', 'all');
   const [fromDate, setFromDate] = useUrlParam('from');
   const [toDate, setToDate] = useUrlParam('to');
-  
-  // Menu state for create button
-  const [createMenuAnchor, setCreateMenuAnchor] = useState<null | HTMLElement>(null);
-  
+
   // Delete dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
@@ -113,16 +106,16 @@ export const TransactionsPage: React.FC = () => {
     return format(new Date(dateString), 'dd MMM yyyy');
   };
 
-  const getStatusColor = (status: string): 'success' | 'warning' | 'error' => {
+  const getStatusBadgeClass = (status: string): string => {
     switch (status) {
       case PAYMENT_STATUS.PAID:
-        return 'success';
+        return 'bg-success text-success-foreground';
       case PAYMENT_STATUS.PARTIAL:
-        return 'warning';
+        return 'bg-warning text-warning-foreground';
       case PAYMENT_STATUS.UNPAID:
-        return 'error';
+        return 'bg-destructive text-white';
       default:
-        return 'warning';
+        return 'bg-warning text-warning-foreground';
     }
   };
 
@@ -149,18 +142,18 @@ export const TransactionsPage: React.FC = () => {
       label: 'Transaction #',
       mobileLabel: 'TXN #',
       render: (transaction: Transaction) => (
-        <Typography variant="body2" fontWeight={600}>
+        <span className="text-sm font-semibold">
           {transaction.transaction_number}
-        </Typography>
+        </span>
       ),
     },
     {
       id: 'date',
       label: 'Date',
       render: (transaction: Transaction) => (
-        <Typography variant="caption">
+        <span className="text-xs">
           {formatDate(transaction.transaction_date)}
-        </Typography>
+        </span>
       ),
       hideOnMobile: true,
     },
@@ -168,27 +161,27 @@ export const TransactionsPage: React.FC = () => {
       id: 'type',
       label: 'Type',
       render: (transaction: Transaction) => (
-        <Chip
-          icon={transaction.type === TRANSACTION_TYPES.SALE ? <SaleIcon /> : <PurchaseIcon />}
-          label={transaction.type}
-          size="small"
-          color={transaction.type === TRANSACTION_TYPES.SALE ? 'primary' : 'secondary'}
-          variant="outlined"
-        />
+        <Badge
+          variant="outline"
+          className={
+            transaction.type === TRANSACTION_TYPES.SALE
+              ? 'border-primary/50 text-primary'
+              : 'border-foreground/30 text-foreground'
+          }
+        >
+          {transaction.type === TRANSACTION_TYPES.SALE ? <ShoppingCart /> : <Truck />}
+          {transaction.type}
+        </Badge>
       ),
     },
     {
       id: 'contact',
       label: 'Contact',
       render: (transaction: Transaction) => (
-        <Box>
-          <Typography variant="body2">
-            {transaction.contact.name}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {transaction.contact.phone}
-          </Typography>
-        </Box>
+        <div>
+          <p className="text-sm">{transaction.contact.name}</p>
+          <p className="text-xs text-muted-foreground">{transaction.contact.phone}</p>
+        </div>
       ),
       hideOnMobile: true,
     },
@@ -197,9 +190,9 @@ export const TransactionsPage: React.FC = () => {
       label: 'Total',
       align: 'right' as const,
       render: (transaction: Transaction) => (
-        <Typography variant="body2" fontWeight={500}>
+        <span className="text-sm font-medium">
           {formatCurrency(transaction.total_amount)}
-        </Typography>
+        </span>
       ),
     },
     {
@@ -207,9 +200,9 @@ export const TransactionsPage: React.FC = () => {
       label: 'Paid',
       align: 'right' as const,
       render: (transaction: Transaction) => (
-        <Typography variant="body2" color="success.main">
+        <span className="text-sm text-success">
           {formatCurrency(transaction.paid_amount)}
-        </Typography>
+        </span>
       ),
       hideOnMobile: true,
     },
@@ -218,13 +211,15 @@ export const TransactionsPage: React.FC = () => {
       label: 'Balance',
       align: 'right' as const,
       render: (transaction: Transaction) => (
-        <Typography
-          variant="body2"
-          color={transaction.balance_due > 0 ? 'error.main' : 'text.secondary'}
-          fontWeight={transaction.balance_due > 0 ? 600 : 400}
+        <span
+          className={
+            transaction.balance_due > 0
+              ? 'text-sm font-semibold text-destructive'
+              : 'text-sm text-muted-foreground'
+          }
         >
           {formatCurrency(transaction.balance_due)}
-        </Typography>
+        </span>
       ),
       hideOnMobile: true,
     },
@@ -232,12 +227,9 @@ export const TransactionsPage: React.FC = () => {
       id: 'status',
       label: 'Status',
       render: (transaction: Transaction) => (
-        <Chip
-          label={transaction.payment_status}
-          size="small"
-          color={getStatusColor(transaction.payment_status)}
-          variant="filled"
-        />
+        <Badge className={getStatusBadgeClass(transaction.payment_status)}>
+          {transaction.payment_status}
+        </Badge>
       ),
     },
     {
@@ -246,36 +238,49 @@ export const TransactionsPage: React.FC = () => {
       align: 'center' as const,
       isAction: true,
       render: (transaction: Transaction) => (
-        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-          <Tooltip title="View">
-            <IconButton
-              size="small"
-              component="a"
-              href={`/transactions/${transaction.id}`}
-              onClick={(e: React.MouseEvent) => {
-                e.stopPropagation();
-                if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
-                  e.preventDefault();
-                  navigate(`/transactions/${transaction.id}`);
-                }
-              }}
-            >
-              <ViewIcon fontSize="small" />
-            </IconButton>
+        <div className="flex justify-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                asChild
+                variant="ghost"
+                size="icon-sm"
+                aria-label="View"
+              >
+                <a
+                  href={`/transactions/${transaction.id}`}
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                      e.preventDefault();
+                      navigate(`/transactions/${transaction.id}`);
+                    }
+                  }}
+                >
+                  <Eye />
+                </a>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>View</TooltipContent>
           </Tooltip>
-          <Tooltip title="Delete">
-            <IconButton
-              size="small"
-              color="error"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleOpenDeleteDialog(transaction);
-              }}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Delete"
+                className="text-destructive hover:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenDeleteDialog(transaction);
+                }}
+              >
+                <Trash2 />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Delete</TooltipContent>
           </Tooltip>
-        </Box>
+        </div>
       ),
     },
   ];
@@ -310,139 +315,126 @@ export const TransactionsPage: React.FC = () => {
         />
 
         {/* Infinite scroll trigger and loading indicator */}
-        <Box sx={{ p: 2, textAlign: 'center' }}>
+        <div className="p-4 text-center">
           <div ref={observerTarget} style={{ height: '20px' }} />
           {isFetchingNextPage && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
-              <CircularProgress size={24} />
-              <Typography variant="body2" color="text.secondary">
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="size-6 animate-spin" />
+              <p className="text-sm text-muted-foreground">
                 Loading more transactions...
-              </Typography>
-            </Box>
+              </p>
+            </div>
           )}
           {!hasNextPage && transactions.length > 0 && (
-            <Typography variant="caption" color="text.secondary">
+            <span className="text-xs text-muted-foreground">
               All transactions loaded ({totalCount} total)
-            </Typography>
+            </span>
           )}
-        </Box>
+        </div>
       </>
     );
   };
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title="Transactions"
         subtitle={totalCount > 0 ? `${totalCount} transactions (showing ${transactions.length})` : 'Sales and purchases'}
       />
 
       {/* Action Button */}
-      <Box sx={{ mb: { xs: 2, sm: 3 } }}>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          endIcon={<ArrowDownIcon />}
-          onClick={(e) => setCreateMenuAnchor(e.currentTarget)}
-          fullWidth
-          sx={{ width: { xs: '100%', sm: 'auto' } }}
-        >
-          New Transaction
-        </Button>
-        <Menu
-          anchorEl={createMenuAnchor}
-          open={Boolean(createMenuAnchor)}
-          onClose={() => setCreateMenuAnchor(null)}
-        >
-          <MenuItem onClick={() => { setCreateMenuAnchor(null); navigate('/transactions/new-sale'); }}>
-            <ListItemIcon>
-              <SaleIcon fontSize="small" color="primary" />
-            </ListItemIcon>
-            <ListItemText>New Sale</ListItemText>
-          </MenuItem>
-          <MenuItem onClick={() => { setCreateMenuAnchor(null); navigate('/transactions/new-purchase'); }}>
-            <ListItemIcon>
-              <PurchaseIcon fontSize="small" color="secondary" />
-            </ListItemIcon>
-            <ListItemText>New Purchase</ListItemText>
-          </MenuItem>
-          <MenuItem onClick={() => { setCreateMenuAnchor(null); navigate('/transactions/new-deodap-bill'); }}>
-            <ListItemIcon>
-              <DeodapIcon fontSize="small" color="warning" />
-            </ListItemIcon>
-            <ListItemText>Create Deodap Bill</ListItemText>
-          </MenuItem>
-        </Menu>
-      </Box>
+      <div className="mb-4 sm:mb-6">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="w-full sm:w-auto">
+              <Plus />
+              New Transaction
+              <ChevronDown />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onSelect={() => navigate('/transactions/new-sale')}>
+              <ShoppingCart className="text-primary" />
+              New Sale
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => navigate('/transactions/new-purchase')}>
+              <Truck />
+              New Purchase
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => navigate('/transactions/new-deodap-bill')}>
+              <Receipt className="text-warning" />
+              Create Deodap Bill
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
-      {/* Filters - responsive with Stack */}
-      <Stack 
-        direction={{ xs: 'column', sm: 'row' }} 
-        spacing={2} 
-        sx={{ mb: { xs: 2, sm: 3 } }}
-        flexWrap="wrap"
-      >
-        <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' }, minWidth: { xs: '100%', sm: '200px' } }}>
+      {/* Filters */}
+      <div className="mb-4 flex flex-col flex-wrap gap-4 sm:mb-6 sm:flex-row">
+        <div className="w-full sm:w-auto sm:min-w-[200px] sm:flex-auto">
           <SearchInput
             value={search}
             onChange={setSearch}
             placeholder="Search by transaction # or notes..."
+            className="sm:w-full"
           />
-        </Box>
+        </div>
 
-        <ToggleButtonGroup
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
           value={typeFilter}
-          exclusive
-          onChange={(_, value) => value !== null && setTypeFilter(value as string)}
-          size="small"
-          sx={{ width: { xs: '100%', sm: 'auto' } }}
+          onValueChange={(value) => value && setTypeFilter(value)}
+          className="w-full sm:w-auto"
         >
-          <ToggleButton value="all" sx={{ flex: { xs: 1, sm: 'initial' } }}>All</ToggleButton>
-          <ToggleButton value={TRANSACTION_TYPES.SALE} sx={{ flex: { xs: 1, sm: 'initial' } }}>Sales</ToggleButton>
-          <ToggleButton value={TRANSACTION_TYPES.PURCHASE} sx={{ flex: { xs: 1, sm: 'initial' } }}>Purchases</ToggleButton>
-        </ToggleButtonGroup>
+          <ToggleGroupItem value="all" className="flex-1 sm:flex-initial">All</ToggleGroupItem>
+          <ToggleGroupItem value={TRANSACTION_TYPES.SALE} className="flex-1 sm:flex-initial">Sales</ToggleGroupItem>
+          <ToggleGroupItem value={TRANSACTION_TYPES.PURCHASE} className="flex-1 sm:flex-initial">Purchases</ToggleGroupItem>
+        </ToggleGroup>
 
-        <ToggleButtonGroup
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
           value={statusFilter}
-          exclusive
-          onChange={(_, value) => value !== null && setStatusFilter(value as string)}
-          size="small"
-          sx={{ width: { xs: '100%', sm: 'auto' } }}
+          onValueChange={(value) => value && setStatusFilter(value)}
+          className="w-full sm:w-auto"
         >
-          <ToggleButton value="all" sx={{ flex: { xs: 1, sm: 'initial' } }}>All</ToggleButton>
-          <ToggleButton value={PAYMENT_STATUS.PAID} sx={{ flex: { xs: 1, sm: 'initial' } }}>Paid</ToggleButton>
-          <ToggleButton value={PAYMENT_STATUS.PARTIAL} sx={{ flex: { xs: 1, sm: 'initial' } }}>Partial</ToggleButton>
-          <ToggleButton value={PAYMENT_STATUS.UNPAID} sx={{ flex: { xs: 1, sm: 'initial' } }}>Unpaid</ToggleButton>
-        </ToggleButtonGroup>
+          <ToggleGroupItem value="all" className="flex-1 sm:flex-initial">All</ToggleGroupItem>
+          <ToggleGroupItem value={PAYMENT_STATUS.PAID} className="flex-1 sm:flex-initial">Paid</ToggleGroupItem>
+          <ToggleGroupItem value={PAYMENT_STATUS.PARTIAL} className="flex-1 sm:flex-initial">Partial</ToggleGroupItem>
+          <ToggleGroupItem value={PAYMENT_STATUS.UNPAID} className="flex-1 sm:flex-initial">Unpaid</ToggleGroupItem>
+        </ToggleGroup>
 
-        <TextField
-          type="date"
-          size="small"
-          label="From"
-          value={fromDate}
-          onChange={(e) => setFromDate(e.target.value || '')}
-          InputLabelProps={{ shrink: true }}
-          sx={{ width: { xs: '100%', sm: 150 } }}
-        />
-        <TextField
-          type="date"
-          size="small"
-          label="To"
-          value={toDate}
-          onChange={(e) => setToDate(e.target.value || '')}
-          InputLabelProps={{ shrink: true }}
-          sx={{ width: { xs: '100%', sm: 150 } }}
-        />
+        <div className="grid w-full gap-2 sm:w-[150px]">
+          <Label htmlFor="from-date">From</Label>
+          <Input
+            id="from-date"
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value || '')}
+          />
+        </div>
+        <div className="grid w-full gap-2 sm:w-[150px]">
+          <Label htmlFor="to-date">To</Label>
+          <Input
+            id="to-date"
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value || '')}
+          />
+        </div>
 
         {isFetching && !isFetchingNextPage && !showFullLoading && (
-          <Typography variant="caption" color="text.secondary" sx={{ alignSelf: 'center' }}>
+          <span className="self-center text-xs text-muted-foreground">
             Loading...
-          </Typography>
+          </span>
         )}
-      </Stack>
+      </div>
 
       {/* Transactions table */}
-      <Card>{renderTableContent()}</Card>
+      <Card className="gap-0 py-0">{renderTableContent()}</Card>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
@@ -455,7 +447,7 @@ export const TransactionsPage: React.FC = () => {
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteDialogOpen(false)}
       />
-    </Box>
+    </div>
   );
 };
 

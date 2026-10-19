@@ -1,21 +1,18 @@
 import React from 'react';
+import { Boxes } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import {
-  Card,
-  CardContent,
-  Typography,
-  Divider,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  Chip,
-  Box,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
-import { Inventory as InventoryIcon } from '@mui/icons-material';
+} from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { ContainerProductInfo } from '../../../types';
 
 export interface ProductStockDistributionCardProps {
@@ -31,60 +28,62 @@ export const ProductStockDistributionCard: React.FC<ProductStockDistributionCard
 }) => (
   <Card>
     <CardContent>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-        <Typography variant="h6">
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="text-base font-semibold">
           Stock Distribution ({containers.length} containers)
-        </Typography>
+        </h3>
         {onManageClick && (
-          <Tooltip title="Manage Containers">
-            <IconButton
-              color="primary"
-              size="small"
-              onClick={onManageClick}
-            >
-              <InventoryIcon />
-            </IconButton>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-primary"
+                aria-label="Manage Containers"
+                onClick={onManageClick}
+              >
+                <Boxes />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Manage Containers</TooltipContent>
           </Tooltip>
         )}
-      </Box>
-      <Divider sx={{ mb: 2 }} />
+      </div>
+      <Separator className="mb-4" />
 
       {containers.length > 0 ? (
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell>Container</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell align="right">Quantity</TableCell>
+                <TableHead>Container</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead className="text-right">Quantity</TableHead>
               </TableRow>
-            </TableHead>
+            </TableHeader>
             <TableBody>
               {containers.map((cp) => (
                 <TableRow
                   key={cp.container.id}
-                  hover
-                  sx={{ cursor: 'pointer' }}
+                  className="cursor-pointer"
                   onClick={() => onContainerClick(cp.container.id)}
                 >
                   <TableCell>
-                    <Typography variant="body2" fontWeight={500}>
-                      {cp.container.name}
-                    </Typography>
+                    <p className="text-sm font-medium">{cp.container.name}</p>
                   </TableCell>
                   <TableCell>
-                    <Chip label={cp.container.type} size="small" variant="outlined" />
+                    <Badge variant="outline">{cp.container.type}</Badge>
                   </TableCell>
-                  <TableCell align="right">{cp.quantity}</TableCell>
+                  <TableCell className="text-right">{cp.quantity}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </TableContainer>
+        </div>
       ) : (
-        <Typography variant="body2" color="text.secondary">
+        <p className="text-sm text-muted-foreground">
           This product is not stored in any containers yet.
-        </Typography>
+        </p>
       )}
     </CardContent>
   </Card>

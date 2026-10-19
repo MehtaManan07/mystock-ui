@@ -1,31 +1,36 @@
 import React, { useState, useEffect } from 'react';
+import { Boxes, Check, ChevronDown, Loader2, Plus, Trash2, X } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
-  Button,
-  Box,
-  Typography,
-  TextField,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  IconButton,
-  Tooltip,
-  Chip,
-  Autocomplete,
-  CircularProgress,
-  Alert,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Inventory as InventoryIcon,
-} from '@mui/icons-material';
+} from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from 'cn';
 import { useContainers } from '../../../hooks/useContainers';
 import { useSetContainerProducts } from '../../../hooks/useContainerProducts';
 import type { ContainerProductInfo, SetProductsDto } from '../../../types';
@@ -60,6 +65,7 @@ export const ManageContainersDialog: React.FC<ManageContainersDialogProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [search, setSearch] = useState('');
+  const [containerPickerOpen, setContainerPickerOpen] = useState(false);
   const debouncedSearch = useDebounce(search, 300);
 
   // Fetch all containers for selection
@@ -203,171 +209,204 @@ export const ManageContainersDialog: React.FC<ManageContainersDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        Manage Containers for {productName}
-      </DialogTitle>
-      <DialogContent>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-            {error}
-          </Alert>
-        )}
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="sm:max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>Manage Containers for {productName}</DialogTitle>
+        </DialogHeader>
 
-        {/* Add Container Section */}
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 2,
-            alignItems: 'flex-start',
-            mb: 3,
-            mt: 1,
-          }}
-        >
-          <Autocomplete
-            value={selectedContainer}
-            onChange={(_, value) => setSelectedContainer(value)}
-            onInputChange={(_, value) => setSearch(value)}
-            options={availableContainers}
-            getOptionLabel={(option) => `${option.name} (${option.type})`}
-            loading={containersLoading}
-            sx={{ flex: 1 }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Select Container"
-                size="small"
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
+        <div>
+          {error && (
+            <Alert variant="destructive" className="mb-4 pr-10">
+              <AlertDescription>{error}</AlertDescription>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Dismiss error"
+                className="absolute top-2 right-2"
+                onClick={() => setError(null)}
+              >
+                <X />
+              </Button>
+            </Alert>
+          )}
+
+          {/* Add Container Section */}
+          <div className="mt-2 mb-6 flex items-end gap-4">
+            <div className="grid flex-1 gap-2">
+              <Label htmlFor="manage-containers-select">Select Container</Label>
+              <Popover open={containerPickerOpen} onOpenChange={setContainerPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    id="manage-containers-select"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={containerPickerOpen}
+                    size="sm"
+                    className="w-full justify-between font-normal"
+                  >
+                    <span className={cn('truncate', !selectedContainer && 'text-muted-foreground')}>
+                      {selectedContainer
+                        ? `${selectedContainer.name} (${selectedContainer.type})`
+                        : 'Select Container'}
+                    </span>
+                    {containersLoading ? (
+                      <Loader2 className="animate-spin opacity-50" />
+                    ) : (
+                      <ChevronDown className="opacity-50" />
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+                  <Command>
+                    <CommandInput
+                      placeholder="Select Container"
+                      value={search}
+                      onValueChange={setSearch}
+                    />
+                    <CommandList>
                       {containersLoading ? (
-                        <CircularProgress color="inherit" size={20} />
-                      ) : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
-                }}
+                        <div className="flex items-center justify-center py-6">
+                          <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : (
+                        <>
+                          <CommandEmpty>No options</CommandEmpty>
+                          <CommandGroup>
+                            {availableContainers.map((option) => (
+                              <CommandItem
+                                key={option.id}
+                                value={`${option.name} (${option.type})`}
+                                onSelect={() => {
+                                  setSelectedContainer(option);
+                                  setContainerPickerOpen(false);
+                                }}
+                              >
+                                {option.name} ({option.type})
+                                <Check
+                                  className={cn(
+                                    'ml-auto',
+                                    selectedContainer?.id === option.id
+                                      ? 'opacity-100'
+                                      : 'opacity-0'
+                                  )}
+                                />
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </>
+                      )}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="grid w-[120px] gap-2">
+              <Label htmlFor="manage-containers-quantity">Quantity</Label>
+              <Input
+                id="manage-containers-quantity"
+                type="number"
+                className="h-8"
+                min={1}
+                value={newQuantity}
+                onChange={(e) => setNewQuantity(parseInt(e.target.value) || 0)}
               />
-            )}
-          />
-          <TextField
-            label="Quantity"
-            type="number"
-            size="small"
-            value={newQuantity}
-            onChange={(e) => setNewQuantity(parseInt(e.target.value) || 0)}
-            sx={{ width: 120 }}
-            inputProps={{ min: 1 }}
-          />
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleAddContainer}
-            disabled={!selectedContainer || newQuantity <= 0}
-          >
-            Add
-          </Button>
-        </Box>
+            </div>
 
-        {/* Containers Table */}
-        {items.length > 0 ? (
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Container</TableCell>
-                  <TableCell>Type</TableCell>
-                  <TableCell align="right">Quantity</TableCell>
-                  <TableCell align="center">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {items.map((item) => (
-                  <TableRow key={item.container.id}>
-                    <TableCell>
-                      <Typography variant="body2" fontWeight={500}>
-                        {item.container.name}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip label={item.container.type} size="small" variant="outlined" />
-                    </TableCell>
-                    <TableCell align="right">
-                      <TextField
-                        type="number"
-                        size="small"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          handleQuantityChange(
-                            item.container.id,
-                            parseInt(e.target.value) || 0
-                          )
-                        }
-                        sx={{ width: 100 }}
-                        inputProps={{ min: 0 }}
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Tooltip title="Remove">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => handleRemoveContainer(item.container.id)}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
+            <Button onClick={handleAddContainer} disabled={!selectedContainer || newQuantity <= 0}>
+              <Plus />
+              Add
+            </Button>
+          </div>
+
+          {/* Containers Table */}
+          {items.length > 0 ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Container</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead className="text-right">Quantity</TableHead>
+                    <TableHead className="text-center">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        ) : (
-          <Box
-            sx={{
-              py: 4,
-              textAlign: 'center',
-              bgcolor: 'action.hover',
-              borderRadius: 1,
-            }}
-          >
-            <InventoryIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
-            <Typography variant="body2" color="text.secondary">
-              This product is not stored in any containers yet. Add containers using the form above.
-            </Typography>
-          </Box>
-        )}
+                </TableHeader>
+                <TableBody>
+                  {items.map((item) => (
+                    <TableRow key={item.container.id}>
+                      <TableCell>
+                        <p className="text-sm font-medium">{item.container.name}</p>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{item.container.type}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Input
+                          type="number"
+                          className="ml-auto h-8 w-[100px]"
+                          min={0}
+                          value={item.quantity}
+                          onChange={(e) =>
+                            handleQuantityChange(
+                              item.container.id,
+                              parseInt(e.target.value) || 0
+                            )
+                          }
+                        />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              className="text-destructive"
+                              aria-label="Remove"
+                              onClick={() => handleRemoveContainer(item.container.id)}
+                            >
+                              <Trash2 />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Remove</TooltipContent>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="rounded bg-accent px-4 py-8 text-center">
+              <Boxes className="mx-auto mb-2 size-12 text-muted-foreground" strokeWidth={1.5} />
+              <p className="text-sm text-muted-foreground">
+                This product is not stored in any containers yet. Add containers using the form
+                above.
+              </p>
+            </div>
+          )}
 
-        {/* Summary */}
-        <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-          <Chip
-            label={`${items.length} container${items.length !== 1 ? 's' : ''}`}
-            size="small"
-            color="primary"
-            variant="outlined"
-          />
-          <Chip
-            label={`${items.reduce((sum, i) => sum + i.quantity, 0)} total quantity`}
-            size="small"
-            color="success"
-            variant="outlined"
-          />
-        </Box>
+          {/* Summary */}
+          <div className="mt-4 flex gap-4">
+            <Badge variant="outline" className="border-primary text-primary">
+              {items.length} container{items.length !== 1 ? 's' : ''}
+            </Badge>
+            <Badge variant="outline" className="border-success text-success">
+              {items.reduce((sum, i) => sum + i.quantity, 0)} total quantity
+            </Badge>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={isSaving || !hasChanges()}>
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={isSaving}>
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={isSaving || !hasChanges()}
-        >
-          {isSaving ? 'Saving...' : 'Save Changes'}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 };

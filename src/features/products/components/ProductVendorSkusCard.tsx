@@ -1,21 +1,17 @@
 import React from 'react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Divider,
-  Button,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+} from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { VendorSkuInfo } from '../../../types';
 
 export interface ProductVendorSkusCardProps {
@@ -31,65 +27,75 @@ export const ProductVendorSkusCard: React.FC<ProductVendorSkusCardProps> = ({
   onEdit,
   onDelete,
 }) => (
-  <Card sx={{ mb: 3 }}>
+  <Card className="mb-6">
     <CardContent>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">Vendor SKU Mappings ({vendorSkus.length})</Typography>
-        <Button startIcon={<AddIcon />} variant="contained" size="small" onClick={onAdd}>
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-base font-semibold">Vendor SKU Mappings ({vendorSkus.length})</h3>
+        <Button size="sm" onClick={onAdd}>
+          <Plus />
           Add Vendor SKU
         </Button>
-      </Box>
-      <Divider sx={{ mb: 2 }} />
+      </div>
+      <Separator className="mb-4" />
 
       {vendorSkus.length > 0 ? (
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell>Customer/Vendor Name</TableCell>
-                <TableCell>Vendor SKU</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                <TableHead>Customer/Vendor Name</TableHead>
+                <TableHead>Vendor SKU</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            </TableHead>
+            </TableHeader>
             <TableBody>
               {vendorSkus.map((vs) => (
                 <TableRow key={vs.vendor_id}>
                   <TableCell>
-                    <Typography variant="body2" fontWeight={500}>
-                      {vs.vendor_name}
-                    </Typography>
+                    <p className="text-sm font-medium">{vs.vendor_name}</p>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" fontFamily="monospace">
-                      {vs.vendor_sku}
-                    </Typography>
+                    <p className="font-mono text-sm">{vs.vendor_sku}</p>
                   </TableCell>
-                  <TableCell align="right">
-                    <Tooltip title="Edit">
-                      <IconButton size="small" onClick={() => onEdit(vs.vendor_id, vs.vendor_sku)}>
-                        <EditIcon fontSize="small" />
-                      </IconButton>
+                  <TableCell className="text-right">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label="Edit"
+                          onClick={() => onEdit(vs.vendor_id, vs.vendor_sku)}
+                        >
+                          <Pencil />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Edit</TooltipContent>
                     </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => onDelete(vs.vendor_id, vs.vendor_name)}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          className="text-destructive"
+                          aria-label="Delete"
+                          onClick={() => onDelete(vs.vendor_id, vs.vendor_name)}
+                        >
+                          <Trash2 />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Delete</TooltipContent>
                     </Tooltip>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </TableContainer>
+        </div>
       ) : (
-        <Typography variant="body2" color="text.secondary">
+        <p className="text-sm text-muted-foreground">
           No vendor SKU mappings yet. Add customer/marketplace-specific SKUs (e.g., deodap, meesho,
           amazon, flipkart).
-        </Typography>
+        </p>
       )}
     </CardContent>
   </Card>

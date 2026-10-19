@@ -1,23 +1,19 @@
 import React, { useState } from 'react';
 import { useUrlParam } from '../../hooks/useUrlFilters';
+import { Pencil, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
-  Box,
-  Card,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  IconButton,
-  Chip,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import {
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-} from '@mui/icons-material';
+} from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from 'cn';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SearchInput } from '../../components/common/SearchInput';
 import { LoadingState } from '../../components/common/LoadingState';
@@ -42,6 +38,14 @@ const getRoleColor = (role: string): 'error' | 'warning' | 'info' | 'default' =>
       return 'default';
   }
 };
+
+// Outlined badge tints standing in for the MUI chip `color` prop.
+const roleBadgeClass = {
+  error: 'border-destructive/50 text-destructive',
+  warning: 'border-warning/50 text-warning',
+  info: 'border-primary/50 text-primary',
+  default: '',
+} as const;
 
 const getRoleLabel = (role: string): string => {
   switch (role) {
@@ -161,69 +165,77 @@ export const UsersPage: React.FC = () => {
     }
     
     return (
-      <TableContainer>
+      <div className="overflow-x-auto">
         <Table>
-          <TableHead>
+          <TableHeader>
             <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Username</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell>Contact</TableCell>
-              <TableCell>Created</TableCell>
-              <TableCell align="center">Actions</TableCell>
+              <TableHead>Name</TableHead>
+              <TableHead>Username</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Contact</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead className="text-center">Actions</TableHead>
             </TableRow>
-          </TableHead>
+          </TableHeader>
           <TableBody>
             {users.map((user) => (
-              <TableRow key={user.id} hover>
+              <TableRow key={user.id}>
                 <TableCell>
-                  <Typography variant="body2" fontWeight={600}>
-                    {user.name}
-                  </Typography>
+                  <p className="text-sm font-semibold">{user.name}</p>
                 </TableCell>
                 <TableCell>{user.username}</TableCell>
                 <TableCell>
-                  <Chip
-                    label={getRoleLabel(user.role)}
-                    size="small"
-                    color={getRoleColor(user.role)}
-                    variant="outlined"
-                  />
+                  <Badge variant="outline" className={cn(roleBadgeClass[getRoleColor(user.role)])}>
+                    {getRoleLabel(user.role)}
+                  </Badge>
                 </TableCell>
                 <TableCell>{user.contact_info || '-'}</TableCell>
                 <TableCell>{formatDate(user.created_at)}</TableCell>
-                <TableCell align="center">
-                  <Tooltip title="Edit">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleOpenEditDialog(user)}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title={user.id === currentUser?.id ? "Can't delete yourself" : 'Delete'}>
-                    <span>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => handleOpenDeleteDialog(user)}
-                        disabled={user.id === currentUser?.id}
+                <TableCell className="text-center">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label="Edit"
+                        onClick={() => handleOpenEditDialog(user)}
                       >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </span>
+                        <Pencil />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Edit</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    {/* The span keeps the tooltip reachable while the button is disabled. */}
+                    <TooltipTrigger asChild>
+                      <span>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label="Delete"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleOpenDeleteDialog(user)}
+                          disabled={user.id === currentUser?.id}
+                        >
+                          <Trash2 />
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {user.id === currentUser?.id ? "Can't delete yourself" : 'Delete'}
+                    </TooltipContent>
                   </Tooltip>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      </TableContainer>
+      </div>
     );
   };
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title="Users"
         subtitle={users ? `${users.length} users in the system` : 'Manage system users'}
@@ -232,21 +244,19 @@ export const UsersPage: React.FC = () => {
       />
 
       {/* Search bar - always visible */}
-      <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+      <div className="mb-6 flex items-center gap-4">
         <SearchInput
           value={search}
           onChange={setSearch}
           placeholder="Search by name or username..."
         />
         {isFetching && !showFullLoading && (
-          <Typography variant="caption" color="text.secondary">
-            Searching...
-          </Typography>
+          <span className="text-xs text-muted-foreground">Searching...</span>
         )}
-      </Box>
+      </div>
 
       {/* Users table */}
-      <Card>
+      <Card className="gap-0 overflow-hidden py-0">
         {renderTableContent()}
       </Card>
 
@@ -270,7 +280,7 @@ export const UsersPage: React.FC = () => {
         onConfirm={handleConfirmDelete}
         onCancel={handleCloseDeleteDialog}
       />
-    </Box>
+    </div>
   );
 };
 

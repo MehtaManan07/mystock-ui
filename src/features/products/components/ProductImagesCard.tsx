@@ -1,21 +1,16 @@
 import React, { useRef } from 'react';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  IconButton,
-  CircularProgress,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  ContentCopy as CopyIcon,
-  Delete as DeleteIcon,
-  ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon,
-  ImageOutlined as ImageIcon,
-} from '@mui/icons-material';
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Image as ImageIcon,
+  Loader2,
+  Plus,
+  Trash2,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from 'cn';
 import type { ProductImage } from '../../../types';
 
 export interface ProductImagesCardProps {
@@ -30,9 +25,6 @@ export interface ProductImagesCardProps {
   deletePending: boolean;
   fileInputRef?: React.RefObject<HTMLInputElement | null>;
 }
-
-const THUMB_SIZE = 72;
-const MAIN_IMAGE_MAX_HEIGHT = 420;
 
 export const ProductImagesCard: React.FC<ProductImagesCardProps> = ({
   images,
@@ -53,225 +45,133 @@ export const ProductImagesCard: React.FC<ProductImagesCardProps> = ({
   const canAddMore = images.length < 15;
 
   return (
-    <Card variant="outlined" sx={{ overflow: 'hidden' }}>
-      <CardContent sx={{ '&:last-child': { pb: 3 } }}>
+    <Card className="overflow-hidden">
+      <CardContent>
         {/* Header */}
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 2,
-            mb: 2,
-          }}
-        >
-          <Typography variant="h6" fontWeight={600}>
-            Product images
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+          <h3 className="text-base font-semibold">Product images</h3>
+          <div className="flex items-center gap-3">
             <input
               type="file"
               ref={fileInputRef}
               accept="image/jpeg,image/png,image/webp"
               multiple
-              style={{ display: 'none' }}
+              className="hidden"
               onChange={(e) => {
                 const files = e.target.files ? Array.from(e.target.files) : [];
                 if (files.length) onUpload(files);
               }}
             />
             <Button
-              size="small"
-              variant="contained"
-              startIcon={uploadPending ? <CircularProgress size={16} color="inherit" /> : <AddIcon />}
+              size="sm"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadPending || !canAddMore}
             >
+              {uploadPending ? <Loader2 className="animate-spin" /> : <Plus />}
               {uploadPending ? 'Uploading…' : 'Add images'}
             </Button>
             <Button
-              size="small"
-              variant="outlined"
-              startIcon={copyPending ? <CircularProgress size={16} color="inherit" /> : <CopyIcon />}
+              size="sm"
+              variant="outline"
               onClick={onCopyFromClick}
               disabled={copyPending || !canAddMore}
             >
+              {copyPending ? <Loader2 className="animate-spin" /> : <Copy />}
               {copyPending ? 'Copying…' : 'Copy from product'}
             </Button>
             {images.length > 0 && (
-              <Typography variant="caption" color="text.secondary">
-                {images.length} / 15
-              </Typography>
+              <span className="text-xs text-muted-foreground">{images.length} / 15</span>
             )}
-          </Box>
-        </Box>
+          </div>
+        </div>
 
         {images.length > 0 ? (
-          <Box>
+          <div>
             {/* Main image with nav */}
-            <Box
-              sx={{
-                position: 'relative',
-                width: '100%',
-                maxHeight: MAIN_IMAGE_MAX_HEIGHT,
-                minHeight: 280,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                bgcolor: 'grey.50',
-                borderRadius: 2,
-                overflow: 'hidden',
-                border: '1px solid',
-                borderColor: 'divider',
-                mb: 2,
-              }}
-            >
+            <div className="relative mb-4 flex max-h-[420px] min-h-[280px] w-full items-center justify-center overflow-hidden rounded-lg border bg-muted/50">
               <img
                 src={selectedImage?.url}
                 alt={`Image ${selectedImageIndex + 1} of ${images.length}`}
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: MAIN_IMAGE_MAX_HEIGHT,
-                  objectFit: 'contain',
-                }}
+                className="max-h-[420px] max-w-full object-contain"
               />
               {images.length > 1 && (
                 <>
-                  <IconButton
-                    size="small"
-                    onClick={() => onSelectImage((selectedImageIndex - 1 + images.length) % images.length)}
-                    sx={{
-                      position: 'absolute',
-                      left: 8,
-                      bgcolor: 'rgba(255,255,255,0.9)',
-                      boxShadow: 1,
-                      '&:hover': { bgcolor: 'white' },
-                    }}
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Previous image"
+                    onClick={() =>
+                      onSelectImage((selectedImageIndex - 1 + images.length) % images.length)
+                    }
+                    className="absolute left-2 rounded-full bg-white/90 shadow-sm hover:bg-white"
                   >
-                    <ChevronLeftIcon />
-                  </IconButton>
-                  <IconButton
-                    size="small"
+                    <ChevronLeft />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Next image"
                     onClick={() => onSelectImage((selectedImageIndex + 1) % images.length)}
-                    sx={{
-                      position: 'absolute',
-                      right: 8,
-                      bgcolor: 'rgba(255,255,255,0.9)',
-                      boxShadow: 1,
-                      '&:hover': { bgcolor: 'white' },
-                    }}
+                    className="absolute right-2 rounded-full bg-white/90 shadow-sm hover:bg-white"
                   >
-                    <ChevronRightIcon />
-                  </IconButton>
+                    <ChevronRight />
+                  </Button>
                 </>
               )}
-              <Typography
-                variant="caption"
-                sx={{
-                  position: 'absolute',
-                  bottom: 8,
-                  right: 8,
-                  bgcolor: 'rgba(0,0,0,0.5)',
-                  color: 'white',
-                  px: 1,
-                  py: 0.5,
-                  borderRadius: 1,
-                }}
-              >
+              <span className="absolute right-2 bottom-2 rounded bg-black/50 px-2 py-1 text-xs text-white">
                 {selectedImageIndex + 1} / {images.length}
-              </Typography>
-            </Box>
+              </span>
+            </div>
 
             {/* Thumbnails */}
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 1.5,
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
-            >
+            <div className="flex flex-wrap items-center gap-3">
               {images.map((img, idx) => (
-                <Box
+                <div
                   key={img.id}
                   onClick={() => onSelectImage(idx)}
-                  sx={{
-                    position: 'relative',
-                    width: THUMB_SIZE,
-                    height: THUMB_SIZE,
-                    flexShrink: 0,
-                    borderRadius: 1.5,
-                    overflow: 'hidden',
-                    border: 2,
-                    borderColor: selectedImageIndex === idx ? 'primary.main' : 'transparent',
-                    cursor: 'pointer',
-                    bgcolor: 'grey.100',
-                    transition: 'border-color 0.2s, transform 0.15s',
-                    '&:hover': {
-                      borderColor: selectedImageIndex === idx ? 'primary.main' : 'grey.400',
-                      '& .thumb-delete': { opacity: 1 },
-                    },
-                  }}
+                  className={cn(
+                    'group relative size-[72px] shrink-0 cursor-pointer overflow-hidden rounded-md border-2 bg-muted transition-[border-color,transform] duration-200',
+                    selectedImageIndex === idx
+                      ? 'border-primary'
+                      : 'border-transparent hover:border-muted-foreground/40'
+                  )}
                 >
                   <img
                     src={img.thumb_url || img.url}
                     alt=""
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    className="size-full object-cover"
                   />
-                  <IconButton
-                    className="thumb-delete"
-                    size="small"
-                    sx={{
-                      position: 'absolute',
-                      top: 4,
-                      right: 4,
-                      opacity: 0,
-                      bgcolor: 'error.main',
-                      color: 'white',
-                      width: 24,
-                      height: 24,
-                      '&:hover': { bgcolor: 'error.dark' },
-                    }}
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    aria-label="Delete image"
+                    className="absolute top-1 right-1 rounded-full bg-destructive text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive/90 hover:text-white"
                     onClick={(e) => {
                       e.stopPropagation();
                       onDeleteImage(img.id);
                     }}
                     disabled={deletePending}
                   >
-                    <DeleteIcon sx={{ fontSize: 16 }} />
-                  </IconButton>
-                </Box>
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
               ))}
-            </Box>
-          </Box>
+            </div>
+          </div>
         ) : (
-          <Box
+          <div
             onClick={() => fileInputRef.current?.click()}
-            sx={{
-              border: '2px dashed',
-              borderColor: 'divider',
-              borderRadius: 2,
-              py: 6,
-              px: 3,
-              textAlign: 'center',
-              cursor: 'pointer',
-              bgcolor: 'grey.50',
-              transition: 'border-color 0.2s, bgcolor 0.2s',
-              '&:hover': {
-                borderColor: 'primary.light',
-                bgcolor: 'grey.100',
-              },
-            }}
+            className="cursor-pointer rounded-lg border-2 border-dashed bg-muted/50 px-6 py-12 text-center transition-colors duration-200 hover:border-primary/60 hover:bg-muted"
           >
-            <ImageIcon sx={{ fontSize: 48, color: 'grey.400', mb: 1 }} />
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-              No images yet
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <ImageIcon
+              className="mx-auto mb-2 size-12 text-muted-foreground/50"
+              strokeWidth={1.5}
+            />
+            <p className="mb-1 text-sm text-muted-foreground">No images yet</p>
+            <span className="text-xs text-muted-foreground">
               Click to upload or use “Copy from product” for the same item in another size/color
-            </Typography>
-          </Box>
+            </span>
+          </div>
         )}
       </CardContent>
     </Card>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { Box, CircularProgress } from '@mui/material';
+import { Loader2 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { useCurrentUser } from '../../hooks/useAuth';
 import type { UserRole } from '../../constants';
@@ -23,16 +23,9 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children, allowedRoles }) 
   // Show loading while checking auth
   if (isLoading) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-        }}
-      >
-        <CircularProgress />
-      </Box>
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="size-9 animate-spin text-primary" />
+      </div>
     );
   }
 

@@ -1,18 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  MenuItem,
-  Typography,
-  Box,
-  Checkbox,
-  FormControlLabel,
-} from '@mui/material';
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { cn } from 'cn';
 import type { Product, ProductImage } from '../../../types';
+
+/** Radix forbids an empty SelectItem value, so the "no selection" row uses a sentinel. */
+const NO_PRODUCT = 'none';
 
 export interface CopyImagesDialogProps {
   open: boolean;
@@ -73,116 +81,106 @@ export const CopyImagesDialog: React.FC<CopyImagesDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Copy images from another product</DialogTitle>
-      <DialogContent>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Choose a product, then select which images to copy. No new upload; images are shared.
-        </Typography>
-        <TextField
-          select
-          label="Product"
-          value={copyFromProductId}
-          onChange={(e) => onProductSelect(e.target.value === '' ? '' : Number(e.target.value))}
-          fullWidth
-          size="small"
-          sx={{ mb: 2 }}
-        >
-          <MenuItem value="">Select a product</MenuItem>
-          {otherProducts.map((p) => (
-            <MenuItem key={p.id} value={p.id}>
-              {p.name} — {p.size} • {p.packing}
-            </MenuItem>
-          ))}
-        </TextField>
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Copy images from another product</DialogTitle>
+        </DialogHeader>
 
-        {sourceProductImages.length > 0 ? (
-          <Box>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={allSelected}
-                  indeterminate={someSelected && !allSelected}
-                  onChange={handleToggleAll}
-                />
+        <div>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Choose a product, then select which images to copy. No new upload; images are shared.
+          </p>
+
+          <div className="mb-4 grid gap-2">
+            <Label htmlFor="copy-images-product">Product</Label>
+            <Select
+              value={copyFromProductId === '' ? '' : String(copyFromProductId)}
+              onValueChange={(value) =>
+                onProductSelect(value === NO_PRODUCT ? '' : Number(value))
               }
-              label="Select all"
-              sx={{ mb: 1.5 }}
-            />
-            <Box
-              sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 1.5,
-              }}
             >
-              {sourceProductImages.map((img) => (
-                <Box
-                  key={img.id}
-                  onClick={() => handleToggleOne(img.id)}
-                  sx={{
-                    position: 'relative',
-                    width: 80,
-                    height: 80,
-                    borderRadius: 1,
-                    overflow: 'hidden',
-                    border: 2,
-                    borderColor: selectedIds.has(img.id) ? 'primary.main' : 'divider',
-                    cursor: 'pointer',
-                    bgcolor: 'grey.100',
-                    '&:hover': { borderColor: 'primary.light' },
-                  }}
-                >
-                  <img
-                    src={img.thumb_url || img.url}
-                    alt=""
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                  <Checkbox
-                    checked={selectedIds.has(img.id)}
-                    sx={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      color: 'white',
-                      bgcolor: 'rgba(0,0,0,0.4)',
-                      p: 0.25,
-                      '&.Mui-checked': { color: 'primary.light' },
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={() => handleToggleOne(img.id)}
-                  />
-                </Box>
-              ))}
-            </Box>
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-              {selectedIds.size} of {sourceProductImages.length} selected
-            </Typography>
-          </Box>
-        ) : (
-          copyFromProductId && (
-            <Typography variant="body2" color="text.secondary">
-              This product has no images.
-            </Typography>
-          )
-        )}
+              <SelectTrigger id="copy-images-product" className="w-full">
+                <SelectValue placeholder="Select a product" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_PRODUCT}>Select a product</SelectItem>
+                {otherProducts.map((p) => (
+                  <SelectItem key={p.id} value={String(p.id)}>
+                    {p.name} — {p.size} • {p.packing}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        {otherProducts.length === 0 && (
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-            No other products found. Create another product first (e.g. same item, different size).
-          </Typography>
-        )}
+          {sourceProductImages.length > 0 ? (
+            <div>
+              <div className="mb-3 flex items-center gap-2">
+                <Checkbox
+                  id="copy-images-select-all"
+                  checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+                  onCheckedChange={handleToggleAll}
+                />
+                <Label htmlFor="copy-images-select-all" className="font-normal">
+                  Select all
+                </Label>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                {sourceProductImages.map((img) => (
+                  <div
+                    key={img.id}
+                    onClick={() => handleToggleOne(img.id)}
+                    className={cn(
+                      'relative size-20 cursor-pointer overflow-hidden rounded border-2 bg-muted hover:border-primary/60',
+                      selectedIds.has(img.id) ? 'border-primary' : 'border-border'
+                    )}
+                  >
+                    <img
+                      src={img.thumb_url || img.url}
+                      alt=""
+                      className="size-full object-cover"
+                    />
+                    <Checkbox
+                      checked={selectedIds.has(img.id)}
+                      className="absolute top-1 left-1 border-white bg-black/40 text-white data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+                      onClick={(e) => e.stopPropagation()}
+                      onCheckedChange={() => handleToggleOne(img.id)}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <span className="mt-2 block text-xs text-muted-foreground">
+                {selectedIds.size} of {sourceProductImages.length} selected
+              </span>
+            </div>
+          ) : (
+            copyFromProductId && (
+              <p className="text-sm text-muted-foreground">This product has no images.</p>
+            )
+          )}
+
+          {otherProducts.length === 0 && (
+            <span className="mt-2 block text-xs text-muted-foreground">
+              No other products found. Create another product first (e.g. same item, different
+              size).
+            </span>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={handleCopy} disabled={!someSelected || isPending}>
+            {isPending
+              ? 'Copying…'
+              : `Copy ${selectedIds.size} image${selectedIds.size !== 1 ? 's' : ''}`}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button
-          variant="contained"
-          onClick={handleCopy}
-          disabled={!someSelected || isPending}
-        >
-          {isPending ? 'Copying…' : `Copy ${selectedIds.size} image${selectedIds.size !== 1 ? 's' : ''}`}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 };

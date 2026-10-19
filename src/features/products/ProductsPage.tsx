@@ -1,21 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUrlParam } from '../../hooks/useUrlFilters';
-import {
-  Box,
-  Button,
-  Card,
-  IconButton,
-  Chip,
-  Tooltip,
-  Typography,
-  CircularProgress,
-} from '@mui/material';
-import {
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Visibility as ViewIcon,
-} from '@mui/icons-material';
+import { Eye, Loader2, Pencil, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SearchInput } from '../../components/common/SearchInput';
 import { LoadingState } from '../../components/common/LoadingState';
@@ -159,18 +149,16 @@ export const ProductsPage: React.FC = () => {
       id: 'name',
       label: 'Name',
       render: (product: Product) => (
-        <Typography variant="body2" fontWeight={600}>
-          {product.name}
-        </Typography>
+        <p className="text-sm font-semibold">{product.name}</p>
       ),
     },
     {
       id: 'company_sku',
       label: 'Company SKU',
       render: (product: Product) => (
-        <Typography variant="body2" fontFamily="monospace" color="text.secondary">
+        <p className="font-mono text-sm text-muted-foreground">
           {product.company_sku || '-'}
-        </Typography>
+        </p>
       ),
       hideOnMobile: true,
     },
@@ -181,7 +169,7 @@ export const ProductsPage: React.FC = () => {
       mobileLabel: 'Display',
       align: 'right' as const,
       render: (product: Product) => (
-        <Typography variant="body2">{product.display_name || '-'}</Typography>
+        <p className="text-sm">{product.display_name || '-'}</p>
       ),
       hideOnMobile: true,
     },
@@ -190,9 +178,9 @@ export const ProductsPage: React.FC = () => {
       label: 'Type',
       render: (product: Product) => (
         product.product_type ? (
-          <Chip label={product.product_type} size="small" variant="outlined" />
+          <Badge variant="outline">{product.product_type}</Badge>
         ) : (
-          <Typography variant="body2" color="text.secondary">-</Typography>
+          <p className="text-sm text-muted-foreground">-</p>
         )
       ),
       hideOnMobile: true,
@@ -200,13 +188,13 @@ export const ProductsPage: React.FC = () => {
     {
       id: 'size',
       label: 'Size',
-      render: (product: Product) => <Typography variant="body2">{product.size || '-'}</Typography>,
+      render: (product: Product) => <p className="text-sm">{product.size || '-'}</p>,
       hideOnMobile: true,
     },
     {
       id: 'packing',
       label: 'Packing',
-      render: (product: Product) => <Typography variant="body2">{product.packing || '-'}</Typography>,
+      render: (product: Product) => <p className="text-sm">{product.packing || '-'}</p>,
       hideOnMobile: true,
     },
     {
@@ -215,12 +203,9 @@ export const ProductsPage: React.FC = () => {
       mobileLabel: 'Sale',
       align: 'right' as const,
       render: (product: Product) => (
-        <Chip
-          label={formatCurrency(product.default_sale_price)}
-          size="small"
-          color="success"
-          variant="outlined"
-        />
+        <Badge variant="outline" className="border-success text-success">
+          {formatCurrency(product.default_sale_price)}
+        </Badge>
       ),
     },
     {
@@ -229,14 +214,11 @@ export const ProductsPage: React.FC = () => {
       mobileLabel: 'Qty',
       align: 'center' as const,
       render: (product: Product) => (
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-          <Chip
-            label={formatQuantityDisplay(product.totalQuantity, product.packing)}
-            size="small"
-            color={product.totalQuantity > 0 ? 'primary' : 'default'}
-            variant={product.totalQuantity > 0 ? 'filled' : 'outlined'}
-          />
-        </Box>
+        <div className="flex flex-col items-center gap-1">
+          <Badge variant={product.totalQuantity > 0 ? 'default' : 'outline'}>
+            {formatQuantityDisplay(product.totalQuantity, product.packing)}
+          </Badge>
+        </div>
       ),
     },
     {
@@ -245,47 +227,60 @@ export const ProductsPage: React.FC = () => {
       align: 'center' as const,
       isAction: true,
       render: (product: Product) => (
-        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-          <Tooltip title="View">
-            <IconButton
-              size="small"
-              component="a"
-              href={`/products/${product.id}`}
-              onClick={(e: React.MouseEvent) => {
-                e.stopPropagation();
-                if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
-                  e.preventDefault();
-                  handleViewProduct(product);
-                }
-              }}
-            >
-              <ViewIcon fontSize="small" />
-            </IconButton>
+        <div className="flex justify-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button asChild variant="ghost" size="icon-sm" aria-label="View">
+                <a
+                  href={`/products/${product.id}`}
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                      e.preventDefault();
+                      handleViewProduct(product);
+                    }
+                  }}
+                >
+                  <Eye />
+                </a>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>View</TooltipContent>
           </Tooltip>
-          <Tooltip title="Edit">
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleOpenEditDialog(product);
-              }}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Edit"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenEditDialog(product);
+                }}
+              >
+                <Pencil />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Edit</TooltipContent>
           </Tooltip>
-          <Tooltip title="Delete">
-            <IconButton
-              size="small"
-              color="error"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleOpenDeleteDialog(product);
-              }}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Delete"
+                className="text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenDeleteDialog(product);
+                }}
+              >
+                <Trash2 />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Delete</TooltipContent>
           </Tooltip>
-        </Box>
+        </div>
       ),
     },
   ];
@@ -331,33 +326,31 @@ export const ProductsPage: React.FC = () => {
         />
 
         {/* Infinite scroll trigger and loading indicator */}
-        <Box sx={{ p: 2, textAlign: 'center' }}>
+        <div className="p-4 text-center">
           {/* Invisible div that triggers intersection observer */}
-          <div ref={observerTarget} style={{ height: '20px' }} />
+          <div ref={observerTarget} className="h-5" />
 
           {/* Loading indicator while fetching next page */}
           {isFetchingNextPage && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
-              <CircularProgress size={24} />
-              <Typography variant="body2" color="text.secondary">
-                Loading more products...
-              </Typography>
-            </Box>
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="size-6 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Loading more products...</p>
+            </div>
           )}
 
           {/* End of results indicator */}
           {!hasNextPage && products.length > 0 && (
-            <Typography variant="caption" color="text.secondary">
+            <span className="text-xs text-muted-foreground">
               All products loaded ({totalCount} total)
-            </Typography>
+            </span>
           )}
-        </Box>
+        </div>
       </>
     );
   };
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title="Products"
         subtitle={
@@ -366,36 +359,33 @@ export const ProductsPage: React.FC = () => {
             : 'Search to browse your product catalog'
         }
         action={
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant="outlined" onClick={() => setBulkDialogOpen(true)}>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setBulkDialogOpen(true)}>
               Bulk Create
             </Button>
-            <Button variant="contained" onClick={handleOpenCreateDialog}>
-              Add Product
-            </Button>
-          </Box>
+            <Button onClick={handleOpenCreateDialog}>Add Product</Button>
+          </div>
         }
       />
 
       {/* Search bar - always visible */}
-      <Box sx={{ mb: { xs: 2, sm: 3 }, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-        <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' }, minWidth: { xs: '100%', sm: '200px' } }}>
+      <div className="mb-4 flex flex-wrap items-center gap-4 sm:mb-6">
+        <div className="w-full sm:w-auto sm:min-w-[200px] sm:flex-auto">
           <SearchInput
             value={search}
             onChange={setSearch}
             placeholder="Search by name, size, or packing..."
+            className="sm:w-full"
           />
-        </Box>
+        </div>
         {/* Show searching indicator (not for next page fetch) */}
         {isFetching && !isFetchingNextPage && !showFullLoading && (
-          <Typography variant="caption" color="text.secondary">
-            Searching...
-          </Typography>
+          <span className="text-xs text-muted-foreground">Searching...</span>
         )}
-      </Box>
+      </div>
 
       {/* Products table */}
-      <Card>
+      <Card className="overflow-hidden py-0">
         {renderTableContent()}
       </Card>
 
@@ -425,7 +415,7 @@ export const ProductsPage: React.FC = () => {
         onConfirm={handleConfirmDelete}
         onCancel={handleCloseDeleteDialog}
       />
-    </Box>
+    </div>
   );
 };
 

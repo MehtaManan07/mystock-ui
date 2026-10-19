@@ -1,12 +1,18 @@
 import React from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button,
-} from '@mui/material';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { buttonVariants } from '@/components/ui/button';
+import { cn } from 'cn';
+
+type ConfirmColor = 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -14,7 +20,8 @@ interface ConfirmDialogProps {
   message: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  confirmColor?: 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success';
+  /** Kept for source compatibility with the previous MUI API. */
+  confirmColor?: ConfirmColor;
   isLoading?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -31,26 +38,32 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   onConfirm,
   onCancel,
 }) => {
+  const destructive = confirmColor === 'error' || confirmColor === 'warning';
+
   return (
-    <Dialog open={open} onClose={onCancel} maxWidth="xs" fullWidth>
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent>
-        <DialogContentText>{message}</DialogContentText>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onCancel} disabled={isLoading}>
-          {cancelLabel}
-        </Button>
-        <Button
-          onClick={onConfirm}
-          variant="contained"
-          color={confirmColor}
-          disabled={isLoading}
-        >
-          {isLoading ? 'Please wait...' : confirmLabel}
-        </Button>
-      </DialogActions>
-    </Dialog>
+    <AlertDialog open={open} onOpenChange={(next) => !next && onCancel()}>
+      <AlertDialogContent className="sm:max-w-md">
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{message}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isLoading}>{cancelLabel}</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={isLoading}
+            onClick={(e) => {
+              // Keep the dialog mounted while the async action runs; the caller
+              // closes it by flipping `open`.
+              e.preventDefault();
+              onConfirm();
+            }}
+            className={cn(destructive && buttonVariants({ variant: 'destructive' }))}
+          >
+            {isLoading ? 'Please wait...' : confirmLabel}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
 

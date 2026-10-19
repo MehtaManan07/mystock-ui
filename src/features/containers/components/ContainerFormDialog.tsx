@@ -1,18 +1,21 @@
 import React, { useEffect } from 'react';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
   Select,
-  MenuItem,
-  FormHelperText,
-  Grid,
-} from '@mui/material';
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -85,54 +88,82 @@ export const ContainerFormDialog: React.FC<ContainerFormDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <form onSubmit={handleSubmit(handleFormSubmit)}>
-        <DialogTitle>{isEditing ? 'Edit Container' : 'Add New Container'}</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid size={12}>
-              <TextField
+    <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
+      <DialogContent className="sm:max-w-xl">
+        <form onSubmit={handleSubmit(handleFormSubmit)}>
+          <DialogHeader>
+            <DialogTitle>
+              {isEditing ? 'Edit Container' : 'Add New Container'}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="container-name">Container Name</Label>
+              <Input
+                id="container-name"
                 {...register('name')}
-                label="Container Name"
                 placeholder="e.g., Warehouse-A, Godown-1, Rack-3"
-                error={!!errors.name}
-                helperText={errors.name?.message}
+                aria-invalid={!!errors.name}
                 disabled={isLoading}
                 autoFocus
               />
-            </Grid>
-            <Grid size={12}>
+              {errors.name && (
+                <p className="text-sm text-destructive">{errors.name.message}</p>
+              )}
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="container-type">Container Type</Label>
               <Controller
                 name="type"
                 control={control}
                 render={({ field }) => (
-                  <FormControl fullWidth error={!!errors.type}>
-                    <InputLabel>Container Type</InputLabel>
-                    <Select {...field} label="Container Type" disabled={isLoading}>
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger
+                      id="container-type"
+                      className="w-full"
+                      aria-invalid={!!errors.type}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
+                    >
+                      <SelectValue placeholder="Container Type" />
+                    </SelectTrigger>
+                    <SelectContent>
                       {containerTypeOptions.map((option) => (
-                        <MenuItem key={option.value} value={option.value}>
+                        <SelectItem key={option.value} value={option.value}>
                           {option.label}
-                        </MenuItem>
+                        </SelectItem>
                       ))}
-                    </Select>
-                    {errors.type && (
-                      <FormHelperText>{errors.type.message}</FormHelperText>
-                    )}
-                  </FormControl>
+                    </SelectContent>
+                  </Select>
                 )}
               />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={onClose} disabled={isLoading}>
-            Cancel
-          </Button>
-          <Button type="submit" variant="contained" disabled={isLoading}>
-            {isLoading ? 'Saving...' : isEditing ? 'Update' : 'Create'}
-          </Button>
-        </DialogActions>
-      </form>
+              {errors.type && (
+                <p className="text-sm text-destructive">{errors.type.message}</p>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Saving...' : isEditing ? 'Update' : 'Create'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
     </Dialog>
   );
 };

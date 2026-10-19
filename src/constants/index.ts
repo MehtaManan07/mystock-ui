@@ -1,6 +1,6 @@
 // API Configuration
-// export const API_BASE_URL = "http://localhost:8000/api"
-export const API_BASE_URL = "https://adminstock.duckdns.org/api"
+export const API_BASE_URL = "http://localhost:8000/api"
+// export const API_BASE_URL = "https://adminstock.duckdns.org/api"
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -88,6 +88,15 @@ export const API_ENDPOINTS = {
     BY_ID: (id: number) => `/drafts/${id}`,
     COMPLETE: (id: number) => `/drafts/${id}/complete`,
   },
+  // Assistant
+  ASSISTANT: {
+    THREADS: '/assistant/threads',
+    THREAD: (id: number) => `/assistant/threads/${id}`,
+    MESSAGES: '/assistant/messages',
+    RUN: (id: number) => `/assistant/runs/${id}`,
+    RUN_CANCEL: (id: number) => `/assistant/runs/${id}/cancel`,
+    RUN_STREAM: (id: number) => `/assistant/runs/${id}/stream`,
+  },
 } as const;
 
 // React Query Base Keys — single source of truth for all string literals used in query keys
@@ -114,6 +123,8 @@ export const QUERY_KEY_BASE = {
   DRAFTS: 'drafts',
   PDF_INVOICES: 'pdfInvoices',
   SETTINGS: 'settings',
+  ASSISTANT_THREADS: 'assistantThreads',
+  ASSISTANT_RUN: 'assistantRun',
   // Segment qualifiers (sub-keys within an entity's key hierarchy)
   INFINITE: 'infinite',
   BATCH: 'batch',
@@ -222,6 +233,11 @@ export const QUERY_KEYS = {
     type ? [QUERY_KEY_BASE.DRAFTS, type] : [QUERY_KEY_BASE.DRAFTS],
   DRAFT: (id: number) => [QUERY_KEY_BASE.DRAFTS, id] as const,
   DRAFT_COMPLETE: (id: number) => [QUERY_KEY_BASE.DRAFTS, id, QUERY_KEY_BASE.COMPLETE],
+
+  // Assistant
+  ASSISTANT_THREADS: [QUERY_KEY_BASE.ASSISTANT_THREADS] as const,
+  ASSISTANT_THREAD: (id: number) => [QUERY_KEY_BASE.ASSISTANT_THREADS, id] as const,
+  ASSISTANT_RUN: (id: number) => [QUERY_KEY_BASE.ASSISTANT_RUN, id] as const,
 };
 
 // User Roles

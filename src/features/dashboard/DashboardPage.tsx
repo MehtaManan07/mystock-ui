@@ -1,108 +1,37 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Box,
-  Typography,
-  Grid,
+  Package,
+  Warehouse,
+  Users,
+  Receipt,
+  TrendingUp,
+  TrendingDown,
+  Landmark,
+  ArrowRight,
+  ShoppingCart,
+  Truck,
+} from 'lucide-react';
+import {
   Card,
+  CardAction,
   CardContent,
   CardHeader,
-  useTheme,
-  useMediaQuery,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
   Table,
   TableBody,
   TableCell,
   TableRow,
-  Chip,
-  Button,
-  Skeleton,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Avatar,
-} from '@mui/material';
-import {
-  Inventory2 as ProductIcon,
-  Warehouse as ContainerIcon,
-  People as ContactIcon,
-  Receipt as TransactionIcon,
-  TrendingUp as IncomeIcon,
-  TrendingDown as ExpenseIcon,
-  AccountBalance as BalanceIcon,
-  ArrowForward as ArrowIcon,
-  ShoppingCart as SaleIcon,
-  LocalShipping as PurchaseIcon,
-} from '@mui/icons-material';
+} from '@/components/ui/table';
+import { cn } from 'cn';
 import { useAuthStore } from '../../stores/authStore';
 import { useDashboard } from '../../hooks/useDashboard';
-
-interface StatCardProps {
-  title: string;
-  value: string | number;
-  icon: React.ReactNode;
-  color: string;
-  loading?: boolean;
-  onClick?: () => void;
-}
-
-const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color, loading, onClick }) => {
-  const theme = useTheme();
-
-  return (
-    <Card
-      sx={{
-        height: '100%',
-        position: 'relative',
-        overflow: 'visible',
-        cursor: onClick ? 'pointer' : 'default',
-        transition: 'transform 0.2s, box-shadow 0.2s',
-        '&:hover': onClick
-          ? {
-              transform: 'translateY(-4px)',
-              boxShadow: theme.shadows[8],
-            }
-          : {},
-      }}
-      onClick={onClick}
-    >
-      <CardContent sx={{ p: { xs: 2, sm: 3 }, pt: { xs: 4, sm: 3 } }}>
-        <Box
-          sx={{
-            position: 'absolute',
-            top: { xs: -16, sm: -20 },
-            left: { xs: 16, sm: 24 },
-            width: { xs: 48, sm: 56 },
-            height: { xs: 48, sm: 56 },
-            borderRadius: 2,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: `linear-gradient(135deg, ${color} 0%, ${
-              theme.palette.mode === 'dark' ? color + 'cc' : color + '99'
-            } 100%)`,
-            boxShadow: `0 4px 20px ${color}40`,
-          }}
-        >
-          <Box sx={{ color: 'white', fontSize: { xs: 24, sm: 28 }, display: 'flex' }}>{icon}</Box>
-        </Box>
-        <Box sx={{ textAlign: 'right', mt: { xs: 1, sm: 2 } }}>
-          <Typography variant="body2" color="text.secondary" gutterBottom sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-            {title}
-          </Typography>
-          {loading ? (
-            <Skeleton width={80} height={40} sx={{ ml: 'auto' }} />
-          ) : (
-            <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
-              {value}
-            </Typography>
-          )}
-        </Box>
-      </CardContent>
-    </Card>
-  );
-};
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('en-IN', {
@@ -120,9 +49,114 @@ const formatDate = (dateString: string) => {
   });
 };
 
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  icon: React.ReactNode;
+  /** Tailwind classes for the icon tile — colours must be static for JIT. */
+  accentClassName: string;
+  loading?: boolean;
+  onClick?: () => void;
+}
+
+const StatCard: React.FC<StatCardProps> = ({
+  title,
+  value,
+  icon,
+  accentClassName,
+  loading,
+  onClick,
+}) => (
+  <Card
+    onClick={onClick}
+    className={cn(
+      'gap-0 py-5 transition-all',
+      onClick && 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md'
+    )}
+  >
+    <CardContent className="flex items-center gap-4 px-5">
+      <div
+        className={cn(
+          'flex size-11 shrink-0 items-center justify-center rounded-xl [&_svg]:size-5',
+          accentClassName
+        )}
+      >
+        {icon}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm text-muted-foreground">{title}</p>
+        {loading ? (
+          <Skeleton className="mt-2 h-7 w-20" />
+        ) : (
+          <p className="text-2xl font-semibold tracking-tight tabular-nums">
+            {value}
+          </p>
+        )}
+      </div>
+    </CardContent>
+  </Card>
+);
+
+interface FinanceCardProps {
+  title: string;
+  value: number;
+  icon: React.ReactNode;
+  accentClassName: string;
+  valueClassName: string;
+  loading?: boolean;
+  onClick: () => void;
+}
+
+const FinanceCard: React.FC<FinanceCardProps> = ({
+  title,
+  value,
+  icon,
+  accentClassName,
+  valueClassName,
+  loading,
+  onClick,
+}) => (
+  <Card
+    onClick={onClick}
+    className="cursor-pointer gap-0 py-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
+  >
+    <CardContent className="px-5">
+      <div className="flex items-center gap-2.5">
+        <span
+          className={cn(
+            'flex size-8 items-center justify-center rounded-lg [&_svg]:size-4',
+            accentClassName
+          )}
+        >
+          {icon}
+        </span>
+        <span className="text-sm font-medium text-muted-foreground">
+          {title}
+        </span>
+      </div>
+      {loading ? (
+        <Skeleton className="mt-4 h-8 w-32" />
+      ) : (
+        <p
+          className={cn(
+            'mt-4 text-2xl font-semibold tracking-tight tabular-nums sm:text-3xl',
+            valueClassName
+          )}
+        >
+          {formatCurrency(value)}
+        </p>
+      )}
+    </CardContent>
+  </Card>
+);
+
+const paymentStatusClass = (status: string) => {
+  if (status === 'paid') return 'border-success/30 bg-success/10 text-success';
+  if (status === 'partial') return 'border-warning/40 bg-warning/10 text-warning';
+  return 'border-destructive/30 bg-destructive/10 text-destructive';
+};
+
 export const DashboardPage: React.FC = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
 
@@ -148,449 +182,373 @@ export const DashboardPage: React.FC = () => {
     {
       title: 'Total Products',
       value: totalProducts,
-      icon: <ProductIcon />,
-      color: theme.palette.primary.main,
+      icon: <Package />,
+      accentClassName: 'bg-chart-1/12 text-chart-1',
       loading: isLoading,
       onClick: () => navigate('/products'),
     },
     {
       title: 'Containers',
       value: totalContainers,
-      icon: <ContainerIcon />,
-      color: theme.palette.secondary.main,
+      icon: <Warehouse />,
+      accentClassName: 'bg-chart-2/20 text-chart-2',
       loading: isLoading,
       onClick: () => navigate('/containers'),
     },
     {
       title: 'Contacts',
       value: totalContacts,
-      icon: <ContactIcon />,
-      color: theme.palette.info.main,
+      icon: <Users />,
+      accentClassName: 'bg-chart-3/12 text-chart-3',
       loading: isLoading,
       onClick: () => navigate('/contacts'),
     },
     {
       title: 'Total Inventory',
       value: totalInventory.toLocaleString(),
-      icon: <TransactionIcon />,
-      color: theme.palette.success.main,
+      icon: <Receipt />,
+      accentClassName: 'bg-chart-4/12 text-chart-4',
       loading: isLoading,
       onClick: () => navigate('/inventory'),
     },
   ];
 
+  const transactionIcon = (type: string) =>
+    type === 'sale' ? <ShoppingCart /> : <Truck />;
+
+  const transactionIconClass = (type: string) =>
+    type === 'sale'
+      ? 'bg-success/10 text-success'
+      : 'bg-primary/10 text-primary';
+
   return (
-    <Box>
+    <div>
       {/* Header */}
-      <Box sx={{ mb: { xs: 3, sm: 4 } }}>
-        <Typography variant="h4" fontWeight={700} gutterBottom>
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-[1.75rem]">
           Welcome back, {user?.name || 'User'}!
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground sm:text-base">
           Here's what's happening with your inventory today.
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* Stats Grid */}
-      <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mt: 2 }}>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => (
-          <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={index}>
-            <StatCard {...stat} />
-          </Grid>
+          <StatCard {...stat} key={index} />
         ))}
-      </Grid>
+      </div>
 
       {/* Financial Overview */}
-      <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mt: { xs: 3, sm: 4 } }}>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Card
-            sx={{
-              background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
-              color: 'white',
-              cursor: 'pointer',
-              transition: 'transform 0.2s, box-shadow 0.2s',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: theme.shadows[12],
-              },
-            }}
-            onClick={() => navigate('/payments')}
-          >
-            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <IncomeIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
-                <Typography variant="subtitle1" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>Total Income</Typography>
-              </Box>
-              {isLoading ? (
-                <Skeleton width={120} height={40} sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
-              ) : (
-                <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
-                  {formatCurrency(totalIncome)}
-                </Typography>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Card
-            sx={{
-              background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error.dark} 100%)`,
-              color: 'white',
-              cursor: 'pointer',
-              transition: 'transform 0.2s, box-shadow 0.2s',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: theme.shadows[12],
-              },
-            }}
-            onClick={() => navigate('/payments')}
-          >
-            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <ExpenseIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
-                <Typography variant="subtitle1" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>Total Expenses</Typography>
-              </Box>
-              {isLoading ? (
-                <Skeleton width={120} height={40} sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
-              ) : (
-                <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
-                  {formatCurrency(totalExpenses)}
-                </Typography>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Card
-            sx={{
-              background:
-                netBalance >= 0
-                  ? `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`
-                  : `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
-              color: 'white',
-              cursor: 'pointer',
-              transition: 'transform 0.2s, box-shadow 0.2s',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: theme.shadows[12],
-              },
-            }}
-            onClick={() => navigate('/payments')}
-          >
-            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <BalanceIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
-                <Typography variant="subtitle1" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>Net Balance</Typography>
-              </Box>
-              {isLoading ? (
-                <Skeleton width={120} height={40} sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
-              ) : (
-                <Typography variant="h4" fontWeight={700} sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
-                  {formatCurrency(netBalance)}
-                </Typography>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3 sm:mt-6">
+        <FinanceCard
+          title="Total Income"
+          value={totalIncome}
+          icon={<TrendingUp />}
+          accentClassName="bg-success/10 text-success"
+          valueClassName="text-success"
+          loading={isLoading}
+          onClick={() => navigate('/payments')}
+        />
+        <FinanceCard
+          title="Total Expenses"
+          value={totalExpenses}
+          icon={<TrendingDown />}
+          accentClassName="bg-destructive/10 text-destructive"
+          valueClassName="text-destructive"
+          loading={isLoading}
+          onClick={() => navigate('/payments')}
+        />
+        <FinanceCard
+          title="Net Balance"
+          value={netBalance}
+          icon={<Landmark />}
+          accentClassName={
+            netBalance >= 0
+              ? 'bg-chart-3/12 text-chart-3'
+              : 'bg-warning/15 text-warning'
+          }
+          valueClassName={netBalance >= 0 ? 'text-chart-3' : 'text-warning'}
+          loading={isLoading}
+          onClick={() => navigate('/payments')}
+        />
+      </div>
 
       {/* Recent Activity & Outstanding */}
-      <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mt: 2 }}>
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-12 sm:mt-6">
         {/* Recent Transactions */}
-        <Grid size={{ xs: 12, md: 7 }}>
-          <Card>
-            <CardHeader
-              title="Recent Transactions"
-              titleTypographyProps={{ variant: 'h6', sx: { fontSize: { xs: '1rem', sm: '1.25rem' } } }}
-              action={
+        <div className="md:col-span-7">
+          <Card className="h-full gap-0 overflow-hidden pb-0">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base sm:text-lg">
+                Recent Transactions
+              </CardTitle>
+              <CardAction>
                 <Button
-                  endIcon={<ArrowIcon />}
+                  variant="ghost"
+                  size="sm"
                   onClick={() => navigate('/transactions')}
-                  size="small"
-                  sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
                 >
                   View All
+                  <ArrowRight />
                 </Button>
-              }
-              sx={{ p: { xs: 2, sm: 3 }, pb: 1 }}
-            />
-            <Divider />
+              </CardAction>
+            </CardHeader>
+            <Separator />
             {isLoading ? (
-              <Box sx={{ p: 2 }}>
+              <div className="flex flex-col gap-2 p-4">
                 {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} height={60} sx={{ mb: 1 }} />
+                  <Skeleton key={i} className="h-15 w-full" />
                 ))}
-              </Box>
+              </div>
             ) : recentTransactions.length === 0 ? (
-              <CardContent>
-                <Typography variant="body2" color="text.secondary" textAlign="center">
+              <CardContent className="py-10">
+                <p className="text-center text-sm text-muted-foreground">
                   No transactions yet
-                </Typography>
+                </p>
               </CardContent>
             ) : (
-              <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-                <Table>
-                  <TableBody>
-                    {recentTransactions.map((txn) => (
-                      <TableRow
-                        key={txn.id}
-                        hover
-                        sx={{ cursor: 'pointer' }}
+              <>
+                {/* Desktop: table */}
+                <div className="hidden sm:block">
+                  <Table>
+                    <TableBody>
+                      {recentTransactions.map((txn) => (
+                        <TableRow
+                          key={txn.id}
+                          className="cursor-pointer"
+                          onClick={() => navigate(`/transactions/${txn.id}`)}
+                        >
+                          <TableCell className="w-14 px-4 py-3">
+                            <span
+                              className={cn(
+                                'flex size-9 items-center justify-center rounded-full [&_svg]:size-4',
+                                transactionIconClass(txn.type)
+                              )}
+                            >
+                              {transactionIcon(txn.type)}
+                            </span>
+                          </TableCell>
+                          <TableCell className="py-3">
+                            <p className="text-sm font-medium">
+                              {txn.transaction_number}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {txn.contact?.name || 'Unknown'}
+                            </p>
+                          </TableCell>
+                          <TableCell className="py-3">
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'capitalize',
+                                txn.type === 'sale'
+                                  ? 'border-success/30 text-success'
+                                  : 'border-primary/30 text-primary'
+                              )}
+                            >
+                              {txn.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="py-3">
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'capitalize',
+                                paymentStatusClass(txn.payment_status)
+                              )}
+                            >
+                              {txn.payment_status.replace(/_/g, ' ')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="px-4 py-3 text-right">
+                            <p className="text-sm font-semibold tabular-nums">
+                              {formatCurrency(txn.total_amount)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatDate(txn.transaction_date)}
+                            </p>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile: list */}
+                <ul className="flex flex-col p-2 sm:hidden">
+                  {recentTransactions.map((txn) => (
+                    <li key={txn.id}>
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-accent"
                         onClick={() => navigate(`/transactions/${txn.id}`)}
                       >
-                        <TableCell sx={{ width: 50 }}>
-                          <Avatar
-                            sx={{
-                              bgcolor:
-                                txn.type === 'sale'
-                                  ? theme.palette.success.light
-                                  : theme.palette.primary.light,
-                              width: 36,
-                              height: 36,
-                            }}
-                          >
-                            {txn.type === 'sale' ? (
-                              <SaleIcon fontSize="small" />
-                            ) : (
-                              <PurchaseIcon fontSize="small" />
-                            )}
-                          </Avatar>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" fontWeight={500}>
+                        <span
+                          className={cn(
+                            'flex size-8 shrink-0 items-center justify-center rounded-full [&_svg]:size-4',
+                            transactionIconClass(txn.type)
+                          )}
+                        >
+                          {transactionIcon(txn.type)}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-semibold">
                             {txn.transaction_number}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                          </span>
+                          <span className="block truncate text-xs text-muted-foreground">
                             {txn.contact?.name || 'Unknown'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={txn.type}
-                            size="small"
-                            color={txn.type === 'sale' ? 'success' : 'primary'}
-                            variant="outlined"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={txn.payment_status.replace(/_/g, ' ')}
-                            size="small"
-                            color={
-                              txn.payment_status === 'paid'
-                                ? 'success'
-                                : txn.payment_status === 'partial'
-                                ? 'warning'
-                                : 'error'
-                            }
-                          />
-                        </TableCell>
-                        <TableCell align="right">
-                          <Typography variant="body2" fontWeight={600}>
+                          </span>
+                        </span>
+                        <span className="shrink-0 text-right">
+                          <span className="block text-sm font-semibold tabular-nums">
                             {formatCurrency(txn.total_amount)}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                          </span>
+                          <span className="block text-xs text-muted-foreground">
                             {formatDate(txn.transaction_date)}
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Box>
-            )}
-            {/* Mobile view for transactions */}
-            {!isLoading && recentTransactions.length > 0 && (
-              <List sx={{ display: { xs: 'block', sm: 'none' }, p: 1 }}>
-                {recentTransactions.map((txn) => (
-                  <ListItem
-                    key={txn.id}
-                    sx={{
-                      cursor: 'pointer',
-                      borderRadius: 1,
-                      mb: 0.5,
-                      '&:hover': { bgcolor: 'action.hover' },
-                    }}
-                    onClick={() => navigate(`/transactions/${txn.id}`)}
-                  >
-                    <ListItemIcon>
-                      <Avatar
-                        sx={{
-                          bgcolor:
-                            txn.type === 'sale'
-                              ? theme.palette.success.light
-                              : theme.palette.primary.light,
-                          width: 32,
-                          height: 32,
-                        }}
-                      >
-                        {txn.type === 'sale' ? (
-                          <SaleIcon fontSize="small" />
-                        ) : (
-                          <PurchaseIcon fontSize="small" />
-                        )}
-                      </Avatar>
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={txn.transaction_number}
-                      secondary={txn.contact?.name || 'Unknown'}
-                      primaryTypographyProps={{ fontWeight: 600, fontSize: '0.875rem' }}
-                      secondaryTypographyProps={{ fontSize: '0.75rem' }}
-                    />
-                    <Box sx={{ textAlign: 'right' }}>
-                      <Typography variant="body2" fontWeight={600} fontSize="0.875rem">
-                        {formatCurrency(txn.total_amount)}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {formatDate(txn.transaction_date)}
-                      </Typography>
-                    </Box>
-                  </ListItem>
-                ))}
-              </List>
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
           </Card>
-        </Grid>
+        </div>
 
         {/* Outstanding Balances */}
-        <Grid size={{ xs: 12, md: 5 }}>
-          <Card>
-            <CardHeader
-              title="Outstanding Balances"
-              titleTypographyProps={{ variant: 'h6', sx: { fontSize: { xs: '1rem', sm: '1.25rem' } } }}
-              action={
+        <div className="md:col-span-5">
+          <Card className="h-full gap-0 overflow-hidden pb-0">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base sm:text-lg">
+                Outstanding Balances
+              </CardTitle>
+              <CardAction>
                 <Button
-                  endIcon={<ArrowIcon />}
+                  variant="ghost"
+                  size="sm"
                   onClick={() => navigate('/contacts')}
-                  size="small"
-                  sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
                 >
                   View All
+                  <ArrowRight />
                 </Button>
-              }
-              sx={{ p: { xs: 2, sm: 3 }, pb: 1 }}
-            />
-            <Divider />
+              </CardAction>
+            </CardHeader>
+            <Separator />
             {isLoading ? (
-              <Box sx={{ p: 2 }}>
+              <div className="flex flex-col gap-2 p-4">
                 {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} height={50} sx={{ mb: 1 }} />
+                  <Skeleton key={i} className="h-12 w-full" />
                 ))}
-              </Box>
+              </div>
             ) : outstandingContacts.length === 0 ? (
-              <CardContent>
-                <Typography variant="body2" color="text.secondary" textAlign="center">
+              <CardContent className="py-10">
+                <p className="text-center text-sm text-muted-foreground">
                   No outstanding balances
-                </Typography>
+                </p>
               </CardContent>
             ) : (
-              <List disablePadding sx={{ p: { xs: 1, sm: 0 } }}>
+              <ul className="flex flex-col p-2 sm:p-0">
                 {outstandingContacts.map((contact, index) => (
-                  <React.Fragment key={contact.id}>
-                    <ListItem
-                      sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' }, px: { xs: 1, sm: 2 } }}
+                  <li key={contact.id}>
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-accent sm:rounded-none sm:px-6 sm:py-3"
                       onClick={() => navigate(`/contacts/${contact.id}`)}
                     >
-                      <ListItemIcon>
-                        <Avatar
-                          sx={{
-                            bgcolor:
-                              contact.balance > 0
-                                ? theme.palette.success.light
-                                : theme.palette.error.light,
-                            width: { xs: 32, sm: 36 },
-                            height: { xs: 32, sm: 36 },
-                          }}
-                        >
-                          <ContactIcon fontSize="small" />
-                        </Avatar>
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={contact.name}
-                        secondary={contact.type}
-                        primaryTypographyProps={{ fontWeight: 500, fontSize: { xs: '0.875rem', sm: '1rem' } }}
-                        secondaryTypographyProps={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-                      />
-                      <Typography
-                        variant="body2"
-                        fontWeight={600}
-                        color={contact.balance > 0 ? 'success.main' : 'error.main'}
-                        sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                      <span
+                        className={cn(
+                          'flex size-8 shrink-0 items-center justify-center rounded-full sm:size-9 [&_svg]:size-4',
+                          contact.balance > 0
+                            ? 'bg-success/10 text-success'
+                            : 'bg-destructive/10 text-destructive'
+                        )}
+                      >
+                        <Users />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium sm:text-base">
+                          {contact.name}
+                        </span>
+                        <span className="block truncate text-xs text-muted-foreground capitalize sm:text-sm">
+                          {contact.type}
+                        </span>
+                      </span>
+                      <span
+                        className={cn(
+                          'shrink-0 text-sm font-semibold tabular-nums sm:text-base',
+                          contact.balance > 0
+                            ? 'text-success'
+                            : 'text-destructive'
+                        )}
                       >
                         {contact.balance > 0 ? '+' : ''}
                         {formatCurrency(contact.balance)}
-                      </Typography>
-                    </ListItem>
-                    {index < outstandingContacts.length - 1 && <Divider />}
-                  </React.Fragment>
+                      </span>
+                    </button>
+                    {index < outstandingContacts.length - 1 && (
+                      <Separator />
+                    )}
+                  </li>
                 ))}
-              </List>
+              </ul>
             )}
           </Card>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
       {/* Quick Actions */}
-      <Card sx={{ mt: { xs: 2, sm: 3 } }}>
-        <CardHeader 
-          title="Quick Actions" 
-          titleTypographyProps={{ variant: 'h6', sx: { fontSize: { xs: '1rem', sm: '1.25rem' } } }}
-          sx={{ p: { xs: 2, sm: 3 }, pb: 1 }}
-        />
-        <Divider />
-        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-          <Box sx={{ display: 'flex', gap: { xs: 1.5, sm: 2 }, flexWrap: 'wrap' }}>
+      <Card className="mt-4 gap-0 sm:mt-6">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base sm:text-lg">Quick Actions</CardTitle>
+        </CardHeader>
+        <Separator />
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:gap-4">
             <Button
-              variant="contained"
-              color="success"
-              startIcon={<SaleIcon />}
+              className="h-9 bg-success text-success-foreground hover:bg-success/90 sm:h-10 sm:px-6"
               onClick={() => navigate('/transactions/new-sale')}
-              sx={{ flex: { xs: '1 1 calc(50% - 6px)', sm: '0 1 auto' } }}
-              size={isMobile ? 'medium' : 'large'}
             >
+              <ShoppingCart />
               New Sale
             </Button>
             <Button
-              variant="contained"
-              color="primary"
-              startIcon={<PurchaseIcon />}
+              className="h-9 sm:h-10 sm:px-6"
               onClick={() => navigate('/transactions/new-purchase')}
-              sx={{ flex: { xs: '1 1 calc(50% - 6px)', sm: '0 1 auto' } }}
-              size={isMobile ? 'medium' : 'large'}
             >
+              <Truck />
               New Purchase
             </Button>
             <Button
-              variant="outlined"
-              startIcon={<ProductIcon />}
+              variant="outline"
+              className="h-9 sm:h-10 sm:px-6"
               onClick={() => navigate('/products')}
-              sx={{ flex: { xs: '1 1 calc(50% - 6px)', sm: '0 1 auto' } }}
-              size={isMobile ? 'medium' : 'large'}
             >
+              <Package />
               Add Product
             </Button>
             <Button
-              variant="outlined"
-              startIcon={<ContactIcon />}
+              variant="outline"
+              className="h-9 sm:h-10 sm:px-6"
               onClick={() => navigate('/contacts')}
-              sx={{ flex: { xs: '1 1 calc(50% - 6px)', sm: '0 1 auto' } }}
-              size={isMobile ? 'medium' : 'large'}
             >
+              <Users />
               Add Contact
             </Button>
             <Button
-              variant="outlined"
-              startIcon={<ExpenseIcon />}
+              variant="outline"
+              className="col-span-2 h-9 sm:col-auto sm:h-10 sm:px-6"
               onClick={() => navigate('/payments')}
-              sx={{ flex: { xs: '1 1 100%', sm: '0 1 auto' } }}
-              size={isMobile ? 'medium' : 'large'}
             >
+              <TrendingDown />
               Record Payment
             </Button>
-          </Box>
+          </div>
         </CardContent>
       </Card>
-    </Box>
+    </div>
   );
 };
 

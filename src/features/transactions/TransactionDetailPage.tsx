@@ -1,33 +1,28 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Box,
-  Card,
-  CardContent,
-  Grid,
-  Typography,
-  Chip,
+  ArrowLeft,
+  Trash2,
+  CreditCard,
+  Download,
+  ShoppingCart,
+  Truck,
+  Receipt,
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  IconButton,
-  Tooltip,
-  Divider,
-  Button,
-} from '@mui/material';
-import {
-  ArrowBack as BackIcon,
-  Delete as DeleteIcon,
-  Payment as PaymentIcon,
-  Download as DownloadIcon,
-  ShoppingCart as SaleIcon,
-  LocalShipping as PurchaseIcon,
-  Receipt as ReceiptIcon,
-} from '@mui/icons-material';
-import { format } from 'date-fns';
+} from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { PageHeader } from '../../components/common/PageHeader';
 import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorState } from '../../components/common/ErrorState';
@@ -74,16 +69,16 @@ export const TransactionDetailPage: React.FC = () => {
     return format(new Date(dateString), 'dd MMM yyyy');
   };
 
-  const getStatusColor = (status: string): 'success' | 'warning' | 'error' => {
+  const getStatusBadgeClass = (status: string): string => {
     switch (status) {
       case PAYMENT_STATUS.PAID:
-        return 'success';
+        return 'bg-success text-success-foreground';
       case PAYMENT_STATUS.PARTIAL:
-        return 'warning';
+        return 'bg-warning text-warning-foreground';
       case PAYMENT_STATUS.UNPAID:
-        return 'error';
+        return 'bg-destructive text-white';
       default:
-        return 'warning';
+        return 'bg-warning text-warning-foreground';
     }
   };
 
@@ -166,7 +161,7 @@ export const TransactionDetailPage: React.FC = () => {
   const isPaid = transaction.payment_status === PAYMENT_STATUS.PAID;
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title={transaction.transaction_number}
         subtitle={`${transaction.type.toUpperCase()} • ${formatDate(transaction.transaction_date)}`}
@@ -177,343 +172,350 @@ export const TransactionDetailPage: React.FC = () => {
       />
 
       {/* Action buttons */}
-      <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
-        <Tooltip title="Back to Transactions">
-          <IconButton
-            component="a"
-            href="/transactions"
-            onClick={(e: React.MouseEvent) => {
-              if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
-                e.preventDefault();
-                navigate('/transactions');
-              }
-            }}
-          >
-            <BackIcon />
-          </IconButton>
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button asChild variant="ghost" size="icon" aria-label="Back to Transactions">
+              <a
+                href="/transactions"
+                onClick={(e: React.MouseEvent) => {
+                  if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                    e.preventDefault();
+                    navigate('/transactions');
+                  }
+                }}
+              >
+                <ArrowLeft />
+              </a>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Back to Transactions</TooltipContent>
         </Tooltip>
         
         {!isPaid && (
           <Button
-            variant="contained"
-            color="success"
-            startIcon={<PaymentIcon />}
+            className="bg-success text-success-foreground hover:bg-success/90"
             onClick={() => setPaymentDialogOpen(true)}
           >
+            <CreditCard />
             Record Payment
           </Button>
         )}
         
         {!transaction.invoice_url ? (
           <Button
-            variant="contained"
-            color="primary"
-            startIcon={<ReceiptIcon />}
             onClick={() => handleGenerateInvoice(false)}
             disabled={generateInvoiceMutation.isPending}
           >
+            <Receipt />
             {generateInvoiceMutation.isPending ? 'Generating...' : 'Generate Invoice'}
           </Button>
         ) : (
           <>
             <Button
-              variant="outlined"
-              startIcon={<DownloadIcon />}
+              variant="outline"
               onClick={handleDownloadInvoice}
               disabled={downloadInvoiceMutation.isPending}
             >
+              <Download />
               {downloadInvoiceMutation.isPending ? 'Loading...' : 'Download Invoice'}
             </Button>
             <Button
-              variant="outlined"
-              startIcon={<ReceiptIcon />}
+              variant="outline"
               onClick={() => setRegenerateDialogOpen(true)}
               disabled={generateInvoiceMutation.isPending}
             >
+              <Receipt />
               Regenerate Invoice
             </Button>
           </>
         )}
         
-        <Tooltip title="Delete Transaction">
-          <IconButton color="error" onClick={() => setDeleteDialogOpen(true)}>
-            <DeleteIcon />
-          </IconButton>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Delete Transaction"
+              className="text-destructive hover:text-destructive"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              <Trash2 />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Delete Transaction</TooltipContent>
         </Tooltip>
-      </Box>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-12 gap-6">
         {/* Transaction Summary Card */}
-        <Grid size={{ xs: 12, md: 4 }}>
+        <div className="col-span-12 md:col-span-4">
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <div className="mb-4 flex items-center gap-2">
                 {isSale ? (
-                  <SaleIcon color="primary" />
+                  <ShoppingCart className="size-5 text-primary" />
                 ) : (
-                  <PurchaseIcon color="secondary" />
+                  <Truck className="size-5" />
                 )}
-                <Typography variant="h6">
+                <h3 className="text-base font-semibold">
                   {isSale ? 'Sale' : 'Purchase'} Details
-                </Typography>
-              </Box>
-              <Divider sx={{ mb: 2 }} />
+                </h3>
+              </div>
+              <Separator className="mb-4" />
 
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
+              <div className="flex flex-col gap-4">
+                <div>
+                  <span className="text-xs text-muted-foreground">
                     {isSale ? 'Customer' : 'Supplier'}
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    fontWeight={600}
-                    sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                  </span>
+                  <p
+                    className="cursor-pointer font-semibold hover:underline"
                     onClick={() => navigate(`/contacts/${transaction.contact.id}`)}
                   >
                     {transaction.contact.name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  </p>
+                  <p className="text-sm text-muted-foreground">
                     {transaction.contact.phone}
-                  </Typography>
-                </Box>
+                  </p>
+                </div>
 
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
+                <div>
+                  <span className="text-xs text-muted-foreground">
                     Date
-                  </Typography>
-                  <Typography variant="body1">
-                    {formatDate(transaction.transaction_date)}
-                  </Typography>
-                </Box>
+                  </span>
+                  <p>{formatDate(transaction.transaction_date)}</p>
+                </div>
 
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
+                <div>
+                  <span className="text-xs text-muted-foreground">
                     Status
-                  </Typography>
-                  <Box sx={{ mt: 0.5 }}>
-                    <Chip
-                      label={transaction.payment_status}
-                      color={getStatusColor(transaction.payment_status)}
-                      size="small"
-                    />
-                  </Box>
-                </Box>
+                  </span>
+                  <div className="mt-1">
+                    <Badge className={getStatusBadgeClass(transaction.payment_status)}>
+                      {transaction.payment_status}
+                    </Badge>
+                  </div>
+                </div>
 
-                <Divider />
+                <Separator />
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Subtotal</Typography>
-                  <Typography variant="body2">{formatCurrency(transaction.subtotal)}</Typography>
-                </Box>
+                <div className="flex justify-between">
+                  <p className="text-sm text-muted-foreground">Subtotal</p>
+                  <p className="text-sm">{formatCurrency(transaction.subtotal)}</p>
+                </div>
                 {transaction.tax_amount > 0 && transaction.tax_type === 'cgst_sgst' ? (
                   <>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="body2" color="text.secondary">CGST</Typography>
-                      <Typography variant="body2">{formatCurrency(transaction.cgst_amount!)}</Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="body2" color="text.secondary">SGST</Typography>
-                      <Typography variant="body2">{formatCurrency(transaction.sgst_amount!)}</Typography>
-                    </Box>
+                    <div className="flex justify-between">
+                      <p className="text-sm text-muted-foreground">CGST</p>
+                      <p className="text-sm">{formatCurrency(transaction.cgst_amount!)}</p>
+                    </div>
+                    <div className="flex justify-between">
+                      <p className="text-sm text-muted-foreground">SGST</p>
+                      <p className="text-sm">{formatCurrency(transaction.sgst_amount!)}</p>
+                    </div>
                   </>
                 ) : transaction.tax_amount > 0 ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" color="text.secondary">IGST</Typography>
-                    <Typography variant="body2">{formatCurrency(transaction.tax_amount)}</Typography>
-                  </Box>
+                  <div className="flex justify-between">
+                    <p className="text-sm text-muted-foreground">IGST</p>
+                    <p className="text-sm">{formatCurrency(transaction.tax_amount)}</p>
+                  </div>
                 ) : null}
                 {transaction.discount_amount > 0 && (
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" color="text.secondary">Discount</Typography>
-                    <Typography variant="body2" color="error.main">
+                  <div className="flex justify-between">
+                    <p className="text-sm text-muted-foreground">Discount</p>
+                    <p className="text-sm text-destructive">
                       -{formatCurrency(transaction.discount_amount)}
-                    </Typography>
-                  </Box>
+                    </p>
+                  </div>
                 )}
-                <Divider />
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body1" fontWeight={600}>Total</Typography>
-                  <Typography variant="body1" fontWeight={600}>
+                <Separator />
+                <div className="flex justify-between">
+                  <p className="font-semibold">Total</p>
+                  <p className="font-semibold">
                     {formatCurrency(transaction.total_amount)}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="success.main">Paid</Typography>
-                  <Typography variant="body2" color="success.main">
+                  </p>
+                </div>
+                <div className="flex justify-between">
+                  <p className="text-sm text-success">Paid</p>
+                  <p className="text-sm text-success">
                     {formatCurrency(transaction.paid_amount)}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography
-                    variant="body1"
-                    fontWeight={600}
-                    color={transaction.balance_due > 0 ? 'error.main' : 'text.primary'}
+                  </p>
+                </div>
+                <div className="flex justify-between">
+                  <p
+                    className={
+                      transaction.balance_due > 0
+                        ? 'font-semibold text-destructive'
+                        : 'font-semibold text-foreground'
+                    }
                   >
                     Balance Due
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    fontWeight={600}
-                    color={transaction.balance_due > 0 ? 'error.main' : 'text.primary'}
+                  </p>
+                  <p
+                    className={
+                      transaction.balance_due > 0
+                        ? 'font-semibold text-destructive'
+                        : 'font-semibold text-foreground'
+                    }
                   >
                     {formatCurrency(transaction.balance_due)}
-                  </Typography>
-                </Box>
+                  </p>
+                </div>
 
                 {transaction.notes && (
                   <>
-                    <Divider />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
+                    <Separator />
+                    <div>
+                      <span className="text-xs text-muted-foreground">
                         Notes
-                      </Typography>
-                      <Typography variant="body2">{transaction.notes}</Typography>
-                    </Box>
+                      </span>
+                      <p className="text-sm">{transaction.notes}</p>
+                    </div>
                   </>
                 )}
 
-                <Divider />
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
+                <Separator />
+                <div>
+                  <span className="text-xs text-muted-foreground">
                     Invoice Display Mode
-                  </Typography>
-                  <Typography variant="body2">
+                  </span>
+                  <p className="text-sm">
                     {formatDisplayMode(transaction.product_details_display_mode)}
-                  </Typography>
-                </Box>
-              </Box>
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
-        </Grid>
+        </div>
 
         {/* Items and Payments */}
-        <Grid size={{ xs: 12, md: 8 }}>
+        <div className="col-span-12 md:col-span-8">
           {/* Items Card */}
-          <Card sx={{ mb: 3 }}>
+          <Card className="mb-6">
             <CardContent>
-              <Typography variant="h6" gutterBottom>
+              <h3 className="mb-2 text-base font-semibold">
                 Items ({transaction.items.length})
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
+              </h3>
+              <Separator className="mb-4" />
 
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell>Product</TableCell>
-                      <TableCell>Container</TableCell>
-                      <TableCell align="right">Qty</TableCell>
-                      <TableCell align="right">Unit Price</TableCell>
-                      <TableCell align="right">Total</TableCell>
+                      <TableHead>Product</TableHead>
+                      <TableHead>Container</TableHead>
+                      <TableHead className="text-right">Qty</TableHead>
+                      <TableHead className="text-right">Unit Price</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
                     </TableRow>
-                  </TableHead>
+                  </TableHeader>
                   <TableBody>
                     {transaction.items.map((item) => (
                       <TableRow
                         key={item.id}
-                        hover
-                        sx={{ cursor: 'pointer' }}
+                        className="cursor-pointer"
                         onClick={() => navigate(`/products/${item.product.id}`)}
                       >
                         <TableCell>
-                          <Typography variant="body2" fontWeight={500}>
+                          <p className="text-sm font-medium">
                             {item.product.name}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary" display="block">
+                          </p>
+                          <span className="block text-xs text-muted-foreground">
                             {item.product.size} • {item.product.packing}
-                          </Typography>
+                          </span>
                           {item.product.company_sku && (
-                            <Typography variant="caption" color="text.secondary" fontFamily="monospace" display="block">
+                            <span className="block font-mono text-xs text-muted-foreground">
                               SKU: {item.product.company_sku}
-                            </Typography>
+                            </span>
                           )}
                         </TableCell>
                         <TableCell>
                           {item.container ? (
-                            <Chip
-                              label={item.container.name}
-                              size="small"
-                              variant="outlined"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/containers/${item.container!.id}`);
-                              }}
-                            />
+                            <Badge asChild variant="outline">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/containers/${item.container!.id}`);
+                                }}
+                              >
+                                {item.container.name}
+                              </button>
+                            </Badge>
                           ) : (
                             '-'
                           )}
                         </TableCell>
-                        <TableCell align="right">{item.quantity} items</TableCell>
-                        <TableCell align="right">{formatCurrency(item.unit_price)}</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 500 }}>
+                        <TableCell className="text-right">{item.quantity} items</TableCell>
+                        <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
+                        <TableCell className="text-right font-medium">
                           {formatCurrency(item.line_total)}
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
-              </TableContainer>
+              </div>
             </CardContent>
           </Card>
 
           {/* Payments Card */}
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
+              <h3 className="mb-2 text-base font-semibold">
                 Payments ({transaction.payments.length})
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
+              </h3>
+              <Separator className="mb-4" />
 
               {transaction.payments.length > 0 ? (
-                <TableContainer>
-                  <Table size="small">
-                    <TableHead>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell>Date</TableCell>
-                        <TableCell>Method</TableCell>
-                        <TableCell>Reference</TableCell>
-                        <TableCell align="right">Amount</TableCell>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Method</TableHead>
+                        <TableHead>Reference</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
                       </TableRow>
-                    </TableHead>
+                    </TableHeader>
                     <TableBody>
                       {transaction.payments.map((payment) => (
                         <TableRow key={payment.id}>
                           <TableCell>
-                            <Typography variant="caption">
+                            <span className="text-xs">
                               {formatDate(payment.payment_date)}
-                            </Typography>
+                            </span>
                           </TableCell>
                           <TableCell>
-                            <Chip
-                              label={payment.payment_method.replace('_', ' ')}
-                              size="small"
-                              variant="outlined"
-                            />
+                            <Badge variant="outline">
+                              {payment.payment_method.replace('_', ' ')}
+                            </Badge>
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2" color="text.secondary">
+                            <p className="text-sm text-muted-foreground">
                               {payment.reference_number || '-'}
-                            </Typography>
+                            </p>
                           </TableCell>
-                          <TableCell align="right">
-                            <Typography variant="body2" color="success.main" fontWeight={500}>
+                          <TableCell className="text-right">
+                            <p className="text-sm font-medium text-success">
                               {formatCurrency(payment.amount)}
-                            </Typography>
+                            </p>
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                </TableContainer>
+                </div>
               ) : (
-                <Typography variant="body2" color="text.secondary">
+                <p className="text-sm text-muted-foreground">
                   No payments recorded yet.
-                </Typography>
+                </p>
               )}
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
@@ -548,7 +550,7 @@ export const TransactionDetailPage: React.FC = () => {
         onConfirm={handleConfirmRegenerate}
         onCancel={() => setRegenerateDialogOpen(false)}
       />
-    </Box>
+    </div>
   );
 };
 

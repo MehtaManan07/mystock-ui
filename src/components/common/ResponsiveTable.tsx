@@ -1,18 +1,14 @@
 import React from 'react';
+import { Card } from '@/components/ui/card';
 import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  Box,
-  Card,
-  Typography,
-  useTheme,
-  useMediaQuery,
-  Divider,
-} from '@mui/material';
+} from '@/components/ui/table';
+import { cn } from 'cn';
 
 interface Column<T> {
   id: string;
@@ -33,9 +29,29 @@ interface ResponsiveTableProps<T> {
   /** When provided, Cmd/Ctrl+Click or middle-click opens the row URL in a new tab */
   getRowHref?: (row: T) => string;
   emptyMessage?: string;
-  mobileCardProps?: object; // Additional props for mobile cards
+  /** Extra classes for the mobile cards. */
+  mobileCardClassName?: string;
 }
 
+const alignClass = {
+  left: 'text-left',
+  center: 'text-center',
+  right: 'text-right',
+} as const;
+
+const justifyClass = {
+  left: 'justify-start',
+  center: 'justify-center',
+  right: 'justify-end',
+} as const;
+
+/**
+ * Renders a table on >= sm and a stack of cards below it.
+ *
+ * Both layouts are emitted and toggled with CSS breakpoints. The previous MUI
+ * version used `useMediaQuery`, which re-rendered the whole table on every
+ * resize crossing; this does the switch in the compositor instead.
+ */
 export function ResponsiveTable<T>({
   columns,
   data,
@@ -43,172 +59,130 @@ export function ResponsiveTable<T>({
   onRowClick,
   getRowHref,
   emptyMessage = 'No data available',
-  mobileCardProps = {},
+  mobileCardClassName,
 }: ResponsiveTableProps<T>) {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const handleActivate = (row: T) => (e: React.MouseEvent) => {
+    if (getRowHref && (e.metaKey || e.ctrlKey || e.shiftKey)) {
+      window.open(getRowHref(row), '_blank');
+      return;
+    }
+    onRowClick?.(row);
+  };
+
+  const handleAux = (row: T) => (e: React.MouseEvent) => {
+    if (e.button === 1 && getRowHref) {
+      window.open(getRowHref(row), '_blank');
+    }
+  };
 
   if (data.length === 0) {
     return (
-      <Box sx={{ p: { xs: 3, sm: 4 }, textAlign: 'center' }}>
-        <Typography color="text.secondary" variant="body2">
-          {emptyMessage}
-        </Typography>
-      </Box>
+      <div className="px-4 py-12 text-center">
+        <p className="text-sm text-muted-foreground">{emptyMessage}</p>
+      </div>
     );
   }
 
-  // Mobile: Card-based layout
-  if (isMobile) {
-    const visibleColumns = columns.filter((col) => !col.hideOnMobile);
-    const actionColumn = visibleColumns.find((col) => col.isAction);
-    const dataColumns = visibleColumns.filter((col) => !col.isAction);
+  const visibleColumns = columns.filter((col) => !col.hideOnMobile);
+  const actionColumn = visibleColumns.find((col) => col.isAction);
+  const dataColumns = visibleColumns.filter((col) => !col.isAction);
 
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: 2 }}>
+  return (
+    <>
+      {/* Mobile: card list */}
+      <div className="flex flex-col gap-3 p-3 sm:hidden">
         {data.map((row) => (
           <Card
             key={keyExtractor(row)}
-            sx={{
-              p: 2,
-              cursor: onRowClick ? 'pointer' : 'default',
-              transition: 'all 0.2s ease-in-out',
-              '&:hover': onRowClick
-                ? { 
-                    bgcolor: 'action.hover',
-                    transform: 'translateY(-2px)',
-                    boxShadow: theme.shadows[4],
-                  }
-                : {},
-              ...mobileCardProps,
-            }}
+            className={cn(
+              'gap-0 p-4 transition-colors',
+              onRowClick && 'cursor-pointer hover:bg-accent/50',
+              mobileCardClassName
+            )}
             onClick={(e) => {
               // Don't trigger row click if clicking on action buttons
               if (!(e.target as HTMLElement).closest('button, a')) {
-                if (getRowHref && (e.metaKey || e.ctrlKey || e.shiftKey)) {
-                  window.open(getRowHref(row), '_blank');
-                  return;
-                }
-                onRowClick?.(row);
+                handleActivate(row)(e);
               }
             }}
-            onAuxClick={(e) => {
-              if (e.button === 1 && getRowHref) {
-                window.open(getRowHref(row), '_blank');
-              }
-            }}
+            onAuxClick={handleAux(row)}
           >
-            {/* Action buttons at top right if they exist */}
             {actionColumn && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  mb: dataColumns.length > 0 ? 1.5 : 0,
-                  pb: dataColumns.length > 0 ? 1.5 : 0,
-                  borderBottom: dataColumns.length > 0 ? `1px solid ${theme.palette.divider}` : 'none',
-                }}
+              <div
+                className={cn(
+                  'flex justify-end',
+                  dataColumns.length > 0 && 'mb-3 border-b pb-3'
+                )}
                 onClick={(e) => e.stopPropagation()}
               >
                 {actionColumn.render(row)}
-              </Box>
+              </div>
             )}
-            
-            {/* Data rows */}
+
             {dataColumns.map((col, index) => (
-              <React.Fragment key={col.id}>
-                {index > 0 && <Divider sx={{ my: 1.5 }} />}
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    gap: 2,
-                    minHeight: 28,
-                  }}
+              <div
+                key={col.id}
+                className={cn(
+                  'flex min-h-7 items-start justify-between gap-4',
+                  index > 0 && 'mt-3 border-t pt-3'
+                )}
+              >
+                <span className="shrink-0 pt-0.5 text-[0.7rem] font-semibold tracking-wider text-muted-foreground uppercase">
+                  {col.mobileLabel || col.label}
+                </span>
+                <div
+                  className={cn(
+                    'flex flex-1 flex-wrap gap-1',
+                    justifyClass[col.align ?? 'right']
+                  )}
                 >
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ 
-                      fontWeight: 600,
-                      textTransform: 'uppercase',
-                      fontSize: '0.7rem',
-                      letterSpacing: '0.5px',
-                      flexShrink: 0,
-                      pt: 0.5,
-                    }}
-                  >
-                    {col.mobileLabel || col.label}
-                  </Typography>
-                  <Box 
-                    sx={{ 
-                      textAlign: col.align || 'right',
-                      flex: 1,
-                      display: 'flex',
-                      justifyContent: col.align === 'left' ? 'flex-start' : col.align === 'center' ? 'center' : 'flex-end',
-                      flexWrap: 'wrap',
-                      gap: 0.5,
-                    }}
-                  >
-                    {col.render(row)}
-                  </Box>
-                </Box>
-              </React.Fragment>
+                  {col.render(row)}
+                </div>
+              </div>
             ))}
           </Card>
         ))}
-      </Box>
-    );
-  }
+      </div>
 
-  // Desktop: Standard table with horizontal scroll
-  return (
-    <TableContainer sx={{ overflowX: 'auto' }}>
-      <Table sx={{ minWidth: 650 }}>
-        <TableHead>
-          <TableRow>
-            {columns.map((col) => (
-              <TableCell
-                key={col.id}
-                align={col.align || 'left'}
-                sx={{ minWidth: col.minWidth, whiteSpace: 'nowrap' }}
-              >
-                {col.label}
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {data.map((row) => (
-            <TableRow
-              key={keyExtractor(row)}
-              hover
-              sx={{
-                cursor: onRowClick ? 'pointer' : 'default',
-              }}
-              onClick={(e) => {
-                if (getRowHref && (e.metaKey || e.ctrlKey || e.shiftKey)) {
-                  window.open(getRowHref(row), '_blank');
-                  return;
-                }
-                onRowClick?.(row);
-              }}
-              onAuxClick={(e) => {
-                if (e.button === 1 && getRowHref) {
-                  window.open(getRowHref(row), '_blank');
-                }
-              }}
-            >
+      {/* Desktop: table */}
+      <div className="hidden overflow-x-auto sm:block">
+        <Table className="min-w-[650px]">
+          <TableHeader>
+            <TableRow>
               {columns.map((col) => (
-                <TableCell key={col.id} align={col.align || 'left'}>
-                  {col.render(row)}
-                </TableCell>
+                <TableHead
+                  key={col.id}
+                  style={col.minWidth ? { minWidth: col.minWidth } : undefined}
+                  className={cn('whitespace-nowrap', alignClass[col.align ?? 'left'])}
+                >
+                  {col.label}
+                </TableHead>
               ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHeader>
+          <TableBody>
+            {data.map((row) => (
+              <TableRow
+                key={keyExtractor(row)}
+                className={cn(onRowClick && 'cursor-pointer')}
+                onClick={handleActivate(row)}
+                onAuxClick={handleAux(row)}
+              >
+                {columns.map((col) => (
+                  <TableCell
+                    key={col.id}
+                    className={alignClass[col.align ?? 'left']}
+                  >
+                    {col.render(row)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 }
+
+export default ResponsiveTable;

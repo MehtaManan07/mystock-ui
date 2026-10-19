@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Autocomplete, TextField, Chip, CircularProgress, Button, Typography } from '@mui/material';
-import { Warehouse as AssignIcon } from '@mui/icons-material';
+import { Loader2, Warehouse } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Combobox } from '../Combobox';
 import { useProductContainers } from '../../../../hooks/useContainerProducts';
 import { ManageContainersDialog } from '../../../products/components/ManageContainersDialog';
 import type { ContainerProduct, ContainerProductInfo } from '../../../../types';
@@ -47,26 +49,26 @@ export const ContainerSelector: React.FC<ContainerSelectorProps> = ({
     }));
 
   if (isLoading) {
-    return <CircularProgress size={20} />;
+    return <Loader2 className="size-5 animate-spin" />;
   }
 
   if (options.length === 0) {
     return (
       <>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant="caption" color="text.secondary">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">
             No stock available
-          </Typography>
+          </span>
           <Button
-            size="small"
-            variant="outlined"
-            color="warning"
-            startIcon={<AssignIcon fontSize="small" />}
+            size="sm"
+            variant="outline"
+            className="border-warning text-warning hover:text-warning"
             onClick={() => setAssignDialogOpen(true)}
           >
+            <Warehouse />
             Assign Container
           </Button>
-        </Box>
+        </div>
         <ManageContainersDialog
           open={assignDialogOpen}
           productId={productId}
@@ -80,31 +82,27 @@ export const ContainerSelector: React.FC<ContainerSelectorProps> = ({
   }
 
   return (
-    <Autocomplete
-      size="small"
-      value={value}
-      onChange={(_, v) => onChange(v)}
-      options={options}
-      getOptionLabel={(o) => `${o.name} (${o.availableQty} items avail)`}
-      noOptionsText="No stock in any container"
-      isOptionEqualToValue={(a, b) => a.id === b.id}
-      renderOption={(props, option) => (
-        <li {...props} key={option.id}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', gap: 1 }}>
-            <span>{option.name}</span>
-            <Chip label={`${option.availableQty} items`} size="small" color="success" variant="outlined" />
-          </Box>
-        </li>
-      )}
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          placeholder="Select container"
-          error={!value}
-          helperText={!value ? 'Required' : ''}
-        />
-      )}
-      sx={{ minWidth: 220 }}
-    />
+    <div className="min-w-[220px]">
+      <Combobox
+        value={value}
+        onChange={onChange}
+        options={options}
+        getOptionKey={(o) => o.id}
+        getOptionLabel={(o) => `${o.name} (${o.availableQty} items avail)`}
+        placeholder="Select container"
+        searchPlaceholder="Search containers..."
+        emptyText="No stock in any container"
+        invalid={!value}
+        renderOption={(option) => (
+          <div className="flex w-full justify-between gap-2">
+            <span className="truncate">{option.name}</span>
+            <Badge variant="outline" className="border-success/50 text-success">
+              {option.availableQty} items
+            </Badge>
+          </div>
+        )}
+      />
+      {!value && <p className="mt-1 text-sm text-destructive">Required</p>}
+    </div>
   );
 };

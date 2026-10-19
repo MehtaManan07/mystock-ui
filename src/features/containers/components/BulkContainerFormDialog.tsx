@@ -1,31 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
-  Button,
-  Box,
-  TextField,
-  FormControl,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
   Select,
-  MenuItem,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  IconButton,
-  Tooltip,
-  Chip,
-  Alert,
-  Typography,
-} from '@mui/material';
+} from '@/components/ui/table';
 import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-} from '@mui/icons-material';
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { cn } from 'cn';
+import { Plus, Trash2, X } from 'lucide-react';
 import { z } from 'zod';
 import { CONTAINER_TYPES, type ContainerType } from '../../../constants';
 import type { BulkContainerRow, CreateContainerDto } from '../../../types';
@@ -156,123 +162,141 @@ export const BulkContainerFormDialog: React.FC<BulkContainerFormDialogProps> = (
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Bulk Add Containers</DialogTitle>
-      <DialogContent>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-            {error}
-          </Alert>
-        )}
+    <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
+      <DialogContent className="sm:max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>Bulk Add Containers</DialogTitle>
+        </DialogHeader>
 
-        {/* Add Row Button */}
-        <Box sx={{ mb: 2, mt: 1 }}>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={handleAddRow}
-            disabled={isLoading || rows.length >= 20}
-            size="small"
-          >
-            Add Row
-          </Button>
-          <Chip
-            label={`${rows.length} container${rows.length !== 1 ? 's' : ''}`}
-            size="small"
-            color="primary"
-            variant="outlined"
-            sx={{ ml: 2 }}
-          />
-        </Box>
+        <div>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription className="pr-6">{error}</AlertDescription>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                aria-label="Dismiss error"
+                onClick={() => setError(null)}
+                className="absolute top-2 right-2"
+              >
+                <X />
+              </Button>
+            </Alert>
+          )}
 
-        {/* Containers Table */}
-        <TableContainer sx={{ maxHeight: 400 }}>
-          <Table size="small" stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell width="50%">Container Name *</TableCell>
-                <TableCell width="40%">Type</TableCell>
-                <TableCell width="10%" align="center">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map((row, index) => (
-                <TableRow
-                  key={row.id}
-                  sx={{
-                    bgcolor: row.error ? 'error.light' : 'transparent',
-                  }}
-                >
-                  <TableCell>
-                    <TextField
-                      size="small"
-                      fullWidth
-                      value={row.name}
-                      onChange={(e) => handleRowChange(row.id, 'name', e.target.value)}
-                      placeholder={`e.g., Container-${index + 1}`}
-                      error={!!row.error}
-                      helperText={row.error}
-                      disabled={isLoading}
-                      autoFocus={index === 0}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <FormControl size="small" fullWidth>
+          {/* Add Row Button */}
+          <div className="mt-2 mb-4 flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleAddRow}
+              disabled={isLoading || rows.length >= 20}
+            >
+              <Plus />
+              Add Row
+            </Button>
+            <Badge variant="outline" className="border-primary text-primary">
+              {`${rows.length} container${rows.length !== 1 ? 's' : ''}`}
+            </Badge>
+          </div>
+
+          {/* Containers Table */}
+          <div className="max-h-[400px] overflow-auto">
+            <Table>
+              <TableHeader className="sticky top-0 z-10 bg-background">
+                <TableRow>
+                  <TableHead className="w-[50%]">Container Name *</TableHead>
+                  <TableHead className="w-[40%]">Type</TableHead>
+                  <TableHead className="w-[10%] text-center">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((row, index) => (
+                  <TableRow
+                    key={row.id}
+                    className={cn(row.error && 'bg-destructive/10')}
+                  >
+                    <TableCell className="align-top">
+                      <Input
+                        className="h-8"
+                        value={row.name}
+                        onChange={(e) => handleRowChange(row.id, 'name', e.target.value)}
+                        placeholder={`e.g., Container-${index + 1}`}
+                        aria-invalid={!!row.error}
+                        disabled={isLoading}
+                        autoFocus={index === 0}
+                      />
+                      {row.error && (
+                        <p className="mt-1 text-sm text-destructive">{row.error}</p>
+                      )}
+                    </TableCell>
+                    <TableCell className="align-top">
                       <Select
                         value={row.type}
-                        onChange={(e) =>
-                          handleRowChange(row.id, 'type', e.target.value as ContainerType)
+                        onValueChange={(value) =>
+                          handleRowChange(row.id, 'type', value as ContainerType)
                         }
                         disabled={isLoading}
                       >
-                        <MenuItem value={CONTAINER_TYPES.SINGLE}>
-                          Single (one product)
-                        </MenuItem>
-                        <MenuItem value={CONTAINER_TYPES.MIXED}>
-                          Mixed (multiple products)
-                        </MenuItem>
+                        <SelectTrigger className="w-full" size="sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={CONTAINER_TYPES.SINGLE}>
+                            Single (one product)
+                          </SelectItem>
+                          <SelectItem value={CONTAINER_TYPES.MIXED}>
+                            Mixed (multiple products)
+                          </SelectItem>
+                        </SelectContent>
                       </Select>
-                    </FormControl>
-                  </TableCell>
-                  <TableCell align="center">
-                    <Tooltip title="Remove row">
-                      <span>
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => handleRemoveRow(row.id)}
-                          disabled={isLoading || rows.length === 1}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                    </TableCell>
+                    <TableCell className="text-center align-top">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label="Remove row"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => handleRemoveRow(row.id)}
+                              disabled={isLoading || rows.length === 1}
+                            >
+                              <Trash2 />
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>Remove row</TooltipContent>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
 
-        {/* Helper Text */}
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="caption" color="text.secondary">
-            You can add up to 20 containers in a single operation. Each container name must be unique.
-          </Typography>
-        </Box>
+          {/* Helper Text */}
+          <div className="mt-4">
+            <span className="text-xs text-muted-foreground">
+              You can add up to 20 containers in a single operation. Each container name must be unique.
+            </span>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={isLoading || rows.length === 0}
+          >
+            {isLoading ? 'Creating...' : `Create ${rows.length} Container${rows.length !== 1 ? 's' : ''}`}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onClose} disabled={isLoading}>
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={isLoading || rows.length === 0}
-        >
-          {isLoading ? 'Creating...' : `Create ${rows.length} Container${rows.length !== 1 ? 's' : ''}`}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 };

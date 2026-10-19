@@ -1,30 +1,24 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUrlParam } from '../../hooks/useUrlFilters';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
-  Box,
-  Card,
-  CardContent,
-  Grid,
-  Typography,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  Chip,
-  Tooltip,
-  IconButton,
-  Paper,
-  alpha,
-} from '@mui/material';
+} from '@/components/ui/table';
 import {
-  Inventory2 as InventoryIcon,
-  Category as ProductIcon,
-  Warehouse as ContainerIcon,
-  Visibility as ViewIcon,
-} from '@mui/icons-material';
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { cn } from 'cn';
+import { Eye, Package, Shapes, Warehouse } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SearchInput } from '../../components/common/SearchInput';
 import { LoadingState } from '../../components/common/LoadingState';
@@ -32,49 +26,71 @@ import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useInventoryAnalytics, useContainerSearch } from '../../hooks/useContainerProducts';
 
+type StatColor = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
+
+/**
+ * The MUI theme had `info`/`error` palettes with `.light` shades; the Tailwind
+ * theme only exposes flat tokens, so each stat colour is a fixed class triple.
+ */
+const statColorClasses: Record<StatColor, { surface: string; value: string; iconTile: string }> = {
+  primary: {
+    surface: 'border-primary/20 from-primary/10 to-primary/5',
+    value: 'text-primary',
+    iconTile: 'bg-primary/15 text-primary',
+  },
+  secondary: {
+    surface: 'border-secondary-foreground/20 from-secondary-foreground/10 to-secondary-foreground/5',
+    value: 'text-secondary-foreground',
+    iconTile: 'bg-secondary-foreground/15 text-secondary-foreground',
+  },
+  success: {
+    surface: 'border-success/20 from-success/10 to-success/5',
+    value: 'text-success',
+    iconTile: 'bg-success/15 text-success',
+  },
+  warning: {
+    surface: 'border-warning/20 from-warning/10 to-warning/5',
+    value: 'text-warning',
+    iconTile: 'bg-warning/15 text-warning',
+  },
+  error: {
+    surface: 'border-destructive/20 from-destructive/10 to-destructive/5',
+    value: 'text-destructive',
+    iconTile: 'bg-destructive/15 text-destructive',
+  },
+  info: {
+    surface: 'border-primary/20 from-primary/10 to-primary/5',
+    value: 'text-primary',
+    iconTile: 'bg-primary/15 text-primary',
+  },
+};
+
 interface StatCardProps {
   title: string;
   value: number | string;
   icon: React.ReactNode;
-  color: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
+  color: StatColor;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color }) => (
-  <Card
-    sx={{
-      height: '100%',
-      background: (theme) =>
-        `linear-gradient(135deg, ${alpha(theme.palette[color].main, 0.1)} 0%, ${alpha(
-          theme.palette[color].light,
-          0.05
-        )} 100%)`,
-      border: (theme) => `1px solid ${alpha(theme.palette[color].main, 0.2)}`,
-    }}
-  >
-    <CardContent>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Box>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            {title}
-          </Typography>
-          <Typography variant="h4" fontWeight={700} color={`${color}.main`}>
-            {typeof value === 'number' ? value.toLocaleString() : value}
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            p: 1.5,
-            borderRadius: 2,
-            bgcolor: (theme) => alpha(theme.palette[color].main, 0.15),
-            color: `${color}.main`,
-          }}
-        >
-          {icon}
-        </Box>
-      </Box>
-    </CardContent>
-  </Card>
-);
+const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color }) => {
+  const classes = statColorClasses[color];
+
+  return (
+    <Card className={cn('h-full bg-linear-to-br', classes.surface)}>
+      <CardContent>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="mb-1 text-sm text-muted-foreground">{title}</p>
+            <p className={cn('text-2xl font-bold', classes.value)}>
+              {typeof value === 'number' ? value.toLocaleString() : value}
+            </p>
+          </div>
+          <div className={cn('rounded-lg p-3', classes.iconTile)}>{icon}</div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 export const InventoryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -113,55 +129,61 @@ export const InventoryPage: React.FC = () => {
     }
 
     return (
-      <TableContainer>
+      <div className="overflow-x-auto">
         <Table>
-          <TableHead>
+          <TableHeader>
             <TableRow>
-              <TableCell>Product</TableCell>
-              <TableCell>Size</TableCell>
-              <TableCell>Packing</TableCell>
-              <TableCell>Container</TableCell>
-              <TableCell align="center">Quantity</TableCell>
-              <TableCell align="center">Actions</TableCell>
+              <TableHead>Product</TableHead>
+              <TableHead>Size</TableHead>
+              <TableHead>Packing</TableHead>
+              <TableHead>Container</TableHead>
+              <TableHead className="text-center">Quantity</TableHead>
+              <TableHead className="text-center">Actions</TableHead>
             </TableRow>
-          </TableHead>
+          </TableHeader>
           <TableBody>
             {searchResults.map((item) => (
-              <TableRow key={item.id} hover>
+              <TableRow key={item.id}>
                 <TableCell>
-                  <Typography variant="body2" fontWeight={600}>
+                  <p className="text-sm font-semibold">
                     {item.product?.name || '-'}
-                  </Typography>
+                  </p>
                 </TableCell>
                 <TableCell>{item.product?.size || '-'}</TableCell>
                 <TableCell>{item.product?.packing || '-'}</TableCell>
                 <TableCell>
-                  <Chip
-                    label={item.container?.name || '-'}
-                    size="small"
-                    variant="outlined"
-                    color="primary"
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer border-primary text-primary"
                     onClick={() => item.container && navigate(`/containers/${item.container.id}`)}
-                    sx={{ cursor: 'pointer' }}
-                  />
+                  >
+                    {item.container?.name || '-'}
+                  </Badge>
                 </TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={item.quantity}
-                    size="small"
-                    color={item.quantity > 0 ? 'success' : 'default'}
-                    variant={item.quantity > 0 ? 'filled' : 'outlined'}
-                  />
+                <TableCell className="text-center">
+                  <Badge
+                    variant={item.quantity > 0 ? 'default' : 'outline'}
+                    className={
+                      item.quantity > 0 ? 'bg-success text-success-foreground' : undefined
+                    }
+                  >
+                    {item.quantity}
+                  </Badge>
                 </TableCell>
-                <TableCell align="center">
+                <TableCell className="text-center">
                   {item.product && (
-                    <Tooltip title="View Product">
-                      <IconButton
-                        size="small"
-                        onClick={() => navigate(`/products/${item.product!.id}`)}
-                      >
-                        <ViewIcon fontSize="small" />
-                      </IconButton>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label="View Product"
+                          onClick={() => navigate(`/products/${item.product!.id}`)}
+                        >
+                          <Eye />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>View Product</TooltipContent>
                     </Tooltip>
                   )}
                 </TableCell>
@@ -169,7 +191,7 @@ export const InventoryPage: React.FC = () => {
             ))}
           </TableBody>
         </Table>
-      </TableContainer>
+      </div>
     );
   };
 
@@ -182,180 +204,132 @@ export const InventoryPage: React.FC = () => {
   }
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title="Inventory"
         subtitle="Overview of your inventory across all containers"
       />
 
       {/* Analytics Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 4 }}>
+      <div className="mb-8 grid grid-cols-12 gap-6">
+        <div className="col-span-12 sm:col-span-4">
           <StatCard
             title="Total Products"
             value={analytics?.totalProducts || 0}
-            icon={<ProductIcon fontSize="large" />}
+            icon={<Shapes className="size-9" />}
             color="primary"
           />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 4 }}>
+        </div>
+        <div className="col-span-12 sm:col-span-4">
           <StatCard
             title="Total Containers"
             value={analytics?.totalContainers || 0}
-            icon={<ContainerIcon fontSize="large" />}
+            icon={<Warehouse className="size-9" />}
             color="secondary"
           />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 4 }}>
+        </div>
+        <div className="col-span-12 sm:col-span-4">
           <StatCard
             title="Total Stock Quantity"
             value={analytics?.totalQuantity || 0}
-            icon={<InventoryIcon fontSize="large" />}
+            icon={<Package className="size-9" />}
             color="success"
           />
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
       {/* Search Section */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
+      <div className="mb-6 rounded-xl border bg-card p-6 text-card-foreground shadow-sm">
+        <h3 className="mb-2 text-base font-semibold">
           Find Products in Containers
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        </h3>
+        <p className="mb-4 text-sm text-muted-foreground">
           Search by product name to see which containers hold that product and their quantities.
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        </p>
+        <div className="flex items-center gap-4">
           <SearchInput
             value={searchQuery}
             onChange={setSearchQuery}
             placeholder="Search by product name..."
           />
           {searchFetching && !searchLoading && (
-            <Typography variant="caption" color="text.secondary">
-              Searching...
-            </Typography>
+            <span className="text-xs text-muted-foreground">Searching...</span>
           )}
-        </Box>
-      </Paper>
+        </div>
+      </div>
 
       {/* Search Results or Quick Links */}
       {showSearchResults ? (
         <Card>
           <CardContent>
-            <Typography variant="h6" gutterBottom>
+            <h3 className="mb-2 flex items-center gap-2 text-base font-semibold">
               Search Results
               {searchResults && (
-                <Chip
-                  label={`${searchResults.length} found`}
-                  size="small"
-                  sx={{ ml: 1 }}
-                />
+                <Badge variant="secondary">{`${searchResults.length} found`}</Badge>
               )}
-            </Typography>
+            </h3>
             {renderSearchResults()}
           </CardContent>
         </Card>
       ) : (
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, md: 6 }}>
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-12 md:col-span-6">
             <Card
-              sx={{
-                cursor: 'pointer',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 4,
-                },
-              }}
+              className="cursor-pointer transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-lg"
               onClick={() => navigate('/products')}
             >
-              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    bgcolor: 'primary.light',
-                    color: 'primary.contrastText',
-                  }}
-                >
-                  <ProductIcon fontSize="large" />
-                </Box>
-                <Box>
-                  <Typography variant="h6">Manage Products</Typography>
-                  <Typography variant="body2" color="text.secondary">
+              <CardContent className="flex items-center gap-4">
+                <div className="rounded-lg bg-primary/15 p-4 text-primary">
+                  <Shapes className="size-9" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold">Manage Products</h3>
+                  <p className="text-sm text-muted-foreground">
                     View and manage your product catalog
-                  </Typography>
-                </Box>
+                  </p>
+                </div>
               </CardContent>
             </Card>
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
+          </div>
+          <div className="col-span-12 md:col-span-6">
             <Card
-              sx={{
-                cursor: 'pointer',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 4,
-                },
-              }}
+              className="cursor-pointer transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-lg"
               onClick={() => navigate('/containers')}
             >
-              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    bgcolor: 'secondary.light',
-                    color: 'secondary.contrastText',
-                  }}
-                >
-                  <ContainerIcon fontSize="large" />
-                </Box>
-                <Box>
-                  <Typography variant="h6">Manage Containers</Typography>
-                  <Typography variant="body2" color="text.secondary">
+              <CardContent className="flex items-center gap-4">
+                <div className="rounded-lg bg-secondary p-4 text-secondary-foreground">
+                  <Warehouse className="size-9" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold">Manage Containers</h3>
+                  <p className="text-sm text-muted-foreground">
                     View and manage your storage containers
-                  </Typography>
-                </Box>
+                  </p>
+                </div>
               </CardContent>
             </Card>
-          </Grid>
-          <Grid size={{ xs: 12 }}>
+          </div>
+          <div className="col-span-12">
             <Card
-              sx={{
-                cursor: 'pointer',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 4,
-                },
-              }}
+              className="cursor-pointer transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-lg"
               onClick={() => navigate('/inventory/logs')}
             >
-              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    bgcolor: 'info.light',
-                    color: 'info.contrastText',
-                  }}
-                >
-                  <InventoryIcon fontSize="large" />
-                </Box>
-                <Box>
-                  <Typography variant="h6">Inventory Logs</Typography>
-                  <Typography variant="body2" color="text.secondary">
+              <CardContent className="flex items-center gap-4">
+                <div className="rounded-lg bg-success/15 p-4 text-success">
+                  <Package className="size-9" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold">Inventory Logs</h3>
+                  <p className="text-sm text-muted-foreground">
                     View the history of all inventory changes
-                  </Typography>
-                </Box>
+                  </p>
+                </div>
               </CardContent>
             </Card>
-          </Grid>
-        </Grid>
+          </div>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };
 

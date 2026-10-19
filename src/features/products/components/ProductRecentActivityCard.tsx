@@ -1,21 +1,26 @@
 import React from 'react';
+import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import {
-  Card,
-  CardContent,
-  Typography,
-  Divider,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  Chip,
-} from '@mui/material';
-import { format } from 'date-fns';
+} from '@/components/ui/table';
+import { cn } from 'cn';
 import type { InventoryLogInfo } from '../../../types';
 
 const formatDate = (dateString: string) => format(new Date(dateString), 'dd MMM yyyy, HH:mm');
+
+const actionBadgeClass = (action: string) => {
+  if (action === 'add' || action === 'purchase') return 'border-success text-success';
+  if (action === 'remove' || action === 'sale') return 'border-destructive text-destructive';
+  return undefined;
+};
 
 export interface ProductRecentActivityCardProps {
   logs: InventoryLogInfo[];
@@ -28,69 +33,52 @@ export const ProductRecentActivityCard: React.FC<ProductRecentActivityCardProps>
 }) => (
   <Card>
     <CardContent>
-      <Typography variant="h6" gutterBottom>
-        Recent Activity ({logs.length} logs)
-      </Typography>
-      <Divider sx={{ mb: 2 }} />
+      <h3 className="mb-2 text-base font-semibold">Recent Activity ({logs.length} logs)</h3>
+      <Separator className="mb-4" />
 
       {logs.length > 0 ? (
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell>Action</TableCell>
-                <TableCell>Container</TableCell>
-                <TableCell align="right">Quantity</TableCell>
-                <TableCell>Date</TableCell>
+                <TableHead>Action</TableHead>
+                <TableHead>Container</TableHead>
+                <TableHead className="text-right">Quantity</TableHead>
+                <TableHead>Date</TableHead>
               </TableRow>
-            </TableHead>
+            </TableHeader>
             <TableBody>
               {logs.slice(0, 10).map((log) => (
                 <TableRow
                   key={log.id}
-                  hover
-                  sx={{ cursor: log.container ? 'pointer' : 'default' }}
+                  className={cn(log.container ? 'cursor-pointer' : 'cursor-default')}
                   onClick={() => log.container && onContainerClick(log.container.id)}
                 >
                   <TableCell>
-                    <Chip
-                      label={log.action}
-                      size="small"
-                      color={
-                        log.action === 'add' || log.action === 'purchase'
-                          ? 'success'
-                          : log.action === 'remove' || log.action === 'sale'
-                            ? 'error'
-                            : 'default'
-                      }
-                      variant="outlined"
-                    />
+                    <Badge variant="outline" className={actionBadgeClass(log.action)}>
+                      {log.action}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     {log.container ? (
-                      <Chip
-                        label={log.container.name}
-                        size="small"
-                        variant="outlined"
-                        color="primary"
-                      />
+                      <Badge variant="outline" className="border-primary text-primary">
+                        {log.container.name}
+                      </Badge>
                     ) : (
                       '-'
                     )}
                   </TableCell>
-                  <TableCell align="right">{log.quantity}</TableCell>
+                  <TableCell className="text-right">{log.quantity}</TableCell>
                   <TableCell>
-                    <Typography variant="caption">{formatDate(log.created_at)}</Typography>
+                    <span className="text-xs">{formatDate(log.created_at)}</span>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </TableContainer>
+        </div>
       ) : (
-        <Typography variant="body2" color="text.secondary">
-          No activity logs for this product.
-        </Typography>
+        <p className="text-sm text-muted-foreground">No activity logs for this product.</p>
       )}
     </CardContent>
   </Card>

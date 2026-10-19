@@ -2,25 +2,20 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUrlParam } from '../../hooks/useUrlFilters';
 import {
-  Box,
-  Card,
-  IconButton,
-  Chip,
-  Tooltip,
-  Typography,
-  ToggleButton,
-  ToggleButtonGroup,
-  Stack,
-  CircularProgress,
-} from '@mui/material';
-import {
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Visibility as ViewIcon,
-  Person as CustomerIcon,
-  LocalShipping as SupplierIcon,
-  SwapHoriz as BothIcon,
-} from '@mui/icons-material';
+  Pencil,
+  Trash2,
+  Eye,
+  User as CustomerIcon,
+  Truck as SupplierIcon,
+  ArrowLeftRight as BothIcon,
+  Loader2,
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from 'cn';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SearchInput } from '../../components/common/SearchInput';
 import { LoadingState } from '../../components/common/LoadingState';
@@ -158,11 +153,23 @@ export const ContactsPage: React.FC = () => {
   const getTypeIcon = (type: string): React.ReactElement | undefined => {
     switch (type) {
       case CONTACT_TYPES.CUSTOMER:
-        return <CustomerIcon fontSize="small" />;
+        return <CustomerIcon />;
       case CONTACT_TYPES.SUPPLIER:
-        return <SupplierIcon fontSize="small" />;
+        return <SupplierIcon />;
       case CONTACT_TYPES.BOTH:
-        return <BothIcon fontSize="small" />;
+        return <BothIcon />;
+      default:
+        return undefined;
+    }
+  };
+
+  // Outlined badge tints standing in for the MUI chip `color` prop.
+  const getTypeBadgeClass = (type: string) => {
+    switch (type) {
+      case CONTACT_TYPES.CUSTOMER:
+        return 'border-primary/50 text-primary';
+      case CONTACT_TYPES.SUPPLIER:
+        return 'border-secondary-foreground/40 text-secondary-foreground';
       default:
         return undefined;
     }
@@ -176,49 +183,36 @@ export const ContactsPage: React.FC = () => {
       id: 'name',
       label: 'Name',
       render: (contact: Contact) => (
-        <Box>
-          <Typography variant="body2" fontWeight={600}>
-            {contact.name}
-          </Typography>
+        <div>
+          <p className="text-sm font-semibold">{contact.name}</p>
           {contact.address && (
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+            <span className="block text-xs text-muted-foreground">
               {contact.address}
-            </Typography>
+            </span>
           )}
-        </Box>
+        </div>
       ),
     },
     {
       id: 'phone',
       label: 'Phone',
-      render: (contact: Contact) => <Typography variant="body2">{contact.phone}</Typography>,
+      render: (contact: Contact) => <p className="text-sm">{contact.phone}</p>,
     },
     {
       id: 'type',
       label: 'Type',
       render: (contact: Contact) => (
-        <Chip
-          icon={getTypeIcon(contact.type)}
-          label={contact.type}
-          size="small"
-          color={
-            contact.type === CONTACT_TYPES.CUSTOMER
-              ? 'primary'
-              : contact.type === CONTACT_TYPES.SUPPLIER
-              ? 'secondary'
-              : 'default'
-          }
-          variant="outlined"
-        />
+        <Badge variant="outline" className={cn('capitalize', getTypeBadgeClass(contact.type))}>
+          {getTypeIcon(contact.type)}
+          {contact.type}
+        </Badge>
       ),
     },
     {
       id: 'gstin',
       label: 'GSTIN',
       render: (contact: Contact) => (
-        <Typography variant="body2" color="text.secondary">
-          {contact.gstin || '-'}
-        </Typography>
+        <p className="text-sm text-muted-foreground">{contact.gstin || '-'}</p>
       ),
       hideOnMobile: true,
     },
@@ -227,18 +221,14 @@ export const ContactsPage: React.FC = () => {
       label: 'Balance',
       align: 'right' as const,
       render: (contact: Contact) => (
-        <Chip
-          label={formatCurrency(contact.balance)}
-          size="small"
-          color={
-            contact.balance > 0
-              ? 'success'
-              : contact.balance < 0
-              ? 'error'
-              : 'default'
+        <Badge
+          variant={
+            contact.balance < 0 ? 'destructive' : contact.balance > 0 ? 'default' : 'outline'
           }
-          variant={contact.balance !== 0 ? 'filled' : 'outlined'}
-        />
+          className={cn(contact.balance > 0 && 'bg-success text-success-foreground')}
+        >
+          {formatCurrency(contact.balance)}
+        </Badge>
       ),
     },
     {
@@ -247,47 +237,60 @@ export const ContactsPage: React.FC = () => {
       align: 'center' as const,
       isAction: true,
       render: (contact: Contact) => (
-        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-          <Tooltip title="View">
-            <IconButton
-              size="small"
-              component="a"
-              href={`/contacts/${contact.id}`}
-              onClick={(e: React.MouseEvent) => {
-                e.stopPropagation();
-                if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
-                  e.preventDefault();
-                  handleViewContact(contact);
-                }
-              }}
-            >
-              <ViewIcon fontSize="small" />
-            </IconButton>
+        <div className="flex justify-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon-sm" aria-label="View" asChild>
+                <a
+                  href={`/contacts/${contact.id}`}
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                      e.preventDefault();
+                      handleViewContact(contact);
+                    }
+                  }}
+                >
+                  <Eye />
+                </a>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>View</TooltipContent>
           </Tooltip>
-          <Tooltip title="Edit">
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleOpenEditDialog(contact);
-              }}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Edit"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenEditDialog(contact);
+                }}
+              >
+                <Pencil />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Edit</TooltipContent>
           </Tooltip>
-          <Tooltip title="Delete">
-            <IconButton
-              size="small"
-              color="error"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleOpenDeleteDialog(contact);
-              }}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Delete"
+                className="text-destructive hover:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenDeleteDialog(contact);
+                }}
+              >
+                <Trash2 />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Delete</TooltipContent>
           </Tooltip>
-        </Box>
+        </div>
       ),
     },
   ];
@@ -325,28 +328,26 @@ export const ContactsPage: React.FC = () => {
         />
 
         {/* Infinite scroll trigger and loading indicator */}
-        <Box sx={{ p: 2, textAlign: 'center' }}>
+        <div className="p-4 text-center">
           <div ref={observerTarget} style={{ height: '20px' }} />
           {isFetchingNextPage && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
-              <CircularProgress size={24} />
-              <Typography variant="body2" color="text.secondary">
-                Loading more contacts...
-              </Typography>
-            </Box>
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="size-6 animate-spin" />
+              <p className="text-sm text-muted-foreground">Loading more contacts...</p>
+            </div>
           )}
           {!hasNextPage && contacts.length > 0 && (
-            <Typography variant="caption" color="text.secondary">
+            <span className="text-xs text-muted-foreground">
               All contacts loaded ({totalCount} total)
-            </Typography>
+            </span>
           )}
-        </Box>
+        </div>
       </>
     );
   };
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title="Contacts"
         subtitle={totalCount > 0 ? `${totalCount} contacts (showing ${contacts.length})` : 'Manage your customers and suppliers'}
@@ -354,55 +355,50 @@ export const ContactsPage: React.FC = () => {
         onAction={handleOpenCreateDialog}
       />
 
-      {/* Filters - responsive with Stack */}
-      <Stack 
-        direction={{ xs: 'column', sm: 'row' }} 
-        spacing={2} 
-        sx={{ mb: { xs: 2, sm: 3 } }}
-        flexWrap="wrap"
-      >
-        <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' }, minWidth: { xs: '100%', sm: '200px' } }}>
+      {/* Filters - responsive */}
+      <div className="mb-4 flex flex-col flex-wrap gap-4 sm:mb-6 sm:flex-row">
+        <div className="w-full sm:w-auto sm:min-w-[200px]">
           <SearchInput
             value={search}
             onChange={setSearch}
             placeholder="Search by name or phone..."
           />
-        </Box>
+        </div>
         
-        <ToggleButtonGroup
+        <ToggleGroup
+          type="single"
           value={typeFilter}
-          exclusive
-          onChange={(_, value) => value !== null && setTypeFilter(value as string)}
-          size="small"
-          sx={{ width: { xs: '100%', sm: 'auto' } }}
+          onValueChange={(value) => value && setTypeFilter(value)}
+          variant="outline"
+          size="sm"
+          className="w-full sm:w-fit"
         >
-          <ToggleButton value="all" sx={{ flex: { xs: 1, sm: 'initial' } }}>All</ToggleButton>
-          <ToggleButton value={CONTACT_TYPES.CUSTOMER} sx={{ flex: { xs: 1, sm: 'initial' } }}>Customers</ToggleButton>
-          <ToggleButton value={CONTACT_TYPES.SUPPLIER} sx={{ flex: { xs: 1, sm: 'initial' } }}>Suppliers</ToggleButton>
-          <ToggleButton value={CONTACT_TYPES.BOTH} sx={{ flex: { xs: 1, sm: 'initial' } }}>Both</ToggleButton>
-        </ToggleButtonGroup>
+          <ToggleGroupItem value="all" className="flex-1 sm:flex-initial">All</ToggleGroupItem>
+          <ToggleGroupItem value={CONTACT_TYPES.CUSTOMER} className="flex-1 sm:flex-initial">Customers</ToggleGroupItem>
+          <ToggleGroupItem value={CONTACT_TYPES.SUPPLIER} className="flex-1 sm:flex-initial">Suppliers</ToggleGroupItem>
+          <ToggleGroupItem value={CONTACT_TYPES.BOTH} className="flex-1 sm:flex-initial">Both</ToggleGroupItem>
+        </ToggleGroup>
 
-        <ToggleButtonGroup
+        <ToggleGroup
+          type="single"
           value={balanceFilter}
-          exclusive
-          onChange={(_, value) => value !== null && setBalanceFilter(value as string)}
-          size="small"
-          sx={{ width: { xs: '100%', sm: 'auto' } }}
+          onValueChange={(value) => value && setBalanceFilter(value)}
+          variant="outline"
+          size="sm"
+          className="w-full sm:w-fit"
         >
-          <ToggleButton value="all" sx={{ flex: { xs: 1, sm: 'initial' } }}>All</ToggleButton>
-          <ToggleButton value="positive" sx={{ flex: { xs: 1, sm: 'initial' } }}>Receivables</ToggleButton>
-          <ToggleButton value="negative" sx={{ flex: { xs: 1, sm: 'initial' } }}>Payables</ToggleButton>
-        </ToggleButtonGroup>
+          <ToggleGroupItem value="all" className="flex-1 sm:flex-initial">All</ToggleGroupItem>
+          <ToggleGroupItem value="positive" className="flex-1 sm:flex-initial">Receivables</ToggleGroupItem>
+          <ToggleGroupItem value="negative" className="flex-1 sm:flex-initial">Payables</ToggleGroupItem>
+        </ToggleGroup>
         
         {isFetching && !isFetchingNextPage && !showFullLoading && (
-          <Typography variant="caption" color="text.secondary" sx={{ alignSelf: 'center' }}>
-            Searching...
-          </Typography>
+          <span className="self-center text-xs text-muted-foreground">Searching...</span>
         )}
-      </Stack>
+      </div>
 
       {/* Contacts table */}
-      <Card>
+      <Card className="gap-0 overflow-hidden py-0">
         {renderTableContent()}
       </Card>
 
@@ -426,7 +422,7 @@ export const ContactsPage: React.FC = () => {
         onConfirm={handleConfirmDelete}
         onCancel={handleCloseDeleteDialog}
       />
-    </Box>
+    </div>
   );
 };
 

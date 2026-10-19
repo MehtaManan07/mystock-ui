@@ -1,15 +1,25 @@
 import React from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
-  Box,
-  Button,
-  TextField,
-  MenuItem,
-} from '@mui/material';
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { Contact } from '../../../types';
+
+/** Radix forbids an empty SelectItem value, so the "no selection" row uses a sentinel. */
+const NO_VENDOR = 'none';
 
 export interface VendorSkuDialogProps {
   open: boolean;
@@ -36,44 +46,56 @@ export const VendorSkuDialog: React.FC<VendorSkuDialogProps> = ({
   onSkuChange,
   onSubmit,
 }) => (
-  <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-    <DialogTitle>{editingVendorSku ? 'Edit Vendor SKU' : 'Add Vendor SKU'}</DialogTitle>
-    <DialogContent>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-        <TextField
-          select
-          label="Customer/Vendor"
-          value={selectedVendorId}
-          onChange={(e) => onVendorChange(e.target.value === '' ? '' : Number(e.target.value))}
-          disabled={!!editingVendorSku}
-          fullWidth
-        >
-          <MenuItem value="">Select a customer/vendor</MenuItem>
-          {customers.map((customer) => (
-            <MenuItem key={customer.id} value={customer.id}>
-              {customer.name}
-            </MenuItem>
-          ))}
-        </TextField>
-        <TextField
-          label="Vendor SKU"
-          value={vendorSkuValue}
-          onChange={(e) => onSkuChange(e.target.value)}
-          placeholder="Enter vendor's/customer's SKU for this product"
-          helperText="The SKU used by this customer/marketplace for this product"
-          fullWidth
-        />
-      </Box>
+  <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+    <DialogContent className="sm:max-w-xl">
+      <DialogHeader>
+        <DialogTitle>{editingVendorSku ? 'Edit Vendor SKU' : 'Add Vendor SKU'}</DialogTitle>
+      </DialogHeader>
+
+      <div className="mt-2 flex flex-col gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="vendor-sku-vendor">Customer/Vendor</Label>
+          <Select
+            value={selectedVendorId === '' ? '' : String(selectedVendorId)}
+            onValueChange={(value) => onVendorChange(value === NO_VENDOR ? '' : Number(value))}
+            disabled={!!editingVendorSku}
+          >
+            <SelectTrigger id="vendor-sku-vendor" className="w-full">
+              <SelectValue placeholder="Select a customer/vendor" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_VENDOR}>Select a customer/vendor</SelectItem>
+              {customers.map((customer) => (
+                <SelectItem key={customer.id} value={String(customer.id)}>
+                  {customer.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="vendor-sku-value">Vendor SKU</Label>
+          <Input
+            id="vendor-sku-value"
+            value={vendorSkuValue}
+            onChange={(e) => onSkuChange(e.target.value)}
+            placeholder="Enter vendor's/customer's SKU for this product"
+          />
+          <p className="text-sm text-muted-foreground">
+            The SKU used by this customer/marketplace for this product
+          </p>
+        </div>
+      </div>
+
+      <DialogFooter>
+        <Button variant="outline" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button onClick={onSubmit} disabled={!selectedVendorId || !vendorSkuValue || isPending}>
+          {isPending ? 'Saving...' : 'Save'}
+        </Button>
+      </DialogFooter>
     </DialogContent>
-    <DialogActions>
-      <Button onClick={onClose}>Cancel</Button>
-      <Button
-        variant="contained"
-        onClick={onSubmit}
-        disabled={!selectedVendorId || !vendorSkuValue || isPending}
-      >
-        {isPending ? 'Saving...' : 'Save'}
-      </Button>
-    </DialogActions>
   </Dialog>
 );

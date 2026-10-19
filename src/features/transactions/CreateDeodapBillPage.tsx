@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Button } from '@mui/material';
-import { ArrowBack as BackIcon } from '@mui/icons-material';
+import { ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { PageHeader } from '../../components/common/PageHeader';
 import { useProductLookup } from '../../hooks/useProducts';
 import { useContainersForProductsBatch } from '../../hooks/useContainerProducts';
@@ -116,7 +116,7 @@ export const CreateDeodapBillPage: React.FC = () => {
   };
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title="New Deodap Bill"
         subtitle="Upload an Excel file to create a bill"
@@ -126,21 +126,22 @@ export const CreateDeodapBillPage: React.FC = () => {
         ]}
       />
 
-      <Box sx={{ mb: 2 }}>
-        <Button
-          startIcon={<BackIcon />}
-          component="a"
-          href="/transactions"
-          onClick={(e: React.MouseEvent) => {
-            if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
-              e.preventDefault();
-              navigate('/transactions');
-            }
-          }}
-        >
-          Back to Transactions
+      <div className="mb-4">
+        <Button asChild variant="ghost">
+          <a
+            href="/transactions"
+            onClick={(e: React.MouseEvent) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                e.preventDefault();
+                navigate('/transactions');
+              }
+            }}
+          >
+            <ArrowLeft />
+            Back to Transactions
+          </a>
         </Button>
-      </Box>
+      </div>
 
       <ExcelUploadCard
         fileName={fileName}
@@ -154,10 +155,9 @@ export const CreateDeodapBillPage: React.FC = () => {
       )}
 
       {foundRows.length > 0 && (
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <div className="flex justify-end">
           <Button
-            variant="contained"
-            size="large"
+            size="lg"
             disabled={!allContainersSelected}
             onClick={handleProceedToBillDetails}
           >
@@ -165,9 +165,9 @@ export const CreateDeodapBillPage: React.FC = () => {
               ? 'Proceed to Bill Details'
               : `Assign containers for ${remainingCount} remaining row(s)`}
           </Button>
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };
 

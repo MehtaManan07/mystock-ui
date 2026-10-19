@@ -1,36 +1,38 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Box,
-  Card,
-  CardContent,
-  Grid,
-  Typography,
-  TextField,
-  Button,
-  Autocomplete,
+  Plus,
+  Trash2,
+  ArrowLeft,
+  Check,
+  FileStack,
+  X,
+} from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  IconButton,
-  Chip,
-  Divider,
-  MenuItem,
-  Alert,
-  CircularProgress,
-  Switch,
-  FormControlLabel,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  ArrowBack as BackIcon,
-  Check as CheckIcon,
-  Drafts as DraftsIcon,
-} from '@mui/icons-material';
+} from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
+import { Combobox } from './components/Combobox';
 import { PageHeader } from '../../components/common/PageHeader';
 import { useContacts } from '../../hooks/useContacts';
 import { useProducts } from '../../hooks/useProducts';
@@ -371,7 +373,7 @@ export const CreatePurchasePage: React.FC = () => {
   };
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title="New Purchase"
         subtitle="Create a new purchase transaction"
@@ -381,53 +383,51 @@ export const CreatePurchasePage: React.FC = () => {
         ]}
       />
 
-      <Box sx={{ mb: 2 }}>
-        <Button
-          startIcon={<BackIcon />}
-          component="a"
-          href="/transactions"
-          onClick={(e: React.MouseEvent) => {
-            if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
-              e.preventDefault();
-              navigate('/transactions');
-            }
-          }}
-        >
-          Back to Transactions
+      <div className="mb-4">
+        <Button asChild variant="ghost">
+          <a
+            href="/transactions"
+            onClick={(e: React.MouseEvent) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                e.preventDefault();
+                navigate('/transactions');
+              }
+            }}
+          >
+            <ArrowLeft />
+            Back to Transactions
+          </a>
         </Button>
-      </Box>
+      </div>
 
       {/* Draft Controls */}
-      <Card sx={{ mb: 2 }}>
+      <Card className="mb-4">
         <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={isDraftMode}
-                  onChange={(e) => setIsDraftMode(e.target.checked)}
-                />
-              }
-              label="Auto-save draft"
-            />
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="purchase-draft-mode"
+                checked={isDraftMode}
+                onCheckedChange={(checked) => setIsDraftMode(checked)}
+              />
+              <Label htmlFor="purchase-draft-mode">Auto-save draft</Label>
+            </div>
 
             <Button
-              variant="outlined"
-              startIcon={<DraftsIcon />}
+              variant="outline"
               onClick={() => setShowDraftDialog(true)}
             >
+              <FileStack />
               Load Draft ({drafts.length})
             </Button>
 
             {currentDraftId && isDraftMode && (
-              <Chip
-                label="Draft saved"
-                color="success"
-                size="small"
-                icon={<CheckIcon />}
-              />
+              <Badge className="bg-success text-success-foreground">
+                <Check />
+                Draft saved
+              </Badge>
             )}
-          </Box>
+          </div>
         </CardContent>
       </Card>
 
@@ -441,159 +441,154 @@ export const CreatePurchasePage: React.FC = () => {
       />
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-          {error}
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{error}</AlertDescription>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Dismiss error"
+            className="absolute top-1.5 right-1.5"
+            onClick={() => setError(null)}
+          >
+            <X />
+          </Button>
         </Alert>
       )}
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-12 gap-6">
         {/* Left Column - Items */}
-        <Grid size={{ xs: 12, md: 8 }}>
+        <div className="col-span-12 md:col-span-8">
           {/* Add Item Card */}
-          <Card sx={{ mb: 3 }}>
+          <Card className="mb-6">
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Add Items
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
+              <h3 className="mb-2 text-base font-semibold">Add Items</h3>
+              <Separator className="mb-4" />
 
-              <Grid container spacing={2} alignItems="flex-start">
-                <Grid size={{ xs: 12, sm: 4 }}>
-                  <Autocomplete
+              <div className="grid grid-cols-12 items-start gap-4">
+                <div className="col-span-12 grid gap-2 sm:col-span-4">
+                  <Label htmlFor="purchase-product">Product</Label>
+                  <Combobox
+                    id="purchase-product"
                     value={selectedProduct}
-                    onChange={(_, value) => handleProductChange(value)}
-                    onInputChange={(_, value) => setProductSearch(value)}
+                    onChange={(value) => handleProductChange(value)}
+                    onInputChange={(value) => setProductSearch(value)}
                     options={products || []}
-                    getOptionLabel={(option) => 
-                      option.company_sku 
+                    getOptionKey={(option) => option.id}
+                    getOptionLabel={(option) =>
+                      option.company_sku
                         ? `${option.company_sku} - ${option.name} (${option.size})`
                         : `${option.name} (${option.size})`
                     }
                     loading={productsLoading}
-                    filterOptions={(x) => x}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Product"
-                        size="small"
-                        placeholder="Search products..."
-                        InputProps={{
-                          ...params.InputProps,
-                          endAdornment: (
-                            <>
-                              {productsLoading && <CircularProgress size={20} />}
-                              {params.InputProps.endAdornment}
-                            </>
-                          ),
-                        }}
-                      />
-                    )}
+                    disableFiltering
+                    placeholder="Search products..."
+                    searchPlaceholder="Search products..."
+                    emptyText="No products"
                   />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 3 }}>
-                  <Autocomplete
+                </div>
+                <div className="col-span-12 grid gap-2 sm:col-span-3">
+                  <Label htmlFor="purchase-container">Store In</Label>
+                  <Combobox
+                    id="purchase-container"
                     value={selectedContainer}
-                    onChange={(_, value) => setSelectedContainer(value)}
+                    onChange={(value) => setSelectedContainer(value)}
                     options={containers || []}
+                    getOptionKey={(option) => option.id}
                     getOptionLabel={(option) => option.name}
                     loading={containersLoading}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Store In"
-                        size="small"
-                        helperText="Destination container"
-                      />
-                    )}
+                    placeholder="Select container"
+                    searchPlaceholder="Search containers..."
+                    emptyText="No containers"
                   />
-                </Grid>
-                <Grid size={{ xs: 6, sm: 2 }}>
-                  <TextField
-                    label="Qty"
+                  <p className="text-sm text-muted-foreground">Destination container</p>
+                </div>
+                <div className="col-span-6 grid gap-2 sm:col-span-2">
+                  <Label htmlFor="purchase-qty">Qty</Label>
+                  <Input
+                    id="purchase-qty"
                     type="number"
-                    size="small"
-                    fullWidth
                     value={newQuantity}
                     onChange={(e) => setNewQuantity(parseInt(e.target.value) || 0)}
-                    inputProps={{ min: 1 }}
+                    min={1}
                   />
-                </Grid>
-                <Grid size={{ xs: 6, sm: 2 }}>
-                  <TextField
-                    label="Price"
+                </div>
+                <div className="col-span-6 grid gap-2 sm:col-span-2">
+                  <Label htmlFor="purchase-price">Price</Label>
+                  <Input
+                    id="purchase-price"
                     type="number"
-                    size="small"
-                    fullWidth
                     value={newUnitPrice}
                     onChange={(e) => setNewUnitPrice(parseFloat(e.target.value) || 0)}
-                    inputProps={{ min: 0, step: 0.01 }}
+                    min={0}
+                    step={0.01}
                   />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 1 }}>
+                </div>
+                <div className="col-span-12 sm:col-span-1 sm:self-end">
                   <Button
-                    variant="contained"
-                    color="secondary"
+                    variant="secondary"
+                    aria-label="Add item"
                     onClick={handleAddItem}
                     disabled={!selectedProduct || !selectedContainer}
-                    sx={{ minWidth: 0, px: 2 }}
+                    className="px-4"
                   >
-                    <AddIcon />
+                    <Plus />
                   </Button>
-                </Grid>
-              </Grid>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
           {/* Items List Card */}
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Items ({items.length})
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
+              <h3 className="mb-2 text-base font-semibold">Items ({items.length})</h3>
+              <Separator className="mb-4" />
 
               {items.length > 0 ? (
-                <TableContainer>
-                  <Table size="small">
-                    <TableHead>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell>Product</TableCell>
-                        <TableCell>Store In</TableCell>
-                        <TableCell align="right">Qty</TableCell>
-                        <TableCell align="right">Price</TableCell>
-                        <TableCell align="right">GST %</TableCell>
-                        <TableCell align="right">Total</TableCell>
-                        <TableCell align="center">Actions</TableCell>
+                        <TableHead>Product</TableHead>
+                        <TableHead>Store In</TableHead>
+                        <TableHead className="text-right">Qty</TableHead>
+                        <TableHead className="text-right">Price</TableHead>
+                        <TableHead className="text-right">GST %</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
+                        <TableHead className="text-center">Actions</TableHead>
                       </TableRow>
-                    </TableHead>
+                    </TableHeader>
                     <TableBody>
                       {items.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell>
-                            <Typography variant="body2" fontWeight={500}>
-                              {item.product?.name}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            <p className="text-sm font-medium">{item.product?.name}</p>
+                            <span className="text-xs text-muted-foreground">
                               {item.product?.size} • {item.product?.packing}
-                            </Typography>
+                            </span>
                           </TableCell>
                           <TableCell>
-                            <Chip label={item.container?.name} size="small" variant="outlined" color="secondary" />
+                            <Badge variant="outline" className="border-foreground/30">
+                              {item.container?.name}
+                            </Badge>
                           </TableCell>
-                          <TableCell align="right">{item.quantity}</TableCell>
-                          <TableCell align="right">{formatCurrency(item.unit_price)}</TableCell>
-                          <TableCell align="right">
-                            <TextField
-                              size="small"
+                          <TableCell className="text-right">{item.quantity}</TableCell>
+                          <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
+                          <TableCell className="text-right">
+                            <Input
                               type="number"
+                              aria-label="GST %"
                               placeholder="—"
                               value={item.tax_rate ?? ''}
                               onChange={(e) => handleChangeItemTaxRate(item.id, e.target.value)}
-                              inputProps={{ min: 0, max: 100, step: 0.5, style: { textAlign: 'right' } }}
-                              sx={{ width: 84 }}
+                              min={0}
+                              max={100}
+                              step={0.5}
+                              className="ml-auto w-[84px] text-right"
                             />
                           </TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 500 }}>
+                          <TableCell className="text-right font-medium">
                             {formatCurrency(
                               item.quantity * item.unit_price +
                                 (item.tax_rate
@@ -601,230 +596,248 @@ export const CreatePurchasePage: React.FC = () => {
                                   : 0)
                             )}
                           </TableCell>
-                          <TableCell align="center">
-                            <IconButton
-                              size="small"
-                              color="error"
+                          <TableCell className="text-center">
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label="Remove item"
+                              className="text-destructive hover:text-destructive"
                               onClick={() => handleRemoveItem(item.id)}
                             >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
+                              <Trash2 />
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                </TableContainer>
+                </div>
               ) : (
-                <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
+                <p className="py-8 text-center text-sm text-muted-foreground">
                   No items added yet. Use the form above to add products.
-                </Typography>
+                </p>
               )}
             </CardContent>
           </Card>
-        </Grid>
+        </div>
 
         {/* Right Column - Summary */}
-        <Grid size={{ xs: 12, md: 4 }}>
+        <div className="col-span-12 md:col-span-4">
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Purchase Details
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
+              <h3 className="mb-2 text-base font-semibold">Purchase Details</h3>
+              <Separator className="mb-4" />
 
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-                <TextField
-                  label="Date"
-                  type="date"
-                  size="small"
-                  fullWidth
-                  value={transactionDate}
-                  onChange={(e) => setTransactionDate(e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                />
+              <div className="flex flex-col gap-5">
+                <div className="grid gap-2">
+                  <Label htmlFor="purchase-date">Date</Label>
+                  <Input
+                    id="purchase-date"
+                    type="date"
+                    value={transactionDate}
+                    onChange={(e) => setTransactionDate(e.target.value)}
+                  />
+                </div>
 
-                <Autocomplete
-                  value={selectedContact}
-                  onChange={(_, value) => setSelectedContact(value)}
-                  options={contacts || []}
-                  getOptionLabel={(option) => `${option.name} (${option.phone})`}
-                  loading={contactsLoading}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Supplier"
-                      size="small"
-                      required
-                    />
-                  )}
-                />
+                <div className="grid gap-2">
+                  <Label htmlFor="purchase-supplier">Supplier *</Label>
+                  <Combobox
+                    id="purchase-supplier"
+                    value={selectedContact}
+                    onChange={(value) => setSelectedContact(value)}
+                    options={contacts || []}
+                    getOptionKey={(option) => option.id}
+                    getOptionLabel={(option) => `${option.name} (${option.phone})`}
+                    loading={contactsLoading}
+                    placeholder="Select supplier"
+                    searchPlaceholder="Search suppliers..."
+                    emptyText="No suppliers"
+                  />
+                </div>
 
-                <Divider />
+                <Separator />
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2">Subtotal</Typography>
-                  <Typography variant="body2">{formatCurrency(subtotal)}</Typography>
-                </Box>
+                <div className="flex justify-between">
+                  <p className="text-sm">Subtotal</p>
+                  <p className="text-sm">{formatCurrency(subtotal)}</p>
+                </div>
 
                 {selectedContact && !taxTypeAutoSet && (
-                  <TextField
-                    label="Tax Type"
-                    select
-                    size="small"
-                    fullWidth
-                    value={taxType}
-                    onChange={(e) => setTaxType(e.target.value as TaxType)}
-                    helperText="No GSTIN on contact — select manually"
-                  >
-                    <MenuItem value="cgst_sgst">Intra-state (CGST + SGST)</MenuItem>
-                    <MenuItem value="igst">Inter-state (IGST)</MenuItem>
-                  </TextField>
+                  <div className="grid gap-2">
+                    <Label htmlFor="purchase-tax-type">Tax Type</Label>
+                    <Select
+                      value={taxType}
+                      onValueChange={(value) => setTaxType(value as TaxType)}
+                    >
+                      <SelectTrigger id="purchase-tax-type" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cgst_sgst">Intra-state (CGST + SGST)</SelectItem>
+                        <SelectItem value="igst">Inter-state (IGST)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground">
+                      No GSTIN on contact — select manually
+                    </p>
+                  </div>
                 )}
 
-                <Box>
-                  <TextField
-                    label="GST %"
-                    type="number"
-                    size="small"
-                    fullWidth
-                    disabled={hasPerLineRates}
-                    value={taxPercent}
-                    onChange={(e) => setTaxPercent(parseFloat(e.target.value) || 0)}
-                    inputProps={{ min: 0, max: 100, step: 0.5 }}
-                    InputProps={{
-                      endAdornment: <Typography sx={{ ml: 0.5, color: 'text.secondary' }}>%</Typography>,
-                    }}
-                    helperText={
-                      hasPerLineRates
-                        ? 'Each item is taxed at its own GST % (set in the items table)'
-                        : undefined
-                    }
-                  />
+                <div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="purchase-gst">GST %</Label>
+                    <div className="relative">
+                      <Input
+                        id="purchase-gst"
+                        type="number"
+                        disabled={hasPerLineRates}
+                        value={taxPercent}
+                        onChange={(e) => setTaxPercent(parseFloat(e.target.value) || 0)}
+                        min={0}
+                        max={100}
+                        step={0.5}
+                        className="pr-8"
+                      />
+                      <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground">
+                        %
+                      </span>
+                    </div>
+                    {hasPerLineRates && (
+                      <p className="text-sm text-muted-foreground">
+                        Each item is taxed at its own GST % (set in the items table)
+                      </p>
+                    )}
+                  </div>
                   {hasPerLineRates ? (
-                    <Box sx={{ mt: 0.5 }}>
+                    <div className="mt-1">
                       {[...rateBreakdown.entries()]
                         .sort((a, b) => b[0] - a[0])
                         .map(([rate, bucket]) => (
-                          <Typography
-                            key={rate}
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ display: 'block' }}
-                          >
+                          <span key={rate} className="block text-xs text-muted-foreground">
                             {taxType === 'cgst_sgst'
                               ? `CGST ${(rate / 2).toFixed(2)}% + SGST ${(rate / 2).toFixed(2)}% on ${formatCurrency(bucket.taxable)}: ${formatCurrency(bucket.tax)}`
                               : `IGST ${rate.toFixed(2)}% on ${formatCurrency(bucket.taxable)}: ${formatCurrency(bucket.tax)}`}
-                          </Typography>
+                          </span>
                         ))}
-                    </Box>
+                    </div>
                   ) : (
                     taxPercent > 0 && (
-                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                      <span className="mt-1 block text-xs text-muted-foreground">
                         {taxType === 'cgst_sgst'
                           ? `CGST: ${formatCurrency(taxAmount / 2)} + SGST: ${formatCurrency(taxAmount / 2)}`
                           : `IGST: ${formatCurrency(taxAmount)}`}
-                      </Typography>
+                      </span>
                     )
                   )}
-                </Box>
+                </div>
 
-                <TextField
-                  label="Discount Amount"
-                  type="number"
-                  size="small"
-                  fullWidth
-                  value={discountAmount}
-                  onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 0)}
-                  inputProps={{ min: 0, step: 0.01 }}
-                />
+                <div className="grid gap-2">
+                  <Label htmlFor="purchase-discount">Discount Amount</Label>
+                  <Input
+                    id="purchase-discount"
+                    type="number"
+                    value={discountAmount}
+                    onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 0)}
+                    min={0}
+                    step={0.01}
+                  />
+                </div>
 
-                <Divider />
+                <Separator />
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="h6">Total</Typography>
-                  <Typography variant="h6" color="secondary">
+                <div className="flex justify-between">
+                  <h3 className="text-base font-semibold">Total</h3>
+                  <h3 className="text-base font-semibold">
                     {formatCurrency(totalAmount)}
-                  </Typography>
-                </Box>
+                  </h3>
+                </div>
 
-                <Divider />
+                <Separator />
 
-                <TextField
-                  label="Amount Paid Now"
-                  type="number"
-                  size="small"
-                  fullWidth
-                  value={paidAmount}
-                  onChange={(e) => setPaidAmount(parseFloat(e.target.value) || 0)}
-                  inputProps={{ min: 0, max: totalAmount, step: 0.01 }}
-                />
+                <div className="grid gap-2">
+                  <Label htmlFor="purchase-paid">Amount Paid Now</Label>
+                  <Input
+                    id="purchase-paid"
+                    type="number"
+                    value={paidAmount}
+                    onChange={(e) => setPaidAmount(parseFloat(e.target.value) || 0)}
+                    min={0}
+                    max={totalAmount}
+                    step={0.01}
+                  />
+                </div>
 
                 {paidAmount > 0 && (
                   <>
-                    <TextField
-                      label="Payment Method"
-                      select
-                      size="small"
-                      fullWidth
-                      value={paymentMethod}
-                      onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-                    >
-                      {Object.values(PAYMENT_METHODS).map((method) => (
-                        <MenuItem key={method} value={method}>
-                          {method.replace('_', ' ').toUpperCase()}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                    <div className="grid gap-2">
+                      <Label htmlFor="purchase-payment-method">Payment Method</Label>
+                      <Select
+                        value={paymentMethod}
+                        onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
+                      >
+                        <SelectTrigger id="purchase-payment-method" className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.values(PAYMENT_METHODS).map((method) => (
+                            <SelectItem key={method} value={method}>
+                              {method.replace('_', ' ').toUpperCase()}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                    <TextField
-                      label="Payment Reference"
-                      size="small"
-                      fullWidth
-                      value={paymentReference}
-                      onChange={(e) => setPaymentReference(e.target.value)}
-                      placeholder="Check #, UPI ID, etc."
-                    />
+                    <div className="grid gap-2">
+                      <Label htmlFor="purchase-payment-reference">Payment Reference</Label>
+                      <Input
+                        id="purchase-payment-reference"
+                        value={paymentReference}
+                        onChange={(e) => setPaymentReference(e.target.value)}
+                        placeholder="Check #, UPI ID, etc."
+                      />
+                    </div>
                   </>
                 )}
 
-                <TextField
-                  label="Notes"
-                  size="small"
-                  fullWidth
-                  multiline
-                  rows={2}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                />
+                <div className="grid gap-2">
+                  <Label htmlFor="purchase-notes">Notes</Label>
+                  <Textarea
+                    id="purchase-notes"
+                    rows={2}
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                  />
+                </div>
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-                  <Typography variant="body2" color="text.secondary">Balance Due</Typography>
-                  <Typography
-                    variant="body1"
-                    fontWeight={600}
-                    color={totalAmount - paidAmount > 0 ? 'error.main' : 'success.main'}
+                <div className="mt-2 flex justify-between">
+                  <p className="text-sm text-muted-foreground">Balance Due</p>
+                  <p
+                    className={
+                      totalAmount - paidAmount > 0
+                        ? 'font-semibold text-destructive'
+                        : 'font-semibold text-success'
+                    }
                   >
                     {formatCurrency(totalAmount - paidAmount)}
-                  </Typography>
-                </Box>
+                  </p>
+                </div>
 
                 <Button
-                  variant="contained"
-                  color="secondary"
-                  size="large"
-                  fullWidth
+                  variant="secondary"
+                  size="lg"
+                  className="w-full"
                   onClick={handleSubmit}
                   disabled={createPurchaseMutation.isPending || items.length === 0 || !selectedContact}
                 >
                   {createPurchaseMutation.isPending ? 'Creating...' : 'Create Purchase'}
                 </Button>
-              </Box>
+              </div>
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -1,10 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  Alert, Box, Button, Card, Chip, Dialog, DialogActions, DialogContent,
-  DialogTitle, Stack, TablePagination, TextField, Typography,
-} from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
+import { ChevronLeft, ChevronRight, CircleAlert, Info, X } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { pdfInvoicesApi, pdfInvoiceError } from '../../api/pdfInvoices.api';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SearchInput } from '../../components/common/SearchInput';
@@ -15,6 +25,8 @@ import { QUERY_KEYS, USER_ROLES } from '../../constants';
 import { useAuthStore } from '../../stores/authStore';
 import type { PdfInvoice, PdfInvoiceFilters } from '../../types/pdfInvoices';
 import UploadPdfInvoiceDialog from './UploadPdfInvoiceDialog';
+
+const ROWS_PER_PAGE = 25;
 
 const currency = (value: string) => Number(value).toLocaleString('en-IN', {
   style: 'currency', currency: 'INR', minimumFractionDigits: 2,
@@ -64,94 +76,136 @@ export default function PdfInvoicesPage() {
     {
       id: 'number', label: 'Invoice',
       render: (row: PdfInvoice) => (
-        <Box><Typography fontWeight={600}>{row.invoice_number}</Typography>
-          <Typography variant="caption">FY {row.financial_year} · {row.source}</Typography></Box>
+        <div><p className="font-semibold">{row.invoice_number}</p>
+          <span className="text-xs text-muted-foreground">FY {row.financial_year} · {row.source}</span></div>
       ),
     },
     { id: 'date', label: 'Date', render: (row: PdfInvoice) => format(parseISO(row.invoice_date), 'dd MMM yyyy') },
     {
       id: 'customer', label: 'Customer',
       render: (row: PdfInvoice) => (
-        <Box><Typography variant="body2">{row.customer_name}</Typography>
-          <Typography variant="caption">{row.customer_gstin}</Typography></Box>
+        <div><p className="text-sm">{row.customer_name}</p>
+          <span className="text-xs text-muted-foreground">{row.customer_gstin}</span></div>
       ),
     },
     { id: 'taxable', label: 'Taxable', align: 'right' as const, render: (row: PdfInvoice) => currency(row.subtotal) },
     {
       id: 'tax', label: 'GST', align: 'right' as const,
       render: (row: PdfInvoice) => (
-        <Typography variant="caption">
+        <span className="text-xs text-muted-foreground">
           {Number(row.igst) > 0 ? `IGST ${currency(row.igst)}`
             : `CGST ${currency(row.cgst)} / SGST ${currency(row.sgst)}`}
-        </Typography>
+        </span>
       ),
     },
     { id: 'total', label: 'Total', align: 'right' as const, render: (row: PdfInvoice) => currency(row.total_amount) },
     {
       id: 'status', label: 'Storage',
-      render: (row: PdfInvoice) => <Chip size="small"
-        label={row.upload_status === 'ready' ? 'Saved' : 'Upload incomplete'}
-        color={row.upload_status === 'ready' ? 'success' : 'warning'} />,
+      render: (row: PdfInvoice) => <Badge variant="outline"
+        className={row.upload_status === 'ready'
+          ? 'border-success/30 bg-success/10 text-success'
+          : 'border-warning/40 bg-warning/10 text-warning'}>
+        {row.upload_status === 'ready' ? 'Saved' : 'Upload incomplete'}
+      </Badge>,
     },
     {
       id: 'actions', label: 'PDF', isAction: true,
       render: (row: PdfInvoice) => row.upload_status === 'ready'
-        ? <Button size="small" disabled={loadingPdf !== null} onClick={() => void viewPdf(row)}>
+        ? <Button variant="ghost" size="sm" disabled={loadingPdf !== null} onClick={() => void viewPdf(row)}>
           {loadingPdf === row.id ? 'Loading...' : 'View PDF'}
         </Button>
         : canUpload
-          ? <Button size="small" onClick={() => setUploadDialog({ retry: row })}>Retry upload</Button>
-          : <Typography variant="caption">Ask an admin or staff member to retry</Typography>,
+          ? <Button variant="ghost" size="sm" onClick={() => setUploadDialog({ retry: row })}>Retry upload</Button>
+          : <span className="text-xs text-muted-foreground">Ask an admin or staff member to retry</span>,
     },
   ];
 
+  const total = query.data?.total ?? 0;
+  const firstRow = total === 0 ? 0 : page * ROWS_PER_PAGE + 1;
+  const lastRow = Math.min(total, (page + 1) * ROWS_PER_PAGE);
+
   return (
-    <Box>
+    <div>
       <PageHeader title="PDF Bills"
         subtitle="Standalone invoices archived without stock movements or customer balance changes."
         actionLabel={canUpload ? 'Upload existing PDF' : undefined}
         onAction={() => setUploadDialog({})} />
-      <Alert severity="info" sx={{ mb: 2 }}>
-        This register is separate from Transactions. Only archived PDFs appear here;
-        older local files must be imported. Incomplete uploads reserve their invoice number but are not yet downloadable.
+      <Alert className="mb-4">
+        <Info />
+        <AlertDescription>
+          This register is separate from Transactions. Only archived PDFs appear here;
+          older local files must be imported. Incomplete uploads reserve their invoice number but are not yet downloadable.
+        </AlertDescription>
       </Alert>
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
+      <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-end">
         <SearchInput value={filters.search} onChange={(value) => setFilter('search', value)}
           placeholder="Invoice, customer or GSTIN" />
-        <TextField label="From" type="date" size="small" value={filters.from_date}
-          onChange={(e) => setFilter('from_date', e.target.value)} InputLabelProps={{ shrink: true }} />
-        <TextField label="To" type="date" size="small" value={filters.to_date}
-          onChange={(e) => setFilter('to_date', e.target.value)} InputLabelProps={{ shrink: true }} />
-      </Stack>
-      {pdfError && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setPdfError('')}>{pdfError}</Alert>}
+        <div className="grid gap-2">
+          <Label htmlFor="pdf-from-date">From</Label>
+          <Input id="pdf-from-date" type="date" className="sm:w-[170px]" value={filters.from_date}
+            onChange={(e) => setFilter('from_date', e.target.value)} />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="pdf-to-date">To</Label>
+          <Input id="pdf-to-date" type="date" className="sm:w-[170px]" value={filters.to_date}
+            onChange={(e) => setFilter('to_date', e.target.value)} />
+        </div>
+      </div>
+      {pdfError && (
+        <Alert variant="destructive" className="mb-4">
+          <CircleAlert />
+          <AlertDescription>{pdfError}</AlertDescription>
+          <Button type="button" variant="ghost" size="icon-sm" aria-label="Dismiss error"
+            className="absolute top-2 right-2" onClick={() => setPdfError('')}>
+            <X />
+          </Button>
+        </Alert>
+      )}
       {query.isLoading ? <LoadingState message="Loading PDF bills..." />
         : query.isError ? <ErrorState message={pdfInvoiceError(query.error)} onRetry={() => { void query.refetch(); }} />
           : (
-            <Card>
+            <Card className="gap-0 overflow-hidden py-0">
               <ResponsiveTable columns={columns} data={query.data?.items ?? []} keyExtractor={(row) => row.id}
                 emptyMessage="No registered PDF bills match these filters." />
-              <TablePagination component="div" count={query.data?.total ?? 0} rowsPerPage={25}
-                rowsPerPageOptions={[25]} page={page} onPageChange={(_, value) => setPage(value)} />
+              <div className="flex items-center justify-end gap-4 border-t px-4 py-2">
+                <span className="text-sm text-muted-foreground tabular-nums">
+                  {firstRow}–{lastRow} of {total}
+                </span>
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="icon-sm" aria-label="Previous page"
+                    disabled={page === 0} onClick={() => setPage(page - 1)}>
+                    <ChevronLeft />
+                  </Button>
+                  <Button variant="ghost" size="icon-sm" aria-label="Next page"
+                    disabled={lastRow >= total} onClick={() => setPage(page + 1)}>
+                    <ChevronRight />
+                  </Button>
+                </div>
+              </div>
             </Card>
           )}
       {uploadDialog && <UploadPdfInvoiceDialog retryInvoice={uploadDialog.retry} onClose={() => setUploadDialog(null)} />}
       {preview && (
-        <Dialog open fullWidth maxWidth="lg" onClose={() => setPreview(null)}>
-          <DialogTitle>Invoice {preview.invoice.invoice_number} — {preview.invoice.customer_name}</DialogTitle>
-          <DialogContent>
-            <Typography variant="body2" sx={{ mb: 1 }}>
+        <Dialog open onOpenChange={(open) => { if (!open) setPreview(null); }}>
+          <DialogContent className="sm:max-w-6xl">
+            <DialogHeader>
+              <DialogTitle>Invoice {preview.invoice.invoice_number} — {preview.invoice.customer_name}</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm">
               Round-off: {currency(preview.invoice.round_off)}. {preview.invoice.notes}
-            </Typography>
-            <Box component="iframe" src={preview.url} title={`Invoice ${preview.invoice.invoice_number}`}
-              sx={{ width: '100%', height: '70vh', border: 0 }} />
+            </p>
+            <iframe src={preview.url} title={`Invoice ${preview.invoice.invoice_number}`}
+              className="h-[70vh] w-full border-0" />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPreview(null)}>Close</Button>
+              <Button asChild>
+                <a href={preview.url}
+                  download={`${preview.invoice.invoice_number.replaceAll('/', '-')}.pdf`}>Download PDF</a>
+              </Button>
+            </DialogFooter>
           </DialogContent>
-          <DialogActions>
-            <Button component="a" href={preview.url}
-              download={`${preview.invoice.invoice_number.replaceAll('/', '-')}.pdf`}>Download PDF</Button>
-            <Button onClick={() => setPreview(null)}>Close</Button>
-          </DialogActions>
         </Dialog>
       )}
-    </Box>
+    </div>
   );
 }

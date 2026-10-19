@@ -5,10 +5,11 @@ import MainLayout from '../components/layout/MainLayout';
 import { LoadingState } from '../components/common/LoadingState';
 import { USER_ROLES } from '../constants';
 
-// Keep LoginPage as direct import (initial route)
-import LoginPage from '../features/auth/LoginPage';
-
-// Lazy load all page components for code splitting
+// Lazy load all page components for code splitting.
+// LoginPage is lazy too: it is the only eager consumer of react-hook-form/zod,
+// so importing it directly pulled ~89KB of form libraries onto the critical
+// path for already-authenticated users, who never render it.
+const LoginPage = React.lazy(() => import('../features/auth/LoginPage'));
 const DashboardPage = React.lazy(() => import('../features/dashboard/DashboardPage'));
 const ProductsPage = React.lazy(() => import('../features/products/ProductsPage'));
 const ProductDetailPage = React.lazy(() => import('../features/products/ProductDetailPage'));
@@ -26,6 +27,7 @@ const CreateDeodapBillPage = React.lazy(() => import('../features/transactions/C
 const PaymentsPage = React.lazy(() => import('../features/payments/PaymentsPage'));
 const UsersPage = React.lazy(() => import('../features/users/UsersPage'));
 const PdfInvoicesPage = React.lazy(() => import('../features/pdf-invoices/PdfInvoicesPage'));
+const AssistantPage = React.lazy(() => import('../features/assistant/AssistantPage'));
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -35,7 +37,9 @@ export const AppRoutes: React.FC = () => {
         path="/login"
         element={
           <GuestGuard>
-            <LoginPage />
+            <Suspense fallback={<LoadingState />}>
+              <LoginPage />
+            </Suspense>
           </GuestGuard>
         }
       />
@@ -132,6 +136,12 @@ export const AppRoutes: React.FC = () => {
         <Route path="/pdf-invoices" element={
           <Suspense fallback={<LoadingState />}>
             <PdfInvoicesPage />
+          </Suspense>
+        } />
+
+        <Route path="/assistant" element={
+          <Suspense fallback={<LoadingState />}>
+            <AssistantPage />
           </Suspense>
         } />
 

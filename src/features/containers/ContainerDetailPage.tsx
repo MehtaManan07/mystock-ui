@@ -1,28 +1,23 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import {
-  Box,
-  Card,
-  CardContent,
-  Grid,
-  Typography,
-  Chip,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  IconButton,
-  Tooltip,
-  Divider,
-} from '@mui/material';
+} from '@/components/ui/table';
 import {
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  ArrowBack as BackIcon,
-  Inventory as InventoryIcon,
-} from '@mui/icons-material';
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { ArrowLeft, Boxes, Pencil, Trash2 } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorState } from '../../components/common/ErrorState';
@@ -86,7 +81,7 @@ export const ContainerDetailPage: React.FC = () => {
   }
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title={container.name}
         subtitle={`${container.type} container`}
@@ -97,138 +92,167 @@ export const ContainerDetailPage: React.FC = () => {
       />
 
       {/* Action buttons */}
-      <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
-        <Tooltip title="Back to Containers">
-          <IconButton
-            component="a"
-            href="/containers"
-            onClick={(e: React.MouseEvent) => {
-              if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
-                e.preventDefault();
-                navigate('/containers');
-              }
-            }}
-          >
-            <BackIcon />
-          </IconButton>
+      <div className="mb-6 flex gap-2">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Back to Containers" asChild>
+              <a
+                href="/containers"
+                onClick={(e: React.MouseEvent) => {
+                  if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                    e.preventDefault();
+                    navigate('/containers');
+                  }
+                }}
+              >
+                <ArrowLeft />
+              </a>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Back to Containers</TooltipContent>
         </Tooltip>
-        <Tooltip title="Manage Products">
-          <IconButton color="primary" onClick={() => setManageProductsDialogOpen(true)}>
-            <InventoryIcon />
-          </IconButton>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Manage Products"
+              className="text-primary hover:text-primary"
+              onClick={() => setManageProductsDialogOpen(true)}
+            >
+              <Boxes />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Manage Products</TooltipContent>
         </Tooltip>
-        <Tooltip title="Edit Container">
-          <IconButton onClick={() => setEditDialogOpen(true)}>
-            <EditIcon />
-          </IconButton>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Edit Container"
+              onClick={() => setEditDialogOpen(true)}
+            >
+              <Pencil />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Edit Container</TooltipContent>
         </Tooltip>
-        <Tooltip title="Delete Container">
-          <IconButton color="error" onClick={() => setDeleteDialogOpen(true)}>
-            <DeleteIcon />
-          </IconButton>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Delete Container"
+              className="text-destructive hover:text-destructive"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              <Trash2 />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Delete Container</TooltipContent>
         </Tooltip>
-      </Box>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-12 gap-6">
         {/* Container Info Card */}
-        <Grid size={{ xs: 12, md: 4 }}>
+        <div className="col-span-12 md:col-span-4">
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
+              <h3 className="mb-2 text-base font-semibold">
                 Container Information
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Name
-                  </Typography>
-                  <Typography variant="body1" fontWeight={600}>
-                    {container.name}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Type
-                  </Typography>
-                  <Box sx={{ mt: 0.5 }}>
-                    <Chip
-                      label={container.type}
-                      color={container.type === 'mixed' ? 'secondary' : 'primary'}
-                      size="small"
-                    />
-                  </Box>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
+              </h3>
+              <Separator className="mb-4" />
+
+              <div className="flex flex-col gap-4">
+                <div>
+                  <span className="text-xs text-muted-foreground">Name</span>
+                  <p className="font-semibold">{container.name}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground">Type</span>
+                  <div className="mt-1">
+                    <Badge
+                      className={
+                        container.type === 'mixed'
+                          ? 'bg-secondary text-secondary-foreground'
+                          : ''
+                      }
+                    >
+                      {container.type}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground">
                     Products Stored
-                  </Typography>
-                  <Typography variant="body1">
-                    {container.products?.length || 0} products
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
+                  </span>
+                  <p>{container.products?.length || 0} products</p>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground">
                     Total Quantity
-                  </Typography>
-                  <Box sx={{ mt: 0.5 }}>
-                    <Chip
-                      label={totalQuantity}
-                      color={totalQuantity > 0 ? 'primary' : 'default'}
-                    />
-                  </Box>
-                </Box>
-              </Box>
+                  </span>
+                  <div className="mt-1">
+                    <Badge
+                      variant={totalQuantity > 0 ? 'default' : 'secondary'}
+                      className="px-3 py-1 text-sm"
+                    >
+                      {totalQuantity}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
-        </Grid>
+        </div>
 
         {/* Products Card */}
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Card sx={{ mb: 3 }}>
+        <div className="col-span-12 md:col-span-8">
+          <Card className="mb-6">
             <CardContent>
-              <Typography variant="h6" gutterBottom>
+              <h3 className="mb-2 text-base font-semibold">
                 Products in Container ({container.products?.length || 0})
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              
+              </h3>
+              <Separator className="mb-4" />
+
               {container.products && container.products.length > 0 ? (
-                <TableContainer>
-                  <Table size="small">
-                    <TableHead>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell>Product</TableCell>
-                        <TableCell>Size</TableCell>
-                        <TableCell>Packing</TableCell>
-                        <TableCell align="right">Quantity</TableCell>
+                        <TableHead>Product</TableHead>
+                        <TableHead>Size</TableHead>
+                        <TableHead>Packing</TableHead>
+                        <TableHead className="text-right">Quantity</TableHead>
                       </TableRow>
-                    </TableHead>
+                    </TableHeader>
                     <TableBody>
                       {container.products.map((cp) => (
                         <TableRow
                           key={cp.product.id}
-                          hover
-                          sx={{ cursor: 'pointer' }}
+                          className="cursor-pointer"
                           onClick={() => navigate(`/products/${cp.product.id}`)}
                         >
                           <TableCell>
-                            <Typography variant="body2" fontWeight={500}>
+                            <p className="text-sm font-medium">
                               {cp.product.name}
-                            </Typography>
+                            </p>
                           </TableCell>
                           <TableCell>{cp.product.size}</TableCell>
                           <TableCell>{cp.product.packing}</TableCell>
-                          <TableCell align="right">{cp.quantity}</TableCell>
+                          <TableCell className="text-right">
+                            {cp.quantity}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                </TableContainer>
+                </div>
               ) : (
-                <Typography variant="body2" color="text.secondary">
+                <p className="text-sm text-muted-foreground">
                   No products stored in this container yet.
-                </Typography>
+                </p>
               )}
             </CardContent>
           </Card>
@@ -236,60 +260,62 @@ export const ContainerDetailPage: React.FC = () => {
           {/* Recent Logs Card */}
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
+              <h3 className="mb-2 text-base font-semibold">
                 Recent Activity ({container.logs?.length || 0} logs)
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              
+              </h3>
+              <Separator className="mb-4" />
+
               {container.logs && container.logs.length > 0 ? (
-                <TableContainer>
-                  <Table size="small">
-                    <TableHead>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell>Action</TableCell>
-                        <TableCell>Product</TableCell>
-                        <TableCell align="right">Quantity</TableCell>
-                        <TableCell>Date</TableCell>
+                        <TableHead>Action</TableHead>
+                        <TableHead>Product</TableHead>
+                        <TableHead className="text-right">Quantity</TableHead>
+                        <TableHead>Date</TableHead>
                       </TableRow>
-                    </TableHead>
+                    </TableHeader>
                     <TableBody>
                       {container.logs.slice(0, 10).map((log) => (
-                        <TableRow key={log.id} hover>
+                        <TableRow key={log.id}>
                           <TableCell>
-                            <Chip
-                              label={log.action}
-                              size="small"
-                              color={
+                            <Badge
+                              variant="outline"
+                              className={
                                 log.action === 'add' || log.action === 'purchase'
-                                  ? 'success'
+                                  ? 'border-success text-success'
                                   : log.action === 'remove' || log.action === 'sale'
-                                  ? 'error'
-                                  : 'default'
+                                  ? 'border-destructive text-destructive'
+                                  : ''
                               }
-                              variant="outlined"
-                            />
+                            >
+                              {log.action}
+                            </Badge>
                           </TableCell>
                           <TableCell>{log.product?.name || '-'}</TableCell>
-                          <TableCell align="right">{log.quantity}</TableCell>
+                          <TableCell className="text-right">
+                            {log.quantity}
+                          </TableCell>
                           <TableCell>
-                            <Typography variant="caption">
+                            <span className="text-xs text-muted-foreground">
                               {formatDate(log.created_at)}
-                            </Typography>
+                            </span>
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                </TableContainer>
+                </div>
               ) : (
-                <Typography variant="body2" color="text.secondary">
+                <p className="text-sm text-muted-foreground">
                   No activity logs for this container.
-                </Typography>
+                </p>
               )}
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
       {/* Edit Dialog */}
       <ContainerFormDialog
@@ -324,7 +350,7 @@ export const ContainerDetailPage: React.FC = () => {
         onClose={() => setManageProductsDialogOpen(false)}
         onSuccess={() => refetch()}
       />
-    </Box>
+    </div>
   );
 };
 

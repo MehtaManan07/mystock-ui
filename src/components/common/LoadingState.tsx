@@ -1,5 +1,6 @@
 import React from 'react';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Loader2 } from 'lucide-react';
+import { cn } from 'cn';
 
 interface LoadingStateProps {
   message?: string;
@@ -11,21 +12,15 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
   fullPage = false,
 }) => {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        py: fullPage ? 0 : 8,
-        minHeight: fullPage ? '60vh' : 'auto',
-      }}
+    <div
+      className={cn(
+        'flex flex-col items-center justify-center',
+        fullPage ? 'min-h-[60vh]' : 'py-16'
+      )}
     >
-      <CircularProgress size={40} sx={{ mb: 2 }} />
-      <Typography variant="body2" color="text.secondary">
-        {message}
-      </Typography>
-    </Box>
+      <Loader2 className="mb-3 size-9 animate-spin text-primary" />
+      <p className="text-sm text-muted-foreground">{message}</p>
+    </div>
   );
 };
 

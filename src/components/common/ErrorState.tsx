@@ -1,6 +1,7 @@
 import React from 'react';
-import { Box, Typography, Button, Alert } from '@mui/material';
-import { Refresh as RefreshIcon } from '@mui/icons-material';
+import { RefreshCw, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
 interface ErrorStateProps {
   title?: string;
@@ -14,29 +15,19 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   onRetry,
 }) => {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        py: 8,
-        px: 4,
-        textAlign: 'center',
-      }}
-    >
-      <Alert severity="error" sx={{ mb: 3, maxWidth: 400 }}>
-        <Typography variant="subtitle2" gutterBottom>
-          {title}
-        </Typography>
-        <Typography variant="body2">{message}</Typography>
+    <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
+      <Alert variant="destructive" className="mb-6 max-w-md text-left">
+        <AlertCircle />
+        <AlertTitle>{title}</AlertTitle>
+        <AlertDescription>{message}</AlertDescription>
       </Alert>
       {onRetry && (
-        <Button variant="outlined" startIcon={<RefreshIcon />} onClick={onRetry}>
+        <Button variant="outline" onClick={onRetry}>
+          <RefreshCw />
           Try Again
         </Button>
       )}
-    </Box>
+    </div>
   );
 };
 

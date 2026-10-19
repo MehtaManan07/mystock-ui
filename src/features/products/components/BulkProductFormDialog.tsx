@@ -1,29 +1,36 @@
 import React, { useState, useEffect } from 'react';
+import { Check, ChevronDown, Trash2, X } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Grid,
-  InputAdornment,
-  useTheme,
-  useMediaQuery,
-  Alert,
-  Typography,
-  Card,
-  CardContent,
-  IconButton,
-  Chip,
-  Box,
-  Autocomplete,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
   Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-} from '@mui/material';
-import { Delete as DeleteIcon } from '@mui/icons-material';
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from 'cn';
 import { productFormSchema, type ProductFormData, type ContainerQuantity } from '../schemas/productSchema';
 import { useCreateProductsBulk } from '../../../hooks/useProducts';
 import { useContainers, useCreateContainer } from '../../../hooks/useContainers';
@@ -43,9 +50,6 @@ interface ProductInList extends CreateProductDto {
 }
 
 export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ open, onClose }) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
   const createBulkMutation = useCreateProductsBulk();
   const { data: containersData } = useContainers();
   const existingContainers = Array.isArray(containersData) ? containersData : [];
@@ -60,6 +64,7 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
   const [currentContainers, setCurrentContainers] = useState<ContainerQuantity[]>([]);
   const [newContainerName, setNewContainerName] = useState('');
   const [newContainerType, setNewContainerType] = useState<string>('single');
+  const [containerNameOpen, setContainerNameOpen] = useState(false);
 
   // Form state for adding new product
   const [formData, setFormData] = useState<ProductFormData>({
@@ -347,420 +352,495 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="lg"
-      fullWidth
-      fullScreen={isMobile}
-    >
-      <DialogTitle>Bulk Create Products</DialogTitle>
-      <DialogContent>
-        <Grid container spacing={3} sx={{ mt: 0.5 }}>
-          {/* Left Panel - Product Entry Form */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Card variant="outlined">
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Add Product
-                </Typography>
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="flex max-h-[90dvh] flex-col max-sm:inset-0 max-sm:h-full max-sm:max-h-full max-sm:max-w-full max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none sm:max-w-6xl">
+        <DialogHeader>
+          <DialogTitle>Bulk Create Products</DialogTitle>
+        </DialogHeader>
 
-                {error && (
-                  <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-                    {error}
-                  </Alert>
-                )}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="mt-1 grid grid-cols-12 gap-6 px-1">
+            {/* Left Panel - Product Entry Form */}
+            <div className="col-span-12 md:col-span-6">
+              <Card>
+                <CardContent>
+                  <h3 className="mb-2 text-base font-semibold">Add Product</h3>
 
-                <Grid container spacing={2}>
-                  <Grid size={12}>
-                    <TextField
-                      label="Product Name"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
-                      placeholder="Enter product name"
-                      autoFocus
-                      required
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      label="Size"
-                      value={formData.size}
-                      onChange={(e) => handleInputChange('size', e.target.value)}
-                      placeholder="e.g., 25kg, 1L, 500g"
-                      required
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      label="Packing"
-                      value={formData.packing}
-                      onChange={(e) => handleInputChange('packing', e.target.value)}
-                      placeholder="e.g., Bag, Box, Bottle"
-                      required
-                    />
-                  </Grid>
-
-                  <Grid size={12}>
-                    <TextField
-                      label="Company SKU (Optional)"
-                      value={formData.company_sku}
-                      onChange={(e) => handleInputChange('company_sku', e.target.value)}
-                      placeholder="e.g., SKU-001, PROD-ABC"
-                    />
-                  </Grid>
-
-                  <Grid size={12}>
-                    <TextField
-                      label="Display Name"
-                      value={formData.display_name}
-                      onChange={(e) => handleInputChange('display_name', e.target.value)}
-                      placeholder="Display name"
-                    />
-                  </Grid>
-
-                  <Grid size={12}>
-                    <TextField
-                      label="Description (Optional)"
-                      value={formData.description}
-                      onChange={(e) => handleInputChange('description', e.target.value)}
-                      placeholder="Product description"
-                      multiline
-                      rows={2}
-                    />
-                  </Grid>
-
-                  <Grid size={12}>
-                    <TextField
-                      label="Product Type (Optional)"
-                      value={formData.product_type}
-                      onChange={(e) => handleInputChange('product_type', e.target.value)}
-                      placeholder="e.g., Home Decor, Wedding Gifts"
-                    />
-                  </Grid>
-
-                  <Grid size={12}>
-                    <TextField
-                      label="Tags (Optional)"
-                      value={formData.tags}
-                      onChange={(e) => handleInputChange('tags', e.target.value)}
-                      placeholder="Comma-separated tags"
-                      helperText="Separate multiple tags with commas"
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      label="Default Sale Price"
-                      type="number"
-                      value={formData.default_sale_price}
-                      onChange={(e) => handleInputChange('default_sale_price', e.target.value)}
-                      inputProps={{ step: '0.01', min: 0 }}
-                      InputProps={{
-                        startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                      }}
-                      required
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      label="MRP (Optional)"
-                      type="number"
-                      value={formData.mrp}
-                      onChange={(e) => handleInputChange('mrp', e.target.value)}
-                      inputProps={{ step: '0.01', min: 0 }}
-                      InputProps={{
-                        startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid size={12}>
-                    <TextField
-                      label="Default Purchase Price"
-                      type="number"
-                      value={formData.default_purchase_price}
-                      onChange={(e) => handleInputChange('default_purchase_price', e.target.value)}
-                      inputProps={{ step: '0.01', min: 0 }}
-                      InputProps={{
-                        startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                      }}
-                      required
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <TextField
-                      label="Width (cm)"
-                      type="number"
-                      value={formData.dimension_width}
-                      onChange={(e) => handleInputChange('dimension_width', e.target.value)}
-                      inputProps={{ step: '0.01', min: 0 }}
-                      placeholder="Width"
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <TextField
-                      label="Height (cm)"
-                      type="number"
-                      value={formData.dimension_height}
-                      onChange={(e) => handleInputChange('dimension_height', e.target.value)}
-                      inputProps={{ step: '0.01', min: 0 }}
-                      placeholder="Height"
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <TextField
-                      label="Length (cm)"
-                      type="number"
-                      value={formData.dimension_length}
-                      onChange={(e) => handleInputChange('dimension_length', e.target.value)}
-                      inputProps={{ step: '0.01', min: 0 }}
-                      placeholder="Length"
-                    />
-                  </Grid>
-
-                  {/* Container Section */}
-                  <Grid size={12}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                      Container & Quantity (Optional)
-                    </Typography>
-                  </Grid>
-
-                  <Grid size={12}>
-                    <Autocomplete
-                      freeSolo
-                      options={existingContainers.map(c => c.name)}
-                      value={newContainerName}
-                      onChange={(_, value) => setNewContainerName(value || '')}
-                      onInputChange={(_, value) => setNewContainerName(value)}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="Container Name"
-                          placeholder="Select or type new container name"
-                        />
-                      )}
-                      size="small"
-                    />
-                  </Grid>
-
-                  <Grid size={12}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>Container Type</InputLabel>
-                      <Select
-                        value={newContainerType}
-                        onChange={(e) => setNewContainerType(e.target.value)}
-                        label="Container Type"
+                  {error && (
+                    <Alert variant="destructive" className="mb-4 pr-10">
+                      <AlertDescription>{error}</AlertDescription>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label="Dismiss error"
+                        className="absolute top-2 right-2"
+                        onClick={() => setError(null)}
                       >
-                        {Object.entries(CONTAINER_TYPES).map(([key, value]) => (
-                          <MenuItem key={key} value={value}>
-                            {key.charAt(0) + key.slice(1).toLowerCase()}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
+                        <X />
+                      </Button>
+                    </Alert>
+                  )}
 
-                  <Grid size={12}>
-                    <Button
-                      variant="outlined"
-                      onClick={handleAddContainerQuantity}
-                      fullWidth
-                      size="small"
-                    >
-                      Add Container
-                    </Button>
-                  </Grid>
+                  <div className="grid grid-cols-12 gap-4">
+                    <div className="col-span-12 grid gap-2">
+                      <Label htmlFor="bulk-name">Product Name *</Label>
+                      <Input
+                        id="bulk-name"
+                        value={formData.name}
+                        onChange={(e) => handleInputChange('name', e.target.value)}
+                        placeholder="Enter product name"
+                        autoFocus
+                      />
+                    </div>
 
-                  {/* Display Selected Containers */}
-                  {currentContainers.length > 0 && (
-                    <>
-                      <Grid size={12}>
-                        <Typography variant="body2" sx={{ fontWeight: 500, mb: 1 }}>
-                          Selected Containers
-                        </Typography>
-                      </Grid>
-                      {currentContainers.map((container, index) => (
-                        <Grid size={12} key={index}>
-                          <Box sx={{
-                            display: 'flex',
-                            gap: 1,
-                            p: 1,
-                            bgcolor: 'action.hover',
-                            borderRadius: 1,
-                            alignItems: 'center',
-                          }}>
-                            <Box sx={{ flex: 1 }}>
-                              <Typography variant="body2">
-                                {container.container_name} ({container.container_type})
-                              </Typography>
-                            </Box>
-                            <TextField
-                              type="number"
-                              size="small"
-                              label="Qty"
-                              value={container.quantity}
-                              onChange={(e) => handleUpdateContainerQuantity(index, e.target.value)}
-                              inputProps={{ min: 0, step: 1 }}
-                              sx={{ width: 80 }}
-                            />
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => handleRemoveContainerQuantity(index)}
+                    <div className="col-span-12 grid gap-2 sm:col-span-6">
+                      <Label htmlFor="bulk-size">Size *</Label>
+                      <Input
+                        id="bulk-size"
+                        value={formData.size}
+                        onChange={(e) => handleInputChange('size', e.target.value)}
+                        placeholder="e.g., 25kg, 1L, 500g"
+                      />
+                    </div>
+
+                    <div className="col-span-12 grid gap-2 sm:col-span-6">
+                      <Label htmlFor="bulk-packing">Packing *</Label>
+                      <Input
+                        id="bulk-packing"
+                        value={formData.packing}
+                        onChange={(e) => handleInputChange('packing', e.target.value)}
+                        placeholder="e.g., Bag, Box, Bottle"
+                      />
+                    </div>
+
+                    <div className="col-span-12 grid gap-2">
+                      <Label htmlFor="bulk-company-sku">Company SKU (Optional)</Label>
+                      <Input
+                        id="bulk-company-sku"
+                        value={formData.company_sku}
+                        onChange={(e) => handleInputChange('company_sku', e.target.value)}
+                        placeholder="e.g., SKU-001, PROD-ABC"
+                      />
+                    </div>
+
+                    <div className="col-span-12 grid gap-2">
+                      <Label htmlFor="bulk-display-name">Display Name</Label>
+                      <Input
+                        id="bulk-display-name"
+                        value={formData.display_name}
+                        onChange={(e) => handleInputChange('display_name', e.target.value)}
+                        placeholder="Display name"
+                      />
+                    </div>
+
+                    <div className="col-span-12 grid gap-2">
+                      <Label htmlFor="bulk-description">Description (Optional)</Label>
+                      <Textarea
+                        id="bulk-description"
+                        value={formData.description}
+                        onChange={(e) => handleInputChange('description', e.target.value)}
+                        placeholder="Product description"
+                        rows={2}
+                      />
+                    </div>
+
+                    <div className="col-span-12 grid gap-2">
+                      <Label htmlFor="bulk-product-type">Product Type (Optional)</Label>
+                      <Input
+                        id="bulk-product-type"
+                        value={formData.product_type}
+                        onChange={(e) => handleInputChange('product_type', e.target.value)}
+                        placeholder="e.g., Home Decor, Wedding Gifts"
+                      />
+                    </div>
+
+                    <div className="col-span-12 grid gap-2">
+                      <Label htmlFor="bulk-tags">Tags (Optional)</Label>
+                      <Input
+                        id="bulk-tags"
+                        value={formData.tags}
+                        onChange={(e) => handleInputChange('tags', e.target.value)}
+                        placeholder="Comma-separated tags"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Separate multiple tags with commas
+                      </p>
+                    </div>
+
+                    <div className="col-span-12 grid gap-2 sm:col-span-6">
+                      <Label htmlFor="bulk-sale-price">Default Sale Price *</Label>
+                      <div className="relative">
+                        <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
+                          ₹
+                        </span>
+                        <Input
+                          id="bulk-sale-price"
+                          type="number"
+                          step="0.01"
+                          min={0}
+                          className="pl-7"
+                          value={formData.default_sale_price}
+                          onChange={(e) =>
+                            handleInputChange('default_sale_price', e.target.value)
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="col-span-12 grid gap-2 sm:col-span-6">
+                      <Label htmlFor="bulk-mrp">MRP (Optional)</Label>
+                      <div className="relative">
+                        <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
+                          ₹
+                        </span>
+                        <Input
+                          id="bulk-mrp"
+                          type="number"
+                          step="0.01"
+                          min={0}
+                          className="pl-7"
+                          value={formData.mrp}
+                          onChange={(e) => handleInputChange('mrp', e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="col-span-12 grid gap-2">
+                      <Label htmlFor="bulk-purchase-price">Default Purchase Price *</Label>
+                      <div className="relative">
+                        <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
+                          ₹
+                        </span>
+                        <Input
+                          id="bulk-purchase-price"
+                          type="number"
+                          step="0.01"
+                          min={0}
+                          className="pl-7"
+                          value={formData.default_purchase_price}
+                          onChange={(e) =>
+                            handleInputChange('default_purchase_price', e.target.value)
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="col-span-12 grid gap-2 sm:col-span-4">
+                      <Label htmlFor="bulk-dimension-width">Width (cm)</Label>
+                      <Input
+                        id="bulk-dimension-width"
+                        type="number"
+                        step="0.01"
+                        min={0}
+                        value={formData.dimension_width}
+                        onChange={(e) => handleInputChange('dimension_width', e.target.value)}
+                        placeholder="Width"
+                      />
+                    </div>
+
+                    <div className="col-span-12 grid gap-2 sm:col-span-4">
+                      <Label htmlFor="bulk-dimension-height">Height (cm)</Label>
+                      <Input
+                        id="bulk-dimension-height"
+                        type="number"
+                        step="0.01"
+                        min={0}
+                        value={formData.dimension_height}
+                        onChange={(e) => handleInputChange('dimension_height', e.target.value)}
+                        placeholder="Height"
+                      />
+                    </div>
+
+                    <div className="col-span-12 grid gap-2 sm:col-span-4">
+                      <Label htmlFor="bulk-dimension-length">Length (cm)</Label>
+                      <Input
+                        id="bulk-dimension-length"
+                        type="number"
+                        step="0.01"
+                        min={0}
+                        value={formData.dimension_length}
+                        onChange={(e) => handleInputChange('dimension_length', e.target.value)}
+                        placeholder="Length"
+                      />
+                    </div>
+
+                    {/* Container Section */}
+                    <div className="col-span-12">
+                      <p className="mb-2 text-sm font-semibold">
+                        Container &amp; Quantity (Optional)
+                      </p>
+                    </div>
+
+                    <div className="col-span-12 grid gap-2">
+                      <Label htmlFor="bulk-container-name">Container Name</Label>
+                      <Popover open={containerNameOpen} onOpenChange={setContainerNameOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            id="bulk-container-name"
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={containerNameOpen}
+                            size="sm"
+                            className="w-full justify-between font-normal"
+                          >
+                            <span
+                              className={cn(
+                                'truncate',
+                                !newContainerName && 'text-muted-foreground'
+                              )}
                             >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Box>
-                        </Grid>
-                      ))}
+                              {newContainerName || 'Select or type new container name'}
+                            </span>
+                            <ChevronDown className="opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="w-(--radix-popover-trigger-width) p-0"
+                          align="start"
+                        >
+                          {/* freeSolo: the typed text is itself the value, so the input writes
+                              straight through to `newContainerName`. */}
+                          <Command>
+                            <CommandInput
+                              placeholder="Select or type new container name"
+                              value={newContainerName}
+                              onValueChange={setNewContainerName}
+                            />
+                            <CommandList>
+                              <CommandEmpty>No options</CommandEmpty>
+                              <CommandGroup>
+                                {existingContainers.map((c) => (
+                                  <CommandItem
+                                    key={c.id}
+                                    value={c.name}
+                                    onSelect={() => {
+                                      setNewContainerName(c.name);
+                                      setContainerNameOpen(false);
+                                    }}
+                                  >
+                                    {c.name}
+                                    <Check
+                                      className={cn(
+                                        'ml-auto',
+                                        newContainerName === c.name ? 'opacity-100' : 'opacity-0'
+                                      )}
+                                    />
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+
+                    <div className="col-span-12 grid gap-2">
+                      <Label htmlFor="bulk-container-type">Container Type</Label>
+                      <Select value={newContainerType} onValueChange={setNewContainerType}>
+                        <SelectTrigger id="bulk-container-type" size="sm" className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(CONTAINER_TYPES).map(([key, value]) => (
+                            <SelectItem key={key} value={value}>
+                              {key.charAt(0) + key.slice(1).toLowerCase()}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="col-span-12">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={handleAddContainerQuantity}
+                      >
+                        Add Container
+                      </Button>
+                    </div>
+
+                    {/* Display Selected Containers */}
+                    {currentContainers.length > 0 && (
+                      <>
+                        <div className="col-span-12">
+                          <p className="mb-2 text-sm font-medium">Selected Containers</p>
+                        </div>
+                        {currentContainers.map((container, index) => (
+                          <div className="col-span-12" key={index}>
+                            <div className="flex items-center gap-2 rounded bg-accent p-2">
+                              <div className="flex-1">
+                                <p className="text-sm">
+                                  {container.container_name} ({container.container_type})
+                                </p>
+                              </div>
+                              <Input
+                                type="number"
+                                min={0}
+                                step={1}
+                                aria-label="Qty"
+                                placeholder="Qty"
+                                className="h-8 w-20"
+                                value={container.quantity}
+                                onChange={(e) =>
+                                  handleUpdateContainerQuantity(index, e.target.value)
+                                }
+                              />
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                className="text-destructive"
+                                aria-label="Remove container"
+                                onClick={() => handleRemoveContainerQuantity(index)}
+                              >
+                                <Trash2 />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )}
+
+                    <div className="col-span-12">
+                      <Button size="lg" className="w-full" onClick={handleAddProduct}>
+                        Add to List
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right Panel - Preview Table */}
+            <div className="col-span-12 md:col-span-6">
+              <Card>
+                <CardContent>
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-base font-semibold">Products to Create</h3>
+                    {products.length > 0 && (
+                      <Badge>
+                        {products.length} product{products.length !== 1 ? 's' : ''}
+                      </Badge>
+                    )}
+                  </div>
+
+                  {products.length === 0 ? (
+                    <Alert>
+                      <AlertDescription>
+                        No products added yet. Fill in the form on the left and click "Add to
+                        List" to add products.
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <>
+                      <ResponsiveTable
+                        columns={[
+                          {
+                            id: 'name',
+                            label: 'Name',
+                            render: (row: any) => <p className="text-sm">{row.name}</p>
+                          },
+                          {
+                            id: 'size',
+                            label: 'Size',
+                            render: (row: any) => <p className="text-sm">{row.size}</p>
+                          },
+                          {
+                            id: 'packing',
+                            label: 'Packing',
+                            render: (row: any) => <p className="text-sm">{row.packing}</p>
+                          },
+                          {
+                            id: 'containers',
+                            label: 'Containers',
+                            hideOnMobile: true,
+                            render: (row: any) => row.containers ? (
+                              <div className="flex flex-col gap-1">
+                                {row.containers.map((c: any, idx: number) => (
+                                  <span key={idx} className="text-xs">
+                                    {c.container_name}: {c.quantity}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm">-</p>
+                            )
+                          },
+                          {
+                            id: 'sale_price',
+                            label: 'Sale Price',
+                            hideOnMobile: true,
+                            render: (row: any) => <p className="text-sm">{row.sale_price}</p>
+                          },
+                          {
+                            id: 'purchase_price',
+                            label: 'Purchase Price',
+                            hideOnMobile: true,
+                            render: (row: any) => <p className="text-sm">{row.purchase_price}</p>
+                          },
+                          {
+                            id: 'actions',
+                            label: 'Actions',
+                            align: 'center' as const,
+                            render: (row: any) => row.actions
+                          },
+                        ]}
+                        data={products.map(product => ({
+                          id: product.id,
+                          name: product.name,
+                          size: product.size,
+                          packing: product.packing,
+                          containers: product.containers,
+                          sale_price: formatCurrency(product.default_sale_price),
+                          purchase_price: formatCurrency(product.default_purchase_price),
+                          actions: (
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              className="text-destructive"
+                              onClick={() => handleRemoveProduct(product.id)}
+                              aria-label="delete"
+                            >
+                              <Trash2 />
+                            </Button>
+                          ),
+                        }))}
+                        keyExtractor={(row) => row.id}
+                      />
+
+                      <div className="mt-4 flex justify-end">
+                        <Button variant="outline" size="sm" className="border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={handleClearAll}>
+                          Clear All
+                        </Button>
+                      </div>
                     </>
                   )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
 
-                  <Grid size={12}>
-                    <Button
-                      variant="contained"
-                      onClick={handleAddProduct}
-                      fullWidth
-                      size="large"
-                    >
-                      Add to List
-                    </Button>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Right Panel - Preview Table */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Card variant="outlined">
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6">
-                    Products to Create
-                  </Typography>
-                  {products.length > 0 && (
-                    <Chip label={`${products.length} product${products.length !== 1 ? 's' : ''}`} color="primary" />
-                  )}
-                </Box>
-
-                {products.length === 0 ? (
-                  <Alert severity="info">
-                    No products added yet. Fill in the form on the left and click "Add to List" to add products.
-                  </Alert>
-                ) : (
-                  <>
-                    <ResponsiveTable
-                      columns={[
-                        {
-                          id: 'name',
-                          label: 'Name',
-                          render: (row: any) => <Typography variant="body2">{row.name}</Typography>
-                        },
-                        {
-                          id: 'size',
-                          label: 'Size',
-                          render: (row: any) => <Typography variant="body2">{row.size}</Typography>
-                        },
-                        {
-                          id: 'packing',
-                          label: 'Packing',
-                          render: (row: any) => <Typography variant="body2">{row.packing}</Typography>
-                        },
-                        {
-                          id: 'containers',
-                          label: 'Containers',
-                          hideOnMobile: true,
-                          render: (row: any) => row.containers ? (
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                              {row.containers.map((c: any, idx: number) => (
-                                <Typography key={idx} variant="caption">
-                                  {c.container_name}: {c.quantity}
-                                </Typography>
-                              ))}
-                            </Box>
-                          ) : (
-                            <Typography variant="body2">-</Typography>
-                          )
-                        },
-                        {
-                          id: 'sale_price',
-                          label: 'Sale Price',
-                          hideOnMobile: true,
-                          render: (row: any) => <Typography variant="body2">{row.sale_price}</Typography>
-                        },
-                        {
-                          id: 'purchase_price',
-                          label: 'Purchase Price',
-                          hideOnMobile: true,
-                          render: (row: any) => <Typography variant="body2">{row.purchase_price}</Typography>
-                        },
-                        {
-                          id: 'actions',
-                          label: 'Actions',
-                          align: 'center' as const,
-                          render: (row: any) => row.actions
-                        },
-                      ]}
-                      data={products.map(product => ({
-                        id: product.id,
-                        name: product.name,
-                        size: product.size,
-                        packing: product.packing,
-                        containers: product.containers,
-                        sale_price: formatCurrency(product.default_sale_price),
-                        purchase_price: formatCurrency(product.default_purchase_price),
-                        actions: (
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleRemoveProduct(product.id)}
-                            aria-label="delete"
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        ),
-                      }))}
-                      keyExtractor={(row) => row.id}
-                    />
-
-                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        onClick={handleClearAll}
-                        size="small"
-                      >
-                        Clear All
-                      </Button>
-                    </Box>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={createBulkMutation.isPending}
+            className="max-sm:w-full"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={products.length === 0 || createBulkMutation.isPending}
+            className="max-sm:w-full"
+          >
+            {createBulkMutation.isPending ? 'Creating...' : `Create ${products.length} Product${products.length !== 1 ? 's' : ''}`}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: 2, gap: 1 }}>
-        <Button onClick={onClose} disabled={createBulkMutation.isPending} fullWidth={isMobile}>
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={products.length === 0 || createBulkMutation.isPending}
-          fullWidth={isMobile}
-        >
-          {createBulkMutation.isPending ? 'Creating...' : `Create ${products.length} Product${products.length !== 1 ? 's' : ''}`}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 };

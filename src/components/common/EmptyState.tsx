@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, Typography, Button } from '@mui/material';
-import { Inbox as InboxIcon } from '@mui/icons-material';
+import { Inbox } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface EmptyStateProps {
   title: string;
@@ -13,37 +13,23 @@ interface EmptyStateProps {
 export const EmptyState: React.FC<EmptyStateProps> = ({
   title,
   message,
-  icon = <InboxIcon sx={{ fontSize: 64, color: 'text.disabled' }} />,
+  icon = <Inbox className="size-14 text-muted-foreground/40" strokeWidth={1.5} />,
   actionLabel,
   onAction,
 }) => {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        py: 8,
-        px: 4,
-        textAlign: 'center',
-      }}
-    >
-      <Box sx={{ mb: 2 }}>{icon}</Box>
-      <Typography variant="h6" gutterBottom>
-        {title}
-      </Typography>
+    <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
+      <div className="mb-4">{icon}</div>
+      <h3 className="text-base font-semibold">{title}</h3>
       {message && (
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          {message}
-        </Typography>
+        <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">{message}</p>
       )}
       {actionLabel && onAction && (
-        <Button variant="contained" onClick={onAction}>
+        <Button className="mt-6" onClick={onAction}>
           {actionLabel}
         </Button>
       )}
-    </Box>
+    </div>
   );
 };
 

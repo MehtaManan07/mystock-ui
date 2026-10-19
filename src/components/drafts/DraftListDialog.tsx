@@ -1,18 +1,13 @@
 import React from 'react';
+import { Trash2 } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  IconButton,
-  Typography,
-  Box,
-} from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { formatDistanceToNow } from 'date-fns';
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import type { Draft } from '../../api/drafts.api';
 
 interface DraftListDialogProps {
@@ -40,51 +35,48 @@ export const DraftListDialog: React.FC<DraftListDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        Load Draft
-      </DialogTitle>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
+      <DialogContent className="sm:max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>Load Draft</DialogTitle>
+        </DialogHeader>
         {drafts.length === 0 ? (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography color="text.secondary">
-              No saved drafts
-            </Typography>
-          </Box>
+          <div className="p-6 text-center">
+            <p className="text-sm text-muted-foreground">No saved drafts</p>
+          </div>
         ) : (
-          <List>
+          <ul className="flex flex-col gap-1">
             {drafts.map((draft) => (
-              <ListItem
-                key={draft.id}
-                secondaryAction={
-                  <IconButton
-                    edge="end"
-                    onClick={(e) => handleDeleteDraft(e, draft.id)}
-                    aria-label="delete draft"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                }
-                disablePadding
-              >
-                <ListItemButton onClick={() => handleLoadDraft(draft)}>
-                  <ListItemText
-                    primary={draft.name}
-                    secondary={
-                      <>
-                        {draft.data.items.length}{' '}
-                        {draft.data.items.length === 1 ? 'item' : 'items'} •
-                        Last edited{' '}
-                        {formatDistanceToNow(new Date(draft.updated_at), {
-                          addSuffix: true,
-                        })}
-                      </>
-                    }
-                  />
-                </ListItemButton>
-              </ListItem>
+              <li key={draft.id} className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="min-w-0 flex-1 rounded-md px-3 py-2 text-left transition-colors hover:bg-accent"
+                  onClick={() => handleLoadDraft(draft)}
+                >
+                  <span className="block truncate text-sm font-medium">
+                    {draft.name}
+                  </span>
+                  <span className="block truncate text-sm text-muted-foreground">
+                    {draft.data.items.length}{' '}
+                    {draft.data.items.length === 1 ? 'item' : 'items'} •
+                    Last edited{' '}
+                    {formatDistanceToNow(new Date(draft.updated_at), {
+                      addSuffix: true,
+                    })}
+                  </span>
+                </button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="delete draft"
+                  onClick={(e) => handleDeleteDraft(e, draft.id)}
+                >
+                  <Trash2 />
+                </Button>
+              </li>
             ))}
-          </List>
+          </ul>
         )}
       </DialogContent>
     </Dialog>

@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { Box, Button, Typography, Card, CardContent } from '@mui/material';
-import { Refresh as RefreshIcon, Home as HomeIcon } from '@mui/icons-material';
+import { RefreshCw, Home } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface Props {
   children: ReactNode;
@@ -45,72 +46,38 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <Box
-          sx={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            bgcolor: 'background.default',
-            p: 3,
-          }}
-        >
-          <Card sx={{ maxWidth: 500, width: '100%' }}>
-            <CardContent sx={{ textAlign: 'center', py: 4 }}>
-              <Typography
-                variant="h1"
-                sx={{
-                  fontSize: '4rem',
-                  mb: 2,
-                }}
-              >
-                😵
-              </Typography>
-              <Typography variant="h5" gutterBottom fontWeight={600}>
-                Something went wrong
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                An unexpected error occurred. Please try refreshing the page or go back to the dashboard.
-              </Typography>
-              
+        <div className="flex min-h-screen items-center justify-center bg-background p-6">
+          <Card className="w-full max-w-lg">
+            <CardContent className="py-8 text-center">
+              <p className="mb-4 text-6xl">😵</p>
+              <h2 className="text-xl font-semibold">Something went wrong</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                An unexpected error occurred. Please try refreshing the page or go
+                back to the dashboard.
+              </p>
+
               {import.meta.env.DEV && this.state.error && (
-                <Box
-                  sx={{
-                    mb: 3,
-                    p: 2,
-                    bgcolor: 'error.light',
-                    borderRadius: 1,
-                    textAlign: 'left',
-                    overflow: 'auto',
-                    maxHeight: 200,
-                  }}
-                >
-                  <Typography variant="caption" component="pre" sx={{ fontFamily: 'monospace', color: 'error.contrastText' }}>
+                <div className="my-6 max-h-50 overflow-auto rounded-md bg-destructive/10 p-4 text-left">
+                  <pre className="font-mono text-xs break-words whitespace-pre-wrap text-destructive">
                     {this.state.error.message}
                     {this.state.errorInfo?.componentStack}
-                  </Typography>
-                </Box>
+                  </pre>
+                </div>
               )}
-              
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-                <Button
-                  variant="contained"
-                  startIcon={<RefreshIcon />}
-                  onClick={this.handleReset}
-                >
+
+              <div className="mt-6 flex justify-center gap-3">
+                <Button onClick={this.handleReset}>
+                  <RefreshCw />
                   Refresh Page
                 </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<HomeIcon />}
-                  onClick={this.handleGoHome}
-                >
+                <Button variant="outline" onClick={this.handleGoHome}>
+                  <Home />
                   Go to Dashboard
                 </Button>
-              </Box>
+              </div>
             </CardContent>
           </Card>
-        </Box>
+        </div>
       );
     }
 

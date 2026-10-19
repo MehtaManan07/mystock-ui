@@ -1,10 +1,20 @@
 import { useState, type FormEvent } from 'react';
-import {
-  Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle,
-  TextField, Typography,
-} from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { CircleAlert, Info } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from 'cn';
 import { pdfInvoicesApi, pdfInvoiceError } from '../../api/pdfInvoices.api';
 import { QUERY_KEYS } from '../../constants';
 import { useNotificationStore } from '../../stores/notificationStore';
@@ -87,55 +97,106 @@ export default function UploadPdfInvoiceDialog({ retryInvoice, onClose }: Props)
   ] as const;
 
   return (
-    <Dialog open onClose={upload.isPending ? undefined : onClose} fullWidth maxWidth="md">
-      <Box component="form" onSubmit={submit}>
-        <DialogTitle>{retryInvoice ? 'Retry PDF upload' : 'Register an existing PDF bill'}</DialogTitle>
-        <DialogContent>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            {retryInvoice
-              ? 'Select the same original PDF. The reserved invoice details cannot be changed during a retry.'
-              : 'Copy the issued PDF details exactly. This archives a bill; it does not create a sale, payment or stock movement. Existing transaction invoices already belong in Transactions.'}
+    <Dialog
+      open
+      onOpenChange={(next) => { if (!next && !upload.isPending) onClose(); }}
+    >
+      <DialogContent
+        className="max-h-[90vh] overflow-y-auto sm:max-w-4xl"
+        showCloseButton={!upload.isPending}
+      >
+        <form onSubmit={submit}>
+          <DialogHeader>
+            <DialogTitle>{retryInvoice ? 'Retry PDF upload' : 'Register an existing PDF bill'}</DialogTitle>
+          </DialogHeader>
+          <Alert className="mt-4 mb-4">
+            <Info />
+            <AlertDescription>
+              {retryInvoice
+                ? 'Select the same original PDF. The reserved invoice details cannot be changed during a retry.'
+                : 'Copy the issued PDF details exactly. This archives a bill; it does not create a sale, payment or stock movement. Existing transaction invoices already belong in Transactions.'}
+            </AlertDescription>
           </Alert>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, pt: 1 }}>
-            <TextField label="Invoice number" required value={metadata.invoice_number} disabled={locked}
-              onChange={(e) => update('invoice_number', e.target.value)} inputProps={{ maxLength: 50 }} />
-            <TextField label="Invoice date" required type="date" value={metadata.invoice_date} disabled={locked}
-              onChange={(e) => update('invoice_date', e.target.value)} InputLabelProps={{ shrink: true }} />
-            <TextField label="Customer name" required value={metadata.customer_name} disabled={locked}
-              onChange={(e) => update('customer_name', e.target.value)} inputProps={{ maxLength: 255 }} />
-            <TextField label="Customer GSTIN (if applicable)" value={metadata.customer_gstin ?? ''} disabled={locked}
-              onChange={(e) => update('customer_gstin', e.target.value)} inputProps={{ maxLength: 15 }} />
-            <TextField label="Customer address" value={metadata.customer_address ?? ''} disabled={locked}
-              onChange={(e) => update('customer_address', e.target.value)} inputProps={{ maxLength: 500 }} />
-            <TextField label="Customer phone" value={metadata.customer_phone ?? ''} disabled={locked}
-              onChange={(e) => update('customer_phone', e.target.value)} inputProps={{ maxLength: 50 }} />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid gap-2">
+              <Label htmlFor="invoice_number">Invoice number</Label>
+              <Input id="invoice_number" required value={metadata.invoice_number} disabled={locked}
+                onChange={(e) => update('invoice_number', e.target.value)} maxLength={50} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="invoice_date">Invoice date</Label>
+              <Input id="invoice_date" required type="date" value={metadata.invoice_date} disabled={locked}
+                onChange={(e) => update('invoice_date', e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="customer_name">Customer name</Label>
+              <Input id="customer_name" required value={metadata.customer_name} disabled={locked}
+                onChange={(e) => update('customer_name', e.target.value)} maxLength={255} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="customer_gstin">Customer GSTIN (if applicable)</Label>
+              <Input id="customer_gstin" value={metadata.customer_gstin ?? ''} disabled={locked}
+                onChange={(e) => update('customer_gstin', e.target.value)} maxLength={15} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="customer_address">Customer address</Label>
+              <Input id="customer_address" value={metadata.customer_address ?? ''} disabled={locked}
+                onChange={(e) => update('customer_address', e.target.value)} maxLength={500} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="customer_phone">Customer phone</Label>
+              <Input id="customer_phone" value={metadata.customer_phone ?? ''} disabled={locked}
+                onChange={(e) => update('customer_phone', e.target.value)} maxLength={50} />
+            </div>
             {moneyFields.map(([key, label]) => (
-              <TextField key={key} label={label} type="number" required value={metadata[key]} disabled={locked}
-                onChange={(e) => update(key, e.target.value)} inputProps={{ min: 0, step: '0.01' }} />
+              <div key={key} className="grid gap-2">
+                <Label htmlFor={key}>{label}</Label>
+                <Input id={key} type="number" required value={metadata[key]} disabled={locked}
+                  onChange={(e) => update(key, e.target.value)} min={0} step="0.01" />
+              </div>
             ))}
-            <TextField label="Round-off (calculated)" value={roundOff} slotProps={{ input: { readOnly: true } }} />
-          </Box>
-          <TextField label="Notes / source" multiline fullWidth sx={{ mt: 2 }} value={metadata.notes ?? ''}
-            disabled={locked} onChange={(e) => update('notes', e.target.value)} inputProps={{ maxLength: 2000 }} />
-          <Button component="label" variant="outlined" sx={{ mt: 2 }} disabled={upload.isPending}>
-            Choose PDF
-            <input hidden type="file" accept=".pdf,application/pdf"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+            <div className="grid gap-2">
+              <Label htmlFor="round_off">Round-off (calculated)</Label>
+              <Input id="round_off" value={roundOff} readOnly />
+            </div>
+          </div>
+          <div className="mt-4 grid gap-2">
+            <Label htmlFor="notes">Notes / source</Label>
+            <Textarea id="notes" value={metadata.notes ?? ''} disabled={locked}
+              onChange={(e) => update('notes', e.target.value)} maxLength={2000} />
+          </div>
+          <Button
+            asChild
+            variant="outline"
+            className={cn(
+              'mt-4 cursor-pointer',
+              upload.isPending && 'pointer-events-none opacity-50'
+            )}
+          >
+            {/* File input is wrapped in a label so the styled button opens the picker. */}
+            <label>
+              Choose PDF
+              <input hidden type="file" accept=".pdf,application/pdf" disabled={upload.isPending}
+                onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+            </label>
           </Button>
-          <Typography variant="body2" sx={{ mt: 1 }}>{file?.name ?? 'No file selected (maximum 10 MB)'}</Typography>
+          <p className="mt-2 text-sm">{file?.name ?? 'No file selected (maximum 10 MB)'}</p>
           {(localError || upload.isError) && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {localError || pdfInvoiceError(upload.error)}
+            <Alert variant="destructive" className="mt-4">
+              <CircleAlert />
+              <AlertDescription>
+                {localError || pdfInvoiceError(upload.error)}
+              </AlertDescription>
             </Alert>
           )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} disabled={upload.isPending}>Cancel</Button>
-          <Button variant="contained" type="submit" disabled={upload.isPending}>
-            {upload.isPending ? 'Saving...' : 'Save PDF bill'}
-          </Button>
-        </DialogActions>
-      </Box>
+          <DialogFooter className="mt-6">
+            <Button type="button" variant="outline" onClick={onClose} disabled={upload.isPending}>Cancel</Button>
+            <Button type="submit" disabled={upload.isPending}>
+              {upload.isPending ? 'Saving...' : 'Save PDF bill'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
     </Dialog>
   );
 }

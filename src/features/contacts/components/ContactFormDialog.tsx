@@ -1,19 +1,22 @@
 import React, { useEffect } from 'react';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
   Select,
-  MenuItem,
-  FormHelperText,
-  Grid,
-  InputAdornment,
-} from '@mui/material';
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -120,100 +123,137 @@ export const ContactFormDialog: React.FC<ContactFormDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <form onSubmit={handleSubmit(handleFormSubmit)}>
-        <DialogTitle>{isEditing ? 'Edit Contact' : 'Add New Contact'}</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid size={12}>
-              <TextField
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="sm:max-w-xl">
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="grid gap-4">
+          <DialogHeader>
+            <DialogTitle>{isEditing ? 'Edit Contact' : 'Add New Contact'}</DialogTitle>
+          </DialogHeader>
+
+          <div className="grid grid-cols-12 gap-4 pt-1">
+            <div className="col-span-12 grid gap-2">
+              <Label htmlFor="contact-name">Name</Label>
+              <Input
+                id="contact-name"
                 {...register('name')}
-                label="Name"
                 placeholder="Contact or business name"
-                error={!!errors.name}
-                helperText={errors.name?.message}
+                aria-invalid={!!errors.name}
                 disabled={isLoading}
                 autoFocus
               />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
+              {errors.name && (
+                <p className="text-sm text-destructive">{errors.name.message}</p>
+              )}
+            </div>
+
+            <div className="col-span-12 grid gap-2 sm:col-span-6">
+              <Label htmlFor="contact-phone">Phone</Label>
+              <Input
+                id="contact-phone"
                 {...register('phone')}
-                label="Phone"
                 placeholder="e.g., 9876543210"
-                error={!!errors.phone}
-                helperText={errors.phone?.message}
+                aria-invalid={!!errors.phone}
                 disabled={isLoading}
               />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
+              {errors.phone && (
+                <p className="text-sm text-destructive">{errors.phone.message}</p>
+              )}
+            </div>
+
+            <div className="col-span-12 grid gap-2 sm:col-span-6">
+              <Label htmlFor="contact-type">Contact Type</Label>
               <Controller
                 name="type"
                 control={control}
                 render={({ field }) => (
-                  <FormControl fullWidth error={!!errors.type}>
-                    <InputLabel>Contact Type</InputLabel>
-                    <Select {...field} label="Contact Type" disabled={isLoading}>
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger
+                      id="contact-type"
+                      className="w-full"
+                      aria-invalid={!!errors.type}
+                    >
+                      <SelectValue placeholder="Contact Type" />
+                    </SelectTrigger>
+                    <SelectContent>
                       {contactTypeOptions.map((option) => (
-                        <MenuItem key={option.value} value={option.value}>
+                        <SelectItem key={option.value} value={option.value}>
                           {option.label}
-                        </MenuItem>
+                        </SelectItem>
                       ))}
-                    </Select>
-                    {errors.type && (
-                      <FormHelperText>{errors.type.message}</FormHelperText>
-                    )}
-                  </FormControl>
+                    </SelectContent>
+                  </Select>
                 )}
               />
-            </Grid>
-            <Grid size={12}>
-              <TextField
+              {errors.type && (
+                <p className="text-sm text-destructive">{errors.type.message}</p>
+              )}
+            </div>
+
+            <div className="col-span-12 grid gap-2">
+              <Label htmlFor="contact-address">Address (Optional)</Label>
+              <Textarea
+                id="contact-address"
                 {...register('address')}
-                label="Address (Optional)"
                 placeholder="Full address"
-                multiline
                 rows={2}
-                error={!!errors.address}
-                helperText={errors.address?.message}
+                aria-invalid={!!errors.address}
                 disabled={isLoading}
               />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
+              {errors.address && (
+                <p className="text-sm text-destructive">{errors.address.message}</p>
+              )}
+            </div>
+
+            <div className="col-span-12 grid gap-2 sm:col-span-6">
+              <Label htmlFor="contact-gstin">GSTIN (Optional)</Label>
+              <Input
+                id="contact-gstin"
                 {...register('gstin')}
-                label="GSTIN (Optional)"
                 placeholder="e.g., 22AAAAA0000A1Z5"
-                error={!!errors.gstin}
-                helperText={errors.gstin?.message}
+                aria-invalid={!!errors.gstin}
                 disabled={isLoading}
               />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                {...register('balance')}
-                label="Opening Balance"
-                type="number"
-                inputProps={{ step: '0.01' }}
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                }}
-                helperText="Positive = they owe you, Negative = you owe them"
-                error={!!errors.balance}
-                disabled={isLoading}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={onClose} disabled={isLoading}>
-            Cancel
-          </Button>
-          <Button type="submit" variant="contained" disabled={isLoading}>
-            {isLoading ? 'Saving...' : isEditing ? 'Update' : 'Create'}
-          </Button>
-        </DialogActions>
-      </form>
+              {errors.gstin && (
+                <p className="text-sm text-destructive">{errors.gstin.message}</p>
+              )}
+            </div>
+
+            <div className="col-span-12 grid gap-2 sm:col-span-6">
+              <Label htmlFor="contact-balance">Opening Balance</Label>
+              <div className="relative">
+                <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
+                  ₹
+                </span>
+                <Input
+                  id="contact-balance"
+                  {...register('balance')}
+                  type="number"
+                  step="0.01"
+                  className="pl-7"
+                  aria-invalid={!!errors.balance}
+                  disabled={isLoading}
+                />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Positive = they owe you, Negative = you owe them
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Saving...' : isEditing ? 'Update' : 'Create'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
     </Dialog>
   );
 };

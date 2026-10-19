@@ -1,20 +1,17 @@
 import React from 'react';
+import { CircleCheck, CircleAlert, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  Chip,
-  Alert,
-  CircularProgress,
-} from '@mui/material';
-import { CheckCircle as FoundIcon, Error as NotFoundIcon } from '@mui/icons-material';
+} from '@/components/ui/table';
+import { cn } from 'cn';
 import { ContainerSelector } from './ContainerSelector';
 import type { DeodapBillRow, ContainerOption } from './types';
 
@@ -28,79 +25,70 @@ export const BillItemsTable: React.FC<BillItemsTableProps> = ({ rows, onContaine
   const notFoundRows = rows.filter((r) => r.lookupStatus === 'not_found');
 
   return (
-    <Card sx={{ mb: 3 }}>
+    <Card className="mb-6">
       <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-          <Typography variant="h6">Step 2 — Assign Containers</Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Chip label={`${foundCount} found`} color="success" size="small" />
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="text-base font-semibold">Step 2 — Assign Containers</h3>
+          <div className="flex gap-2">
+            <Badge className="bg-success text-success-foreground">{foundCount} found</Badge>
             {notFoundRows.length > 0 && (
-              <Chip label={`${notFoundRows.length} not found`} color="error" size="small" />
+              <Badge variant="destructive">{notFoundRows.length} not found</Badge>
             )}
-          </Box>
-        </Box>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          </div>
+        </div>
+        <p className="mb-4 text-sm text-muted-foreground">
           For each product found, select the container from which stock will be used. If a product
           has no stock, use <strong>Assign Container</strong> to add it first.
-        </Typography>
+        </p>
 
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell>Sr No.</TableCell>
-                <TableCell>SKU</TableCell>
-                <TableCell>Product</TableCell>
-                <TableCell align="right">Qty</TableCell>
-                <TableCell>Container</TableCell>
+                <TableHead>Sr No.</TableHead>
+                <TableHead>SKU</TableHead>
+                <TableHead>Product</TableHead>
+                <TableHead className="text-right">Qty</TableHead>
+                <TableHead>Container</TableHead>
               </TableRow>
-            </TableHead>
+            </TableHeader>
             <TableBody>
               {rows.map((row, idx) => (
                 <TableRow
                   key={idx}
-                  sx={{
-                    opacity: row.lookupStatus === 'not_found' ? 0.5 : 1,
-                    bgcolor: row.lookupStatus === 'not_found' ? 'action.hover' : undefined,
-                  }}
+                  className={cn(
+                    row.lookupStatus === 'not_found' && 'bg-accent opacity-50'
+                  )}
                 >
                   <TableCell>{idx + 1}</TableCell>
 
                   <TableCell>
-                    <Typography variant="body2" fontFamily="monospace">
-                      {row.sku}
-                    </Typography>
+                    <span className="font-mono text-sm">{row.sku}</span>
                   </TableCell>
 
                   <TableCell>
                     {row.lookupStatus === 'pending' ? (
-                      <CircularProgress size={16} />
+                      <Loader2 className="size-4 animate-spin" />
                     ) : row.lookupStatus === 'found' ? (
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <FoundIcon fontSize="small" color="success" />
-                        <Box>
-                          <Typography variant="body2" fontWeight={500}>
-                            {row.product!.name}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                      <div className="flex items-center gap-1">
+                        <CircleCheck className="size-4 shrink-0 text-success" />
+                        <div>
+                          <p className="text-sm font-medium">{row.product!.name}</p>
+                          <span className="text-xs text-muted-foreground">
                             {row.product!.size} • {row.product!.packing}
-                          </Typography>
-                        </Box>
-                      </Box>
+                          </span>
+                        </div>
+                      </div>
                     ) : (
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <NotFoundIcon fontSize="small" color="error" />
-                        <Typography variant="body2" color="error.main">
-                          SKU not found
-                        </Typography>
-                      </Box>
+                      <div className="flex items-center gap-1">
+                        <CircleAlert className="size-4 shrink-0 text-destructive" />
+                        <p className="text-sm text-destructive">SKU not found</p>
+                      </div>
                     )}
                   </TableCell>
 
-                  <TableCell align="right">
-                    <Typography variant="body2" fontWeight={500}>
-                      {row.quantity} items
-                    </Typography>
+                  <TableCell className="text-right">
+                    <span className="text-sm font-medium">{row.quantity} items</span>
                   </TableCell>
 
                   <TableCell>
@@ -113,19 +101,21 @@ export const BillItemsTable: React.FC<BillItemsTableProps> = ({ rows, onContaine
                         onChange={(c) => onContainerChange(idx, c)}
                       />
                     ) : (
-                      <Typography variant="caption" color="text.disabled">—</Typography>
+                      <span className="text-xs text-muted-foreground/60">—</span>
                     )}
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </TableContainer>
+        </div>
 
         {notFoundRows.length > 0 && (
-          <Alert severity="warning" sx={{ mt: 2 }}>
-            {notFoundRows.length} SKU(s) not matched and will be skipped:{' '}
-            {notFoundRows.map((r) => r.sku).join(', ')}
+          <Alert className="mt-4 border-warning/50 text-warning">
+            <AlertDescription className="text-warning">
+              {notFoundRows.length} SKU(s) not matched and will be skipped:{' '}
+              {notFoundRows.map((r) => r.sku).join(', ')}
+            </AlertDescription>
           </Alert>
         )}
       </CardContent>

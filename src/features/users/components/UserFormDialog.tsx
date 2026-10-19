@@ -1,21 +1,22 @@
 import React, { useEffect } from 'react';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Grid,
-  FormControl,
-  InputLabel,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
   Select,
-  MenuItem,
-  FormHelperText,
-  InputAdornment,
-  IconButton,
-} from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Eye, EyeOff } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -133,94 +134,128 @@ export const UserFormDialog: React.FC<UserFormDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <form onSubmit={handleSubmit(handleFormSubmit)}>
-        <DialogTitle>{isEditing ? 'Edit User' : 'Add New User'}</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid size={12}>
-              <TextField
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="sm:max-w-xl">
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="grid gap-4">
+          <DialogHeader>
+            <DialogTitle>{isEditing ? 'Edit User' : 'Add New User'}</DialogTitle>
+          </DialogHeader>
+
+          <div className="grid grid-cols-12 gap-4 pt-1">
+            <div className="col-span-12 grid gap-2">
+              <Label htmlFor="user-name">Full Name</Label>
+              <Input
+                id="user-name"
                 {...register('name')}
-                label="Full Name"
-                error={!!errors.name}
-                helperText={errors.name?.message}
+                aria-invalid={!!errors.name}
                 disabled={isLoading}
                 autoFocus
               />
-            </Grid>
-            <Grid size={12}>
-              <TextField
+              {errors.name && (
+                <p className="text-sm text-destructive">{errors.name.message}</p>
+              )}
+            </div>
+
+            <div className="col-span-12 grid gap-2">
+              <Label htmlFor="user-username">Username</Label>
+              <Input
+                id="user-username"
                 {...register('username')}
-                label="Username"
-                error={!!errors.username}
-                helperText={errors.username?.message}
+                aria-invalid={!!errors.username}
                 disabled={isLoading}
               />
-            </Grid>
-            <Grid size={12}>
-              <TextField
-                {...register('password')}
-                label={isEditing ? 'New Password (leave blank to keep current)' : 'Password'}
-                type={showPassword ? 'text' : 'password'}
-                error={!!errors.password}
-                helperText={errors.password?.message}
-                disabled={isLoading}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => setShowPassword(!showPassword)}
-                        edge="end"
-                      >
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            <Grid size={12}>
+              {errors.username && (
+                <p className="text-sm text-destructive">{errors.username.message}</p>
+              )}
+            </div>
+
+            <div className="col-span-12 grid gap-2">
+              <Label htmlFor="user-password">
+                {isEditing ? 'New Password (leave blank to keep current)' : 'Password'}
+              </Label>
+              <div className="relative">
+                <Input
+                  id="user-password"
+                  {...register('password')}
+                  type={showPassword ? 'text' : 'password'}
+                  className="pr-10"
+                  aria-invalid={!!errors.password}
+                  disabled={isLoading}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute top-1/2 right-1 -translate-y-1/2"
+                >
+                  {showPassword ? <EyeOff /> : <Eye />}
+                </Button>
+              </div>
+              {errors.password && (
+                <p className="text-sm text-destructive">{errors.password.message}</p>
+              )}
+            </div>
+
+            <div className="col-span-12 grid gap-2">
+              <Label htmlFor="user-role">Role</Label>
               <Controller
                 name="role"
                 control={control}
                 render={({ field }) => (
-                  <FormControl fullWidth error={!!errors.role}>
-                    <InputLabel>Role</InputLabel>
-                    <Select {...field} label="Role" disabled={isLoading}>
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger
+                      id="user-role"
+                      className="w-full"
+                      aria-invalid={!!errors.role}
+                    >
+                      <SelectValue placeholder="Role" />
+                    </SelectTrigger>
+                    <SelectContent>
                       {roleOptions.map((option) => (
-                        <MenuItem key={option.value} value={option.value}>
+                        <SelectItem key={option.value} value={option.value}>
                           {option.label}
-                        </MenuItem>
+                        </SelectItem>
                       ))}
-                    </Select>
-                    {errors.role && (
-                      <FormHelperText>{errors.role.message}</FormHelperText>
-                    )}
-                  </FormControl>
+                    </SelectContent>
+                  </Select>
                 )}
               />
-            </Grid>
-            <Grid size={12}>
-              <TextField
+              {errors.role && (
+                <p className="text-sm text-destructive">{errors.role.message}</p>
+              )}
+            </div>
+
+            <div className="col-span-12 grid gap-2">
+              <Label htmlFor="user-contact-info">Contact Info (Optional)</Label>
+              <Input
+                id="user-contact-info"
                 {...register('contact_info')}
-                label="Contact Info (Optional)"
                 placeholder="Phone or email"
-                error={!!errors.contact_info}
-                helperText={errors.contact_info?.message}
+                aria-invalid={!!errors.contact_info}
                 disabled={isLoading}
               />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={onClose} disabled={isLoading}>
-            Cancel
-          </Button>
-          <Button type="submit" variant="contained" disabled={isLoading}>
-            {isLoading ? 'Saving...' : isEditing ? 'Update' : 'Create'}
-          </Button>
-        </DialogActions>
-      </form>
+              {errors.contact_info && (
+                <p className="text-sm text-destructive">{errors.contact_info.message}</p>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Saving...' : isEditing ? 'Update' : 'Create'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
     </Dialog>
   );
 };

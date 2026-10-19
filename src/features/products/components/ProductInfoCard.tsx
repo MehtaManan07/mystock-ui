@@ -1,5 +1,7 @@
 import React from 'react';
-import { Box, Card, CardContent, Typography, Divider, Chip } from '@mui/material';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import type { ProductDetail } from '../../../types';
 
 const formatCurrency = (value: number | null | undefined) => {
@@ -15,131 +17,101 @@ export interface ProductInfoCardProps {
 export const ProductInfoCard: React.FC<ProductInfoCardProps> = ({ product, totalQuantity }) => (
   <Card>
     <CardContent>
-      <Typography variant="h6" gutterBottom>
-        Product Information
-      </Typography>
-      <Divider sx={{ mb: 2 }} />
+      <h3 className="mb-2 text-base font-semibold">Product Information</h3>
+      <Separator className="mb-4" />
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <Box>
-          <Typography variant="caption" color="text.secondary">
-            Name
-          </Typography>
-          <Typography variant="body1" fontWeight={600}>
-            {product.name}
-          </Typography>
-        </Box>
-        <Box>
-          <Typography variant="caption" color="text.secondary">
-            Company SKU
-          </Typography>
-          <Typography variant="body1" fontFamily="monospace">
-            {product.company_sku || '-'}
-          </Typography>
-        </Box>
-        <Box>
-          <Typography variant="caption" color="text.secondary">
-            Display Name
-          </Typography>
-          <Typography variant="body1">{product.display_name || '-'}</Typography>
-        </Box>
+      <div className="flex flex-col gap-4">
+        <div>
+          <span className="text-xs text-muted-foreground">Name</span>
+          <p className="text-base font-semibold">{product.name}</p>
+        </div>
+        <div>
+          <span className="text-xs text-muted-foreground">Company SKU</span>
+          <p className="font-mono text-base">{product.company_sku || '-'}</p>
+        </div>
+        <div>
+          <span className="text-xs text-muted-foreground">Display Name</span>
+          <p className="text-base">{product.display_name || '-'}</p>
+        </div>
         {product.product_type && (
-          <Box>
-            <Typography variant="caption" color="text.secondary">
-              Product Type
-            </Typography>
-            <Box sx={{ mt: 0.5 }}>
-              <Chip label={product.product_type} size="small" color="primary" variant="outlined" />
-            </Box>
-          </Box>
+          <div>
+            <span className="text-xs text-muted-foreground">Product Type</span>
+            <div className="mt-1">
+              <Badge variant="outline" className="border-primary text-primary">
+                {product.product_type}
+              </Badge>
+            </div>
+          </div>
         )}
         {product.tags && product.tags.length > 0 && (
-          <Box>
-            <Typography variant="caption" color="text.secondary">
-              Tags
-            </Typography>
-            <Box sx={{ mt: 0.5, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+          <div>
+            <span className="text-xs text-muted-foreground">Tags</span>
+            <div className="mt-1 flex flex-wrap gap-1">
               {product.tags.map((tag, index) => (
-                <Chip key={index} label={tag} size="small" variant="outlined" />
+                <Badge key={index} variant="outline">
+                  {tag}
+                </Badge>
               ))}
-            </Box>
-          </Box>
+            </div>
+          </div>
         )}
         {product.description && (
-          <Box>
-            <Typography variant="caption" color="text.secondary">
-              Description
-            </Typography>
-            <Typography variant="body2" sx={{ mt: 0.5, whiteSpace: 'pre-wrap' }}>
-              {product.description}
-            </Typography>
-          </Box>
+          <div>
+            <span className="text-xs text-muted-foreground">Description</span>
+            <p className="mt-1 text-sm whitespace-pre-wrap">{product.description}</p>
+          </div>
         )}
-        <Box>
-          <Typography variant="caption" color="text.secondary">
-            Size
-          </Typography>
-          <Typography variant="body1">{product.size}</Typography>
-        </Box>
-        <Box>
-          <Typography variant="caption" color="text.secondary">
-            Packing
-          </Typography>
-          <Typography variant="body1">{product.packing}</Typography>
-        </Box>
+        <div>
+          <span className="text-xs text-muted-foreground">Size</span>
+          <p className="text-base">{product.size}</p>
+        </div>
+        <div>
+          <span className="text-xs text-muted-foreground">Packing</span>
+          <p className="text-base">{product.packing}</p>
+        </div>
         {product.dimensions && (
-          <Box>
-            <Typography variant="caption" color="text.secondary">
-              Dimensions
-            </Typography>
-            <Typography variant="body1">
-              {product.dimensions.width} × {product.dimensions.height} × {product.dimensions.length} cm
-            </Typography>
-          </Box>
+          <div>
+            <span className="text-xs text-muted-foreground">Dimensions</span>
+            <p className="text-base">
+              {product.dimensions.width} × {product.dimensions.height} ×{' '}
+              {product.dimensions.length} cm
+            </p>
+          </div>
         )}
-        <Box>
-          <Typography variant="caption" color="text.secondary">
-            Default Sale Price
-          </Typography>
-          <Typography variant="body1">{formatCurrency(product.default_sale_price)}</Typography>
-        </Box>
+        <div>
+          <span className="text-xs text-muted-foreground">Default Sale Price</span>
+          <p className="text-base">{formatCurrency(product.default_sale_price)}</p>
+        </div>
         {product.mrp && (
-          <Box>
-            <Typography variant="caption" color="text.secondary">
-              MRP
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography
-                variant="body1"
-                sx={{
-                  textDecoration:
-                    product.default_sale_price && product.mrp > product.default_sale_price
-                      ? 'line-through'
-                      : 'none',
-                }}
+          <div>
+            <span className="text-xs text-muted-foreground">MRP</span>
+            <div className="flex items-center gap-2">
+              <p
+                className={
+                  product.default_sale_price && product.mrp > product.default_sale_price
+                    ? 'text-base line-through'
+                    : 'text-base'
+                }
               >
                 {formatCurrency(product.mrp)}
-              </Typography>
+              </p>
               {product.default_sale_price && product.mrp > product.default_sale_price && (
-                <Chip
-                  label={`${Math.round(((product.mrp - product.default_sale_price) / product.mrp) * 100)}% off`}
-                  size="small"
-                  color="success"
-                />
+                <Badge className="bg-success text-success-foreground">
+                  {Math.round(((product.mrp - product.default_sale_price) / product.mrp) * 100)}%
+                  off
+                </Badge>
               )}
-            </Box>
-          </Box>
+            </div>
+          </div>
         )}
 
-        <Box>
-          <Typography variant="caption" color="text.secondary">
-            Total Quantity
-          </Typography>
-          <Box sx={{ mt: 0.5 }}>
-            <Chip label={totalQuantity} color={totalQuantity > 0 ? 'primary' : 'default'} />
-          </Box>
-        </Box>
-      </Box>
+        <div>
+          <span className="text-xs text-muted-foreground">Total Quantity</span>
+          <div className="mt-1">
+            <Badge variant={totalQuantity > 0 ? 'default' : 'secondary'}>{totalQuantity}</Badge>
+          </div>
+        </div>
+      </div>
     </CardContent>
   </Card>
 );

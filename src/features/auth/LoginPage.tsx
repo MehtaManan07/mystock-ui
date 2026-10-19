@@ -3,23 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import {
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Button,
-  Typography,
-  Alert,
-  InputAdornment,
-  IconButton,
-  useTheme,
-} from '@mui/material';
-import {
-  Visibility,
-  VisibilityOff,
-  Inventory2 as LogoIcon,
-} from '@mui/icons-material';
+import { Eye, EyeOff, Package, CircleAlert } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useLogin } from '../../hooks/useAuth';
 
 // Validation schema
@@ -31,12 +20,11 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export const LoginPage: React.FC = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = React.useState(false);
-  
+
   const { mutate: login, isPending, error } = useLogin();
-  
+
   const {
     register,
     handleSubmit,
@@ -58,101 +46,86 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 50%, ${theme.palette.secondary.main} 100%)`,
-        p: 2,
-      }}
-    >
-      <Card
-        sx={{
-          width: '100%',
-          maxWidth: 420,
-          boxShadow: '0 8px 40px rgba(0,0,0,0.2)',
-        }}
-      >
-        <CardContent sx={{ p: 4 }}>
+    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+      <Card className="w-full max-w-[420px] py-0 shadow-lg">
+        <CardContent className="p-8">
           {/* Logo */}
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Box
-              sx={{
-                width: 56,
-                height: 56,
-                borderRadius: 3,
-                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mb: 2,
-              }}
-            >
-              <LogoIcon sx={{ color: 'white', fontSize: 32 }} />
-            </Box>
-            <Typography variant="h4" fontWeight={700} gutterBottom>
-              Welcome Back
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
+          <div className="mb-8 text-center">
+            <div className="mb-4 inline-flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+              <Package className="size-7" />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight">Welcome Back</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
               Sign in to continue to Kraft Culture
-            </Typography>
-          </Box>
+            </p>
+          </div>
 
           {/* Error message */}
           {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {(error as { message?: string }).message || 'Login failed. Please try again.'}
+            <Alert variant="destructive" className="mb-6">
+              <CircleAlert />
+              <AlertDescription>
+                {(error as { message?: string }).message ||
+                  'Login failed. Please try again.'}
+              </AlertDescription>
             </Alert>
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <TextField
-              {...register('username')}
-              label="Username"
-              error={!!errors.username}
-              helperText={errors.username?.message}
-              disabled={isPending}
-              sx={{ mb: 2 }}
-            />
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                autoComplete="username"
+                {...register('username')}
+                aria-invalid={!!errors.username}
+                disabled={isPending}
+              />
+              {errors.username && (
+                <p className="text-sm text-destructive">
+                  {errors.username.message}
+                </p>
+              )}
+            </div>
 
-            <TextField
-              {...register('password')}
-              label="Password"
-              type={showPassword ? 'text' : 'password'}
-              error={!!errors.password}
-              helperText={errors.password?.message}
-              disabled={isPending}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ mb: 3 }}
-            />
+            <div className="grid gap-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  {...register('password')}
+                  aria-invalid={!!errors.password}
+                  disabled={isPending}
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute top-1/2 right-1 -translate-y-1/2"
+                >
+                  {showPassword ? <EyeOff /> : <Eye />}
+                </Button>
+              </div>
+              {errors.password && (
+                <p className="text-sm text-destructive">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
 
-            <Button
-              type="submit"
-              variant="contained"
-              fullWidth
-              size="large"
-              disabled={isPending}
-            >
+            <Button type="submit" size="lg" className="mt-2 w-full" disabled={isPending}>
               {isPending ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
         </CardContent>
       </Card>
-    </Box>
+    </div>
   );
 };
 

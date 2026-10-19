@@ -1,17 +1,13 @@
 import React, { useEffect } from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Button,
-  Grid,
-  Typography,
-  Divider,
-} from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import { PageHeader } from '../../components/common/PageHeader';
 import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorState } from '../../components/common/ErrorState';
@@ -60,6 +56,26 @@ const settingsSchema = z.object({
     }
   }
 });
+
+interface FieldProps {
+  id: keyof SettingsFormData;
+  label: string;
+  error?: string;
+  helperText?: string;
+  children: React.ReactNode;
+}
+
+const Field: React.FC<FieldProps> = ({ id, label, error, helperText, children }) => (
+  <div className="grid gap-2">
+    <Label htmlFor={id}>{label}</Label>
+    {children}
+    {error ? (
+      <p className="text-sm text-destructive">{error}</p>
+    ) : (
+      helperText && <p className="text-sm text-muted-foreground">{helperText}</p>
+    )}
+  </div>
+);
 
 export const SettingsPage: React.FC = () => {
   // Data fetching
@@ -132,224 +148,203 @@ export const SettingsPage: React.FC = () => {
   }
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title="Company Settings"
         subtitle="Manage your company information and invoice settings"
       />
 
-      <form onSubmit={handleSubmit(handleFormSubmit)}>
-        <Grid container spacing={3}>
-          {/* Company Information */}
-          <Grid size={12}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Company Information
-                </Typography>
-                <Divider sx={{ mb: 3 }} />
-                <Grid container spacing={2}>
-                  <Grid size={12}>
-                    <TextField
-                      {...register('company_name')}
-                      label="Company Name"
-                      error={!!errors.company_name}
-                      helperText={errors.company_name?.message}
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid size={12}>
-                    <TextField
-                      {...register('company_address_line1')}
-                      label="Address Line 1"
-                      error={!!errors.company_address_line1}
-                      helperText={errors.company_address_line1?.message}
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid size={12}>
-                    <TextField
-                      {...register('company_address_line2')}
-                      label="Address Line 2"
-                      error={!!errors.company_address_line2}
-                      helperText={errors.company_address_line2?.message}
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid size={12}>
-                    <TextField
-                      {...register('company_address_line3')}
-                      label="Address Line 3"
-                      error={!!errors.company_address_line3}
-                      helperText={errors.company_address_line3?.message}
-                      fullWidth
-                    />
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Seller Information */}
-          <Grid size={12}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Seller Information
-                </Typography>
-                <Divider sx={{ mb: 3 }} />
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      {...register('seller_name')}
-                      label="Seller Name"
-                      error={!!errors.seller_name}
-                      helperText={errors.seller_name?.message}
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      {...register('seller_phone')}
-                      label="Phone"
-                      error={!!errors.seller_phone}
-                      helperText={errors.seller_phone?.message}
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      {...register('seller_email')}
-                      label="Email"
-                      type="email"
-                      error={!!errors.seller_email}
-                      helperText={errors.seller_email?.message}
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      {...register('seller_gstin')}
-                      label="GSTIN"
-                      error={!!errors.seller_gstin}
-                      helperText={errors.seller_gstin?.message}
-                      fullWidth
-                    />
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Invoice Settings */}
-          <Grid size={12}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Invoice Settings
-                </Typography>
-                <Divider sx={{ mb: 3 }} />
-                <Grid container spacing={2}>
-                  <Grid size={12}>
-                    <TextField
-                      {...register('hsn_code')}
-                      label="HSN Code"
-                      error={!!errors.hsn_code}
-                      helperText={errors.hsn_code?.message || 'Harmonized System of Nomenclature code for products'}
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid size={12}>
-                    <TextField
-                      {...register('terms_and_conditions')}
-                      label="Terms and Conditions"
-                      error={!!errors.terms_and_conditions}
-                      helperText={errors.terms_and_conditions?.message || 'Appears at the bottom of invoices'}
-                      multiline
-                      rows={4}
-                      fullWidth
-                    />
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid size={12}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Company Bank Details
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Printed on newly generated invoices. Existing archived PDFs are not changed.
-                  Leave all fields blank to omit bank details.
-                </Typography>
-                <Divider sx={{ mb: 3 }} />
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      {...register('bank_name')}
-                      label="Bank Name"
-                      error={!!errors.bank_name}
-                      helperText={errors.bank_name?.message}
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      {...register('bank_account_number')}
-                      label="Account Number"
-                      error={!!errors.bank_account_number}
-                      helperText={errors.bank_account_number?.message}
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      {...register('bank_branch')}
-                      label="Branch / Code (optional)"
-                      error={!!errors.bank_branch}
-                      helperText={errors.bank_branch?.message}
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      {...register('bank_ifsc')}
-                      label="IFSC"
-                      error={!!errors.bank_ifsc}
-                      helperText={errors.bank_ifsc?.message}
-                      fullWidth
-                    />
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Submit Button */}
-          <Grid size={12}>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-              <Button
-                variant="outlined"
-                onClick={() => reset()}
-                disabled={!isDirty || updateMutation.isPending}
+      <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col gap-6">
+        {/* Company Information */}
+        <Card>
+          <CardContent>
+            <h3 className="text-base font-semibold">Company Information</h3>
+            <Separator className="mt-2 mb-6" />
+            <div className="grid grid-cols-1 gap-4">
+              <Field id="company_name" label="Company Name" error={errors.company_name?.message}>
+                <Input
+                  id="company_name"
+                  {...register('company_name')}
+                  aria-invalid={!!errors.company_name}
+                />
+              </Field>
+              <Field
+                id="company_address_line1"
+                label="Address Line 1"
+                error={errors.company_address_line1?.message}
               >
-                Reset
-              </Button>
-              <Button
-                type="submit"
-                variant="contained"
-                disabled={!isDirty || updateMutation.isPending}
+                <Input
+                  id="company_address_line1"
+                  {...register('company_address_line1')}
+                  aria-invalid={!!errors.company_address_line1}
+                />
+              </Field>
+              <Field
+                id="company_address_line2"
+                label="Address Line 2"
+                error={errors.company_address_line2?.message}
               >
-                {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </Box>
-          </Grid>
-        </Grid>
+                <Input
+                  id="company_address_line2"
+                  {...register('company_address_line2')}
+                  aria-invalid={!!errors.company_address_line2}
+                />
+              </Field>
+              <Field
+                id="company_address_line3"
+                label="Address Line 3"
+                error={errors.company_address_line3?.message}
+              >
+                <Input
+                  id="company_address_line3"
+                  {...register('company_address_line3')}
+                  aria-invalid={!!errors.company_address_line3}
+                />
+              </Field>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Seller Information */}
+        <Card>
+          <CardContent>
+            <h3 className="text-base font-semibold">Seller Information</h3>
+            <Separator className="mt-2 mb-6" />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field id="seller_name" label="Seller Name" error={errors.seller_name?.message}>
+                <Input
+                  id="seller_name"
+                  {...register('seller_name')}
+                  aria-invalid={!!errors.seller_name}
+                />
+              </Field>
+              <Field id="seller_phone" label="Phone" error={errors.seller_phone?.message}>
+                <Input
+                  id="seller_phone"
+                  {...register('seller_phone')}
+                  aria-invalid={!!errors.seller_phone}
+                />
+              </Field>
+              <Field id="seller_email" label="Email" error={errors.seller_email?.message}>
+                <Input
+                  id="seller_email"
+                  type="email"
+                  {...register('seller_email')}
+                  aria-invalid={!!errors.seller_email}
+                />
+              </Field>
+              <Field id="seller_gstin" label="GSTIN" error={errors.seller_gstin?.message}>
+                <Input
+                  id="seller_gstin"
+                  {...register('seller_gstin')}
+                  aria-invalid={!!errors.seller_gstin}
+                />
+              </Field>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Invoice Settings */}
+        <Card>
+          <CardContent>
+            <h3 className="text-base font-semibold">Invoice Settings</h3>
+            <Separator className="mt-2 mb-6" />
+            <div className="grid grid-cols-1 gap-4">
+              <Field
+                id="hsn_code"
+                label="HSN Code"
+                error={errors.hsn_code?.message}
+                helperText="Harmonized System of Nomenclature code for products"
+              >
+                <Input
+                  id="hsn_code"
+                  {...register('hsn_code')}
+                  aria-invalid={!!errors.hsn_code}
+                />
+              </Field>
+              <Field
+                id="terms_and_conditions"
+                label="Terms and Conditions"
+                error={errors.terms_and_conditions?.message}
+                helperText="Appears at the bottom of invoices"
+              >
+                <Textarea
+                  id="terms_and_conditions"
+                  rows={4}
+                  {...register('terms_and_conditions')}
+                  aria-invalid={!!errors.terms_and_conditions}
+                />
+              </Field>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Company Bank Details */}
+        <Card>
+          <CardContent>
+            <h3 className="text-base font-semibold">Company Bank Details</h3>
+            <p className="mt-2 mb-4 text-sm text-muted-foreground">
+              Printed on newly generated invoices. Existing archived PDFs are not changed.
+              Leave all fields blank to omit bank details.
+            </p>
+            <Separator className="mb-6" />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field id="bank_name" label="Bank Name" error={errors.bank_name?.message}>
+                <Input
+                  id="bank_name"
+                  {...register('bank_name')}
+                  aria-invalid={!!errors.bank_name}
+                />
+              </Field>
+              <Field
+                id="bank_account_number"
+                label="Account Number"
+                error={errors.bank_account_number?.message}
+              >
+                <Input
+                  id="bank_account_number"
+                  {...register('bank_account_number')}
+                  aria-invalid={!!errors.bank_account_number}
+                />
+              </Field>
+              <Field
+                id="bank_branch"
+                label="Branch / Code (optional)"
+                error={errors.bank_branch?.message}
+              >
+                <Input
+                  id="bank_branch"
+                  {...register('bank_branch')}
+                  aria-invalid={!!errors.bank_branch}
+                />
+              </Field>
+              <Field id="bank_ifsc" label="IFSC" error={errors.bank_ifsc?.message}>
+                <Input
+                  id="bank_ifsc"
+                  {...register('bank_ifsc')}
+                  aria-invalid={!!errors.bank_ifsc}
+                />
+              </Field>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Submit Button */}
+        <div className="flex justify-end gap-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => reset()}
+            disabled={!isDirty || updateMutation.isPending}
+          >
+            Reset
+          </Button>
+          <Button type="submit" disabled={!isDirty || updateMutation.isPending}>
+            {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </div>
       </form>
-    </Box>
+    </div>
   );
 };
 

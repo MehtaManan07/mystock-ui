@@ -1,25 +1,24 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUrlParam } from '../../hooks/useUrlFilters';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
-  Box,
-  Card,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  Chip,
-  Typography,
-  ToggleButton,
-  ToggleButtonGroup,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
+} from '@/components/ui/table';
 import {
-  Visibility as ViewIcon,
-} from '@mui/icons-material';
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SearchInput } from '../../components/common/SearchInput';
@@ -30,6 +29,15 @@ import { useInventoryLogs } from '../../hooks/useInventoryLogs';
 import type { InventoryLog } from '../../types';
 
 type ActionFilter = 'all' | 'add' | 'remove' | 'transfer' | 'sale' | 'purchase' | 'adjustment';
+
+/** Outline-badge classes per action; `default` keeps the plain outline badge. */
+const actionBadgeClasses: Record<string, string> = {
+  success: 'border-success text-success',
+  error: 'border-destructive text-destructive',
+  info: 'border-primary text-primary',
+  warning: 'border-warning text-warning',
+  default: '',
+};
 
 export const InventoryLogsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -114,95 +122,94 @@ export const InventoryLogsPage: React.FC = () => {
     }
 
     return (
-      <TableContainer>
+      <div className="overflow-x-auto">
         <Table>
-          <TableHead>
+          <TableHeader>
             <TableRow>
-              <TableCell>Date</TableCell>
-              <TableCell>Action</TableCell>
-              <TableCell>Product ID</TableCell>
-              <TableCell>Container ID</TableCell>
-              <TableCell align="center">Quantity</TableCell>
-              <TableCell>Note</TableCell>
-              <TableCell align="center">Actions</TableCell>
+              <TableHead>Date</TableHead>
+              <TableHead>Action</TableHead>
+              <TableHead>Product ID</TableHead>
+              <TableHead>Container ID</TableHead>
+              <TableHead className="text-center">Quantity</TableHead>
+              <TableHead>Note</TableHead>
+              <TableHead className="text-center">Actions</TableHead>
             </TableRow>
-          </TableHead>
+          </TableHeader>
           <TableBody>
             {filteredLogs.map((log: InventoryLog) => (
-              <TableRow key={log.id} hover>
+              <TableRow key={log.id}>
                 <TableCell>
-                  <Typography variant="caption">
+                  <span className="text-xs text-muted-foreground">
                     {formatDate(log.timestamp || log.created_at)}
-                  </Typography>
+                  </span>
                 </TableCell>
                 <TableCell>
-                  <Chip
-                    label={log.action}
-                    size="small"
-                    color={getActionColor(log.action) as 'success' | 'error' | 'info' | 'warning' | 'default'}
-                    variant="outlined"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={`Product #${log.product_id}`}
-                    size="small"
-                    variant="outlined"
-                    onClick={() => navigate(`/products/${log.product_id}`)}
-                    sx={{ cursor: 'pointer' }}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={`Container #${log.container_id}`}
-                    size="small"
-                    variant="outlined"
-                    onClick={() => navigate(`/containers/${log.container_id}`)}
-                    sx={{ cursor: 'pointer' }}
-                  />
-                </TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={log.action === 'remove' || log.action === 'sale' ? `-${log.quantity}` : `+${log.quantity}`}
-                    size="small"
-                    color={log.action === 'remove' || log.action === 'sale' ? 'error' : 'success'}
-                    variant="filled"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{
-                      maxWidth: 200,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
+                  <Badge
+                    variant="outline"
+                    className={actionBadgeClasses[getActionColor(log.action)]}
                   >
-                    {log.note || '-'}
-                  </Typography>
+                    {log.action}
+                  </Badge>
                 </TableCell>
-                <TableCell align="center">
-                  <Tooltip title="View Product">
-                    <IconButton
-                      size="small"
-                      onClick={() => navigate(`/products/${log.product_id}`)}
-                    >
-                      <ViewIcon fontSize="small" />
-                    </IconButton>
+                <TableCell>
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer"
+                    onClick={() => navigate(`/products/${log.product_id}`)}
+                  >
+                    {`Product #${log.product_id}`}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer"
+                    onClick={() => navigate(`/containers/${log.container_id}`)}
+                  >
+                    {`Container #${log.container_id}`}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-center">
+                  <Badge
+                    className={
+                      log.action === 'remove' || log.action === 'sale'
+                        ? 'bg-destructive text-white'
+                        : 'bg-success text-success-foreground'
+                    }
+                  >
+                    {log.action === 'remove' || log.action === 'sale' ? `-${log.quantity}` : `+${log.quantity}`}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <p className="max-w-[200px] truncate text-sm text-muted-foreground">
+                    {log.note || '-'}
+                  </p>
+                </TableCell>
+                <TableCell className="text-center">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label="View Product"
+                        onClick={() => navigate(`/products/${log.product_id}`)}
+                      >
+                        <Eye />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>View Product</TooltipContent>
                   </Tooltip>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      </TableContainer>
+      </div>
     );
   };
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title="Inventory Logs"
         subtitle={logs ? `${filteredLogs.length} log entries` : 'History of inventory changes'}
@@ -213,37 +220,36 @@ export const InventoryLogsPage: React.FC = () => {
       />
 
       {/* Filters - always visible */}
-      <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+      <div className="mb-6 flex flex-wrap items-center gap-4">
         <SearchInput
           value={searchQuery}
           onChange={setSearchQuery}
           placeholder="Search by note or action..."
         />
 
-        <ToggleButtonGroup
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
           value={actionFilter}
-          exclusive
-          onChange={(_, value) => value !== null && setActionFilter(value as string)}
-          size="small"
+          onValueChange={(value) => value && setActionFilter(value)}
         >
-          <ToggleButton value="all">All</ToggleButton>
-          <ToggleButton value="add">Add</ToggleButton>
-          <ToggleButton value="remove">Remove</ToggleButton>
-          <ToggleButton value="sale">Sale</ToggleButton>
-          <ToggleButton value="purchase">Purchase</ToggleButton>
-          <ToggleButton value="adjustment">Adjustment</ToggleButton>
-        </ToggleButtonGroup>
+          <ToggleGroupItem value="all">All</ToggleGroupItem>
+          <ToggleGroupItem value="add">Add</ToggleGroupItem>
+          <ToggleGroupItem value="remove">Remove</ToggleGroupItem>
+          <ToggleGroupItem value="sale">Sale</ToggleGroupItem>
+          <ToggleGroupItem value="purchase">Purchase</ToggleGroupItem>
+          <ToggleGroupItem value="adjustment">Adjustment</ToggleGroupItem>
+        </ToggleGroup>
 
         {isFetching && !showFullLoading && (
-          <Typography variant="caption" color="text.secondary">
-            Refreshing...
-          </Typography>
+          <span className="text-xs text-muted-foreground">Refreshing...</span>
         )}
-      </Box>
+      </div>
 
       {/* Logs table */}
-      <Card>{renderTableContent()}</Card>
-    </Box>
+      <Card className="gap-0 overflow-hidden py-0">{renderTableContent()}</Card>
+    </div>
   );
 };
 

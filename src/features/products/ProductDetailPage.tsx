@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Grid, IconButton, Tooltip } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon, ArrowBack as BackIcon } from '@mui/icons-material';
+import { ArrowLeft, Pencil, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { PageHeader } from '../../components/common/PageHeader';
 import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorState } from '../../components/common/ErrorState';
@@ -148,7 +149,7 @@ export const ProductDetailPage: React.FC = () => {
   }
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title={product.name}
         subtitle={`${product.size} • ${product.packing}`}
@@ -158,35 +159,56 @@ export const ProductDetailPage: React.FC = () => {
         ]}
       />
 
-      <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
-        <Tooltip title="Back to Products">
-          <IconButton
-            component="a"
-            href="/products"
-            onClick={(e: React.MouseEvent) => {
-              if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
-                e.preventDefault();
-                navigate('/products');
-              }
-            }}
-          >
-            <BackIcon />
-          </IconButton>
+      <div className="mb-6 flex gap-2">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button asChild variant="ghost" size="icon" aria-label="Back to Products">
+              <a
+                href="/products"
+                onClick={(e: React.MouseEvent) => {
+                  if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                    e.preventDefault();
+                    navigate('/products');
+                  }
+                }}
+              >
+                <ArrowLeft />
+              </a>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Back to Products</TooltipContent>
         </Tooltip>
-        <Tooltip title="Edit Product">
-          <IconButton onClick={() => setEditDialogOpen(true)}>
-            <EditIcon />
-          </IconButton>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Edit Product"
+              onClick={() => setEditDialogOpen(true)}
+            >
+              <Pencil />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Edit Product</TooltipContent>
         </Tooltip>
-        <Tooltip title="Delete Product">
-          <IconButton color="error" onClick={() => setDeleteDialogOpen(true)}>
-            <DeleteIcon />
-          </IconButton>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-destructive"
+              aria-label="Delete Product"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              <Trash2 />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Delete Product</TooltipContent>
         </Tooltip>
-      </Box>
+      </div>
 
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12 }}>
+      <div className="grid grid-cols-12 gap-6">
+        <div className="col-span-12">
           <ProductImagesCard
             images={images}
             selectedImageIndex={selectedImageIndex}
@@ -203,21 +225,21 @@ export const ProductDetailPage: React.FC = () => {
             deletePending={deleteImageMutation.isPending}
             fileInputRef={fileInputRef}
           />
-        </Grid>
+        </div>
 
-        <Grid size={{ xs: 12 }}>
+        <div className="col-span-12">
           <ProductInfoCard product={product} totalQuantity={totalQuantity} />
-        </Grid>
+        </div>
 
-        <Grid size={{ xs: 12 }}>
+        <div className="col-span-12">
           <ProductStockDistributionCard
             containers={product.containers ?? []}
             onContainerClick={(containerId) => navigate(`/containers/${containerId}`)}
             onManageClick={() => setManageContainersDialogOpen(true)}
           />
-        </Grid>
+        </div>
 
-        <Grid size={{ xs: 12, md: 8 }}>
+        <div className="col-span-12 md:col-span-8">
           <ProductVendorSkusCard
             vendorSkus={product.vendor_skus ?? []}
             onAdd={handleOpenVendorSkuDialog}
@@ -230,8 +252,8 @@ export const ProductDetailPage: React.FC = () => {
             logs={product.logs ?? []}
             onContainerClick={(containerId) => navigate(`/containers/${containerId}`)}
           />
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
       <ProductFormDialog
         open={editDialogOpen}
@@ -301,7 +323,7 @@ export const ProductDetailPage: React.FC = () => {
         onClose={() => setManageContainersDialogOpen(false)}
         onSuccess={() => refetch()}
       />
-    </Box>
+    </div>
   );
 };
 

@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import { Info, X } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  MenuItem,
-  Box,
-  Alert,
-} from '@mui/material';
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { PAYMENT_METHODS, type PaymentMethod } from '../../../constants';
 import type { CreatePaymentDto } from '../../../types';
 
@@ -75,82 +83,113 @@ export const RecordPaymentDialog: React.FC<RecordPaymentDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <form onSubmit={handleSubmit}>
-        <DialogTitle>Record Payment for {transactionNumber}</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mb: 2, mt: 1 }}>
-            <Alert severity="info">
-              Balance Due: <strong>{formatCurrency(balanceDue)}</strong>
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="sm:max-w-xl">
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>Record Payment for {transactionNumber}</DialogTitle>
+          </DialogHeader>
+
+          <div className="mt-4 mb-4">
+            <Alert>
+              <Info />
+              <AlertDescription>
+                Balance Due: <strong>{formatCurrency(balanceDue)}</strong>
+              </AlertDescription>
             </Alert>
-          </Box>
+          </div>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-              {error}
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Dismiss error"
+                className="absolute top-1.5 right-1.5"
+                onClick={() => setError(null)}
+              >
+                <X />
+              </Button>
             </Alert>
           )}
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-            <TextField
-              label="Payment Date"
-              type="date"
-              fullWidth
-              required
-              value={paymentDate}
-              onChange={(e) => setPaymentDate(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-            />
+          <div className="flex flex-col gap-5">
+            <div className="grid gap-2">
+              <Label htmlFor="payment-date">Payment Date *</Label>
+              <Input
+                id="payment-date"
+                type="date"
+                required
+                value={paymentDate}
+                onChange={(e) => setPaymentDate(e.target.value)}
+              />
+            </div>
 
-            <TextField
-              label="Amount"
-              type="number"
-              fullWidth
-              required
-              value={amount}
-              onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
-              inputProps={{ min: 0.01, step: 0.01, max: balanceDue }}
-              error={amount > balanceDue}
-              helperText={amount > balanceDue ? `Exceeds balance due (${formatCurrency(balanceDue)})` : ''}
-            />
+            <div className="grid gap-2">
+              <Label htmlFor="payment-amount">Amount *</Label>
+              <Input
+                id="payment-amount"
+                type="number"
+                required
+                value={amount}
+                onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+                min={0.01}
+                step={0.01}
+                max={balanceDue}
+                aria-invalid={amount > balanceDue}
+              />
+              {amount > balanceDue && (
+                <p className="text-sm text-destructive">
+                  Exceeds balance due ({formatCurrency(balanceDue)})
+                </p>
+              )}
+            </div>
 
-            <TextField
-              label="Payment Method"
-              select
-              fullWidth
-              required
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+            <div className="grid gap-2">
+              <Label htmlFor="payment-method">Payment Method *</Label>
+              <Select
+                value={paymentMethod}
+                onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
+              >
+                <SelectTrigger id="payment-method" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(PAYMENT_METHODS).map((method) => (
+                    <SelectItem key={method} value={method}>
+                      {method.replace('_', ' ').toUpperCase()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="payment-reference">Reference Number</Label>
+              <Input
+                id="payment-reference"
+                value={referenceNumber}
+                onChange={(e) => setReferenceNumber(e.target.value)}
+                placeholder="Check #, UPI ID, etc."
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="mt-6">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isLoading || amount > balanceDue || amount <= 0}
             >
-              {Object.values(PAYMENT_METHODS).map((method) => (
-                <MenuItem key={method} value={method}>
-                  {method.replace('_', ' ').toUpperCase()}
-                </MenuItem>
-              ))}
-            </TextField>
-
-            <TextField
-              label="Reference Number"
-              fullWidth
-              value={referenceNumber}
-              onChange={(e) => setReferenceNumber(e.target.value)}
-              placeholder="Check #, UPI ID, etc."
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} disabled={isLoading}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={isLoading || amount > balanceDue || amount <= 0}
-          >
-            {isLoading ? 'Recording...' : 'Record Payment'}
-          </Button>
-        </DialogActions>
-      </form>
+              {isLoading ? 'Recording...' : 'Record Payment'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
     </Dialog>
   );
 };

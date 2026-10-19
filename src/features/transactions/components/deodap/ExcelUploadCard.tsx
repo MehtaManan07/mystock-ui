@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
-import { Box, Card, CardContent, Typography, CircularProgress, Alert } from '@mui/material';
-import { UploadFile as UploadIcon } from '@mui/icons-material';
+import { Upload, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface ExcelUploadCardProps {
   fileName: string | null;
@@ -30,38 +31,27 @@ export const ExcelUploadCard: React.FC<ExcelUploadCardProps> = ({
   };
 
   return (
-    <Card sx={{ mb: 3 }}>
+    <Card className="mb-6">
       <CardContent>
-        <Typography variant="h6" gutterBottom>
+        <h3 className="mb-2 text-base font-semibold">
           Step 1 — Upload Excel File
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        </h3>
+        <p className="mb-4 text-sm text-muted-foreground">
           The file should have columns for <strong>SKU</strong> and <strong>Quantity</strong>.
           Header row is auto-detected.
-        </Typography>
+        </p>
 
-        <Box
+        <div
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
           onClick={() => fileInputRef.current?.click()}
-          sx={{
-            border: '2px dashed',
-            borderColor: 'divider',
-            borderRadius: 2,
-            p: 4,
-            textAlign: 'center',
-            cursor: 'pointer',
-            transition: 'border-color 0.2s',
-            '&:hover': { borderColor: 'primary.main' },
-          }}
+          className="cursor-pointer rounded-lg border-2 border-dashed border-border p-8 text-center transition-colors hover:border-primary"
         >
-          <UploadIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
-          <Typography variant="body1">
-            {fileName ?? 'Drag & drop or click to select a file'}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
+          <Upload className="mx-auto mb-2 size-12 text-muted-foreground" />
+          <p>{fileName ?? 'Drag & drop or click to select a file'}</p>
+          <span className="text-xs text-muted-foreground">
             .xlsx, .xls, .csv supported
-          </Typography>
+          </span>
           <input
             ref={fileInputRef}
             type="file"
@@ -69,18 +59,18 @@ export const ExcelUploadCard: React.FC<ExcelUploadCardProps> = ({
             style={{ display: 'none' }}
             onChange={handleInputChange}
           />
-        </Box>
+        </div>
 
         {isProcessing && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
-            <CircularProgress size={20} />
-            <Typography variant="body2">Parsing file and looking up products...</Typography>
-          </Box>
+          <div className="mt-4 flex items-center gap-2">
+            <Loader2 className="size-5 animate-spin" />
+            <p className="text-sm">Parsing file and looking up products...</p>
+          </div>
         )}
 
         {parseError && (
-          <Alert severity="error" sx={{ mt: 2 }}>
-            {parseError}
+          <Alert variant="destructive" className="mt-4">
+            <AlertDescription>{parseError}</AlertDescription>
           </Alert>
         )}
       </CardContent>
