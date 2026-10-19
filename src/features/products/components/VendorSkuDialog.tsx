@@ -52,9 +52,9 @@ export const VendorSkuDialog: React.FC<VendorSkuDialogProps> = ({
         <DialogTitle>{editingVendorSku ? 'Edit Vendor SKU' : 'Add Vendor SKU'}</DialogTitle>
       </DialogHeader>
 
-      <div className="mt-2 flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
         <div className="grid gap-2">
-          <Label htmlFor="vendor-sku-vendor">Customer/Vendor</Label>
+          <Label htmlFor="vendor-sku-vendor">Customer / vendor</Label>
           <Select
             value={selectedVendorId === '' ? '' : String(selectedVendorId)}
             onValueChange={(value) => onVendorChange(value === NO_VENDOR ? '' : Number(value))}
@@ -81,18 +81,23 @@ export const VendorSkuDialog: React.FC<VendorSkuDialogProps> = ({
             value={vendorSkuValue}
             onChange={(e) => onSkuChange(e.target.value)}
             placeholder="Enter vendor's/customer's SKU for this product"
+            className="font-mono"
           />
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             The SKU used by this customer/marketplace for this product
           </p>
         </div>
       </div>
 
       <DialogFooter>
-        <Button variant="outline" onClick={onClose}>
+        <Button type="button" variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button onClick={onSubmit} disabled={!selectedVendorId || !vendorSkuValue || isPending}>
+        <Button
+          type="button"
+          onClick={onSubmit}
+          disabled={!selectedVendorId || !vendorSkuValue || isPending}
+        >
           {isPending ? 'Saving...' : 'Save'}
         </Button>
       </DialogFooter>

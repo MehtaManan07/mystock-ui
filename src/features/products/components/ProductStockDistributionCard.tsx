@@ -2,8 +2,7 @@ import React from 'react';
 import { Boxes } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -13,6 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { EmptyState } from '../../../components/common/EmptyState';
 import type { ContainerProductInfo } from '../../../types';
 
 export interface ProductStockDistributionCardProps {
@@ -25,40 +25,44 @@ export const ProductStockDistributionCard: React.FC<ProductStockDistributionCard
   containers,
   onContainerClick,
   onManageClick,
-}) => (
-  <Card>
-    <CardContent>
-      <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-base font-semibold">
-          Stock Distribution ({containers.length} containers)
-        </h3>
-        {onManageClick && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="text-primary"
-                aria-label="Manage Containers"
-                onClick={onManageClick}
-              >
-                <Boxes />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Manage Containers</TooltipContent>
-          </Tooltip>
-        )}
-      </div>
-      <Separator className="mb-4" />
+}) => {
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader className="border-b border-border/70 pb-5">
+        <CardTitle className="text-base font-semibold">Stock distribution</CardTitle>
+        <CardAction className="flex items-center gap-2">
+          <Badge variant="outline" className="tabular-nums">
+            {containers.length} container{containers.length !== 1 ? 's' : ''}
+          </Badge>
+          {onManageClick && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-primary hover:bg-primary/10 hover:text-primary"
+                  aria-label="Manage Containers"
+                  onClick={onManageClick}
+                >
+                  <Boxes />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Manage Containers</TooltipContent>
+            </Tooltip>
+          )}
+        </CardAction>
+      </CardHeader>
 
-      {containers.length > 0 ? (
-        <div className="overflow-x-auto">
+      <CardContent className="px-0">
+        {containers.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Container</TableHead>
+                <TableHead className="pl-6">Container</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead className="text-right">Quantity</TableHead>
+                <TableHead numeric className="pr-6">
+                  Quantity
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -68,23 +72,33 @@ export const ProductStockDistributionCard: React.FC<ProductStockDistributionCard
                   className="cursor-pointer"
                   onClick={() => onContainerClick(cp.container.id)}
                 >
-                  <TableCell>
+                  <TableCell className="pl-6">
                     <p className="text-sm font-medium">{cp.container.name}</p>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{cp.container.type}</Badge>
+                    <Badge variant="outline" className="capitalize">
+                      {cp.container.type}
+                    </Badge>
                   </TableCell>
-                  <TableCell className="text-right">{cp.quantity}</TableCell>
+                  <TableCell numeric className="pr-6 font-medium">
+                    {cp.quantity}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </div>
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          This product is not stored in any containers yet.
-        </p>
-      )}
-    </CardContent>
-  </Card>
-);
+        ) : (
+          <EmptyState
+            compact
+            icon={<Boxes />}
+            title="Not stored anywhere yet"
+            message="This product is not stored in any containers. Assign it to a container to start tracking stock."
+            actionLabel={onManageClick ? 'Manage containers' : undefined}
+            actionIcon={<Boxes />}
+            onAction={onManageClick}
+          />
+        )}
+      </CardContent>
+    </Card>
+  );
+};

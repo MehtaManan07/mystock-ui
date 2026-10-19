@@ -82,12 +82,14 @@ export function Combobox<T>({
             aria-invalid={invalid}
             disabled={disabled}
             className={cn(
-              'w-full justify-between font-normal',
+              'w-full justify-between gap-2 font-normal',
               !selectedLabel && 'text-muted-foreground',
               showClear && 'pr-12'
             )}
           >
-            <span className="truncate">{selectedLabel || placeholder}</span>
+            <span className="min-w-0 truncate text-left">
+              {selectedLabel || placeholder}
+            </span>
             {loading ? (
               <Loader2 className="animate-spin opacity-50" />
             ) : (
@@ -98,7 +100,7 @@ export function Combobox<T>({
         <PopoverContent
           align="start"
           className={cn(
-            'w-(--radix-popover-trigger-width) min-w-[220px] p-0',
+            'w-(--radix-popover-trigger-width) min-w-[220px] overflow-hidden p-0',
             contentClassName
           )}
         >
@@ -108,7 +110,9 @@ export function Combobox<T>({
               onValueChange={onInputChange}
             />
             <CommandList>
-              <CommandEmpty>{loading ? 'Loading...' : emptyText}</CommandEmpty>
+              <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
+                {loading ? 'Loading...' : emptyText}
+              </CommandEmpty>
               <CommandGroup>
                 {options.map((option) => {
                   const key = getOptionKey(option);
@@ -125,7 +129,7 @@ export function Combobox<T>({
                     >
                       <Check
                         className={cn(
-                          'mr-1 size-4',
+                          'mr-1 size-4 text-primary',
                           value !== null && getOptionKey(value) === key
                             ? 'opacity-100'
                             : 'opacity-0'
@@ -134,7 +138,9 @@ export function Combobox<T>({
                       {renderOption ? (
                         renderOption(option)
                       ) : (
-                        <span className="truncate">{getOptionLabel(option)}</span>
+                        <span className="min-w-0 truncate">
+                          {getOptionLabel(option)}
+                        </span>
                       )}
                     </CommandItem>
                   );
@@ -151,7 +157,7 @@ export function Combobox<T>({
           variant="ghost"
           size="icon-sm"
           aria-label="Clear selection"
-          className="absolute top-1/2 right-7 -translate-y-1/2"
+          className="absolute top-1/2 right-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           onClick={() => onChange(null)}
         >
           <X />

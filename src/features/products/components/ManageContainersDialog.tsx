@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from 'cn';
+import { EmptyState } from '../../../components/common/EmptyState';
 import { useContainers } from '../../../hooks/useContainers';
 import { useSetContainerProducts } from '../../../hooks/useContainerProducts';
 import type { ContainerProductInfo, SetProductsDto } from '../../../types';
@@ -220,6 +221,7 @@ export const ManageContainersDialog: React.FC<ManageContainersDialogProps> = ({
             <Alert variant="destructive" className="mb-4 pr-10">
               <AlertDescription>{error}</AlertDescription>
               <Button
+                type="button"
                 variant="ghost"
                 size="icon-sm"
                 aria-label="Dismiss error"
@@ -232,9 +234,9 @@ export const ManageContainersDialog: React.FC<ManageContainersDialogProps> = ({
           )}
 
           {/* Add Container Section */}
-          <div className="mt-2 mb-6 flex items-end gap-4">
+          <div className="mb-5 flex flex-col gap-3 rounded-lg border border-border/70 bg-muted/30 p-3 sm:flex-row sm:items-end sm:gap-3">
             <div className="grid flex-1 gap-2">
-              <Label htmlFor="manage-containers-select">Select Container</Label>
+              <Label htmlFor="manage-containers-select">Select container</Label>
               <Popover open={containerPickerOpen} onOpenChange={setContainerPickerOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -303,19 +305,24 @@ export const ManageContainersDialog: React.FC<ManageContainersDialogProps> = ({
               </Popover>
             </div>
 
-            <div className="grid w-[120px] gap-2">
+            <div className="grid gap-2 sm:w-[120px]">
               <Label htmlFor="manage-containers-quantity">Quantity</Label>
               <Input
                 id="manage-containers-quantity"
                 type="number"
-                className="h-8"
+                className="h-8 tabular-nums"
                 min={1}
                 value={newQuantity}
                 onChange={(e) => setNewQuantity(parseInt(e.target.value) || 0)}
               />
             </div>
 
-            <Button onClick={handleAddContainer} disabled={!selectedContainer || newQuantity <= 0}>
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleAddContainer}
+              disabled={!selectedContainer || newQuantity <= 0}
+            >
               <Plus />
               Add
             </Button>
@@ -323,14 +330,14 @@ export const ManageContainersDialog: React.FC<ManageContainersDialogProps> = ({
 
           {/* Containers Table */}
           {items.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
+            <div className="overflow-hidden rounded-lg border border-border/70">
+              <Table stickyHeader containerClassName="max-h-[45vh]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Container</TableHead>
                     <TableHead>Type</TableHead>
-                    <TableHead className="text-right">Quantity</TableHead>
-                    <TableHead className="text-center">Actions</TableHead>
+                    <TableHead numeric>Quantity</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -340,12 +347,15 @@ export const ManageContainersDialog: React.FC<ManageContainersDialogProps> = ({
                         <p className="text-sm font-medium">{item.container.name}</p>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{item.container.type}</Badge>
+                        <Badge variant="outline" className="capitalize">
+                          {item.container.type}
+                        </Badge>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell numeric>
                         <Input
                           type="number"
-                          className="ml-auto h-8 w-[100px]"
+                          aria-label={`Quantity in ${item.container.name}`}
+                          className="ml-auto h-8 w-[100px] text-right tabular-nums"
                           min={0}
                           value={item.quantity}
                           onChange={(e) =>
@@ -356,13 +366,14 @@ export const ManageContainersDialog: React.FC<ManageContainersDialogProps> = ({
                           }
                         />
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-right">
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
+                              type="button"
                               variant="ghost"
                               size="icon-sm"
-                              className="text-destructive"
+                              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                               aria-label="Remove"
                               onClick={() => handleRemoveContainer(item.container.id)}
                             >
@@ -378,31 +389,33 @@ export const ManageContainersDialog: React.FC<ManageContainersDialogProps> = ({
               </Table>
             </div>
           ) : (
-            <div className="rounded bg-accent px-4 py-8 text-center">
-              <Boxes className="mx-auto mb-2 size-12 text-muted-foreground" strokeWidth={1.5} />
-              <p className="text-sm text-muted-foreground">
-                This product is not stored in any containers yet. Add containers using the form
-                above.
-              </p>
+            <div className="rounded-lg border border-dashed border-border">
+              <EmptyState
+                compact
+                icon={<Boxes />}
+                title="No containers yet"
+                message="This product is not stored in any containers. Pick a container above and add it with a quantity."
+              />
             </div>
           )}
 
           {/* Summary */}
-          <div className="mt-4 flex gap-4">
-            <Badge variant="outline" className="border-primary text-primary">
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary tabular-nums">
               {items.length} container{items.length !== 1 ? 's' : ''}
             </Badge>
-            <Badge variant="outline" className="border-success text-success">
+            <Badge variant="outline" className="border-success/30 bg-success/10 text-success tabular-nums">
               {items.reduce((sum, i) => sum + i.quantity, 0)} total quantity
             </Badge>
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isSaving}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isSaving || !hasChanges()}>
+          <Button type="button" onClick={handleSave} disabled={isSaving || !hasChanges()}>
+            {isSaving ? <Loader2 className="animate-spin" /> : null}
             {isSaving ? 'Saving...' : 'Save Changes'}
           </Button>
         </DialogFooter>

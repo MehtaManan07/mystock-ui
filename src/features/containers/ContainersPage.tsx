@@ -5,29 +5,29 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Eye, Loader2, Pencil, ListPlus, Plus, Trash2 } from 'lucide-react';
+import { cn } from 'cn';
+import { Eye, Loader2, Pencil, ListPlus, Plus, SearchX, Trash2, Warehouse } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SearchInput } from '../../components/common/SearchInput';
 import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
+import { ResponsiveTable } from '../../components/common/ResponsiveTable';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { ContainerFormDialog } from './components/ContainerFormDialog';
 import { BulkContainerFormDialog } from './components/BulkContainerFormDialog';
 import { useContainersInfinite, useCreateContainer, useUpdateContainer, useDeleteContainer, useCreateContainersBulk } from '../../hooks/useContainers';
 import type { Container, CreateContainerDto, UpdateContainerDto } from '../../types';
+
+/** Containers hold either one product line or many; mixed is the notable case. */
+const containerTypeClass = (type: string) =>
+  type === 'mixed'
+    ? 'border-primary/30 bg-primary/10 text-primary'
+    : 'border-border bg-muted text-muted-foreground';
 
 export const ContainersPage: React.FC = () => {
   const navigate = useNavigate();
@@ -163,6 +163,104 @@ export const ContainersPage: React.FC = () => {
     });
   };
 
+  const columns = [
+    {
+      id: 'name',
+      label: 'Name',
+      minWidth: 200,
+      render: (container: Container) => (
+        <span className="font-medium">{container.name}</span>
+      ),
+    },
+    {
+      id: 'type',
+      label: 'Type',
+      render: (container: Container) => (
+        <Badge
+          variant="outline"
+          className={cn('capitalize', containerTypeClass(container.type))}
+        >
+          {container.type}
+        </Badge>
+      ),
+    },
+    {
+      id: 'productCount',
+      label: 'Products',
+      numeric: true,
+      render: (container: Container) => (
+        <span
+          className={cn(
+            'tabular-nums',
+            container.productCount > 0
+              ? 'font-medium text-foreground'
+              : 'text-muted-foreground'
+          )}
+        >
+          {container.productCount}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      label: 'Actions',
+      align: 'center' as const,
+      isAction: true,
+      render: (container: Container) => (
+        <div
+          className="flex items-center justify-center gap-0.5"
+          onClick={(e: React.MouseEvent) => e.stopPropagation()}
+        >
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon-sm" aria-label="View" asChild>
+                <a
+                  href={`/containers/${container.id}`}
+                  onClick={(e: React.MouseEvent) => {
+                    if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                      e.preventDefault();
+                      handleViewContainer(container);
+                    }
+                  }}
+                >
+                  <Eye />
+                </a>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>View</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Edit"
+                onClick={() => handleOpenEditDialog(container)}
+              >
+                <Pencil />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Edit</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Delete"
+                className="text-destructive hover:text-destructive"
+                onClick={() => handleOpenDeleteDialog(container)}
+              >
+                <Trash2 />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Delete</TooltipContent>
+          </Tooltip>
+        </div>
+      ),
+    },
+  ];
+
   // Render content for the table area
   const renderTableContent = () => {
     if (showFullLoading) {
@@ -176,9 +274,15 @@ export const ContainersPage: React.FC = () => {
     if (!containers || containers.length === 0) {
       return (
         <EmptyState
-          title="No containers found"
-          message={search ? 'Try a different search term' : 'Add your first container to get started'}
-          actionLabel={!search ? 'Add Container' : undefined}
+          icon={search ? <SearchX /> : <Warehouse />}
+          title={search ? 'No matching containers' : 'No containers yet'}
+          message={
+            search
+              ? `Nothing matched "${search}". Try a different search term.`
+              : 'Containers are the physical places you store stock. Add your first one to get started.'
+          }
+          actionLabel={!search ? 'Add container' : undefined}
+          actionIcon={!search ? <Plus /> : undefined}
           onAction={!search ? handleOpenCreateDialog : undefined}
         />
       );
@@ -186,126 +290,26 @@ export const ContainersPage: React.FC = () => {
 
     return (
       <>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead className="text-center">Products</TableHead>
-                <TableHead className="text-center">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {containers.map((container) => (
-                <TableRow
-                  key={container.id}
-                  className="cursor-pointer"
-                  onClick={(e: React.MouseEvent) => {
-                    if (e.metaKey || e.ctrlKey || e.shiftKey) {
-                      window.open(`/containers/${container.id}`, '_blank');
-                      return;
-                    }
-                    handleViewContainer(container);
-                  }}
-                  onAuxClick={(e: React.MouseEvent) => {
-                    if (e.button === 1) window.open(`/containers/${container.id}`, '_blank');
-                  }}
-                >
-                  <TableCell>
-                    <p className="text-sm font-semibold">{container.name}</p>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={
-                        container.type === 'mixed'
-                          ? 'border-secondary-foreground/40 text-secondary-foreground'
-                          : 'border-primary text-primary'
-                      }
-                    >
-                      {container.type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Badge
-                      variant={container.productCount > 0 ? 'default' : 'outline'}
-                    >
-                      {container.productCount}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="View"
-                          asChild
-                        >
-                          <a
-                            href={`/containers/${container.id}`}
-                            onClick={(e: React.MouseEvent) => {
-                              if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
-                                e.preventDefault();
-                                handleViewContainer(container);
-                              }
-                            }}
-                          >
-                            <Eye />
-                          </a>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>View</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="Edit"
-                          onClick={() => handleOpenEditDialog(container)}
-                        >
-                          <Pencil />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Edit</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="Delete"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => handleOpenDeleteDialog(container)}
-                        >
-                          <Trash2 />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Delete</TooltipContent>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <ResponsiveTable
+          columns={columns}
+          data={containers}
+          keyExtractor={(container) => container.id}
+          onRowClick={handleViewContainer}
+          getRowHref={(container) => `/containers/${container.id}`}
+        />
 
-        <div className="p-4 text-center">
+        <div className="border-t border-border/70 px-4 py-4 text-center">
           <div ref={observerTarget} className="h-5" />
 
           {isFetchingNextPage && (
-            <div className="flex items-center justify-center gap-2">
-              <Loader2 className="size-6 animate-spin" />
-              <p className="text-sm text-muted-foreground">
-                Loading more containers...
-              </p>
+            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+              <span className="text-sm">Loading more containers...</span>
             </div>
           )}
 
           {!hasNextPage && containers.length > 0 && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground tabular-nums">
               All containers loaded ({totalCount} total)
             </span>
           )}
@@ -315,7 +319,7 @@ export const ContainersPage: React.FC = () => {
   };
 
   return (
-    <div>
+    <div className="space-y-5">
       <PageHeader
         title="Containers"
         subtitle={
@@ -324,29 +328,32 @@ export const ContainersPage: React.FC = () => {
             : 'Manage your storage containers'
         }
         action={
-          <div className="flex gap-2">
-            <Button onClick={handleOpenCreateDialog}>
-              <Plus />
-              Add Container
-            </Button>
+          <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={handleOpenBulkDialog}>
               <ListPlus />
-              Bulk Add
+              Bulk add
+            </Button>
+            <Button onClick={handleOpenCreateDialog}>
+              <Plus />
+              Add container
             </Button>
           </div>
         }
       />
 
-      <div className="mb-6 flex items-center gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <SearchInput
           value={search}
           onChange={setSearch}
           placeholder="Search by name..."
+          className="sm:max-w-xs"
         />
-        {/* Show searching indicator (not for next page fetch) */}
-        {isFetching && !isFetchingNextPage && !showFullLoading && (
-          <span className="text-xs text-muted-foreground">Searching...</span>
-        )}
+        <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+          {/* Show searching indicator (not for next page fetch) */}
+          {isFetching && !isFetchingNextPage && !showFullLoading && (
+            <span className="text-xs text-muted-foreground">Searching...</span>
+          )}
+        </div>
       </div>
 
       <Card className="gap-0 overflow-hidden py-0">

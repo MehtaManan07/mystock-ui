@@ -1,11 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUrlParam } from '../../hooks/useUrlFilters';
-import { Eye, Loader2, Pencil, Trash2 } from 'lucide-react';
+import {
+  Eye,
+  Layers,
+  Loader2,
+  PackageSearch,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from 'cn';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SearchInput } from '../../components/common/SearchInput';
 import { LoadingState } from '../../components/common/LoadingState';
@@ -143,6 +153,13 @@ export const ProductsPage: React.FC = () => {
     return `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
   };
 
+  /** Stock level tone: out of stock, running low, healthy. */
+  const stockToneClass = (quantity: number) => {
+    if (quantity <= 0) return 'bg-destructive/10 text-destructive border-destructive/30';
+    if (quantity < 10) return 'bg-warning/10 text-warning border-warning/40';
+    return 'bg-success/10 text-success border-success/30';
+  };
+
   // Define table columns for ResponsiveTable
   const columns = [
     {
@@ -167,7 +184,6 @@ export const ProductsPage: React.FC = () => {
       id: 'displayName',
       label: 'Display Name',
       mobileLabel: 'Display',
-      align: 'right' as const,
       render: (product: Product) => (
         <p className="text-sm">{product.display_name || '-'}</p>
       ),
@@ -178,7 +194,9 @@ export const ProductsPage: React.FC = () => {
       label: 'Type',
       render: (product: Product) => (
         product.product_type ? (
-          <Badge variant="outline">{product.product_type}</Badge>
+          <Badge variant="outline" className="capitalize">
+            {product.product_type}
+          </Badge>
         ) : (
           <p className="text-sm text-muted-foreground">-</p>
         )
@@ -201,33 +219,31 @@ export const ProductsPage: React.FC = () => {
       id: 'salePrice',
       label: 'Sale Price',
       mobileLabel: 'Sale',
-      align: 'right' as const,
+      numeric: true,
       render: (product: Product) => (
-        <Badge variant="outline" className="border-success text-success">
+        <span className="text-sm font-medium text-success">
           {formatCurrency(product.default_sale_price)}
-        </Badge>
+        </span>
       ),
     },
     {
       id: 'quantity',
       label: 'Quantity',
       mobileLabel: 'Qty',
-      align: 'center' as const,
+      numeric: true,
       render: (product: Product) => (
-        <div className="flex flex-col items-center gap-1">
-          <Badge variant={product.totalQuantity > 0 ? 'default' : 'outline'}>
-            {formatQuantityDisplay(product.totalQuantity, product.packing)}
-          </Badge>
-        </div>
+        <Badge variant="outline" className={cn('tabular-nums', stockToneClass(product.totalQuantity))}>
+          {formatQuantityDisplay(product.totalQuantity, product.packing)}
+        </Badge>
       ),
     },
     {
       id: 'actions',
       label: 'Actions',
-      align: 'center' as const,
+      align: 'right' as const,
       isAction: true,
       render: (product: Product) => (
-        <div className="flex justify-center gap-1">
+        <div className="flex justify-end gap-1">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button asChild variant="ghost" size="icon-sm" aria-label="View">
@@ -269,7 +285,7 @@ export const ProductsPage: React.FC = () => {
                 variant="ghost"
                 size="icon-sm"
                 aria-label="Delete"
-                className="text-destructive"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleOpenDeleteDialog(product);
@@ -291,8 +307,15 @@ export const ProductsPage: React.FC = () => {
     if (!search?.trim()) {
       return (
         <EmptyState
+          icon={<Search />}
           title="Search to find products"
           message="Enter a product name, SKU, size, or packing in the search bar above to get started."
+          secondaryAction={
+            <Button variant="outline" onClick={handleOpenCreateDialog}>
+              <Plus />
+              Add product
+            </Button>
+          }
         />
       );
     }
@@ -308,8 +331,12 @@ export const ProductsPage: React.FC = () => {
     if (!products || products.length === 0) {
       return (
         <EmptyState
+          icon={<PackageSearch />}
           title="No products found"
-          message="Try a different search term"
+          message={`Nothing matches “${search.trim()}”. Try a different search term, or add the product.`}
+          actionLabel="Add product"
+          actionIcon={<Plus />}
+          onAction={handleOpenCreateDialog}
         />
       );
     }
@@ -322,25 +349,27 @@ export const ProductsPage: React.FC = () => {
           keyExtractor={(product) => product.id.toString()}
           onRowClick={handleViewProduct}
           getRowHref={(product) => `/products/${product.id}`}
-          emptyMessage="No products found"
+          emptyIcon={<PackageSearch />}
+          emptyTitle="No products found"
+          emptyMessage="Try a different search term."
         />
 
         {/* Infinite scroll trigger and loading indicator */}
-        <div className="p-4 text-center">
+        <div className="border-t border-border/70 p-4 text-center">
           {/* Invisible div that triggers intersection observer */}
           <div ref={observerTarget} className="h-5" />
 
           {/* Loading indicator while fetching next page */}
           {isFetchingNextPage && (
             <div className="flex items-center justify-center gap-2">
-              <Loader2 className="size-6 animate-spin text-primary" />
+              <Loader2 className="size-4 animate-spin text-primary" />
               <p className="text-sm text-muted-foreground">Loading more products...</p>
             </div>
           )}
 
           {/* End of results indicator */}
           {!hasNextPage && products.length > 0 && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground tabular-nums">
               All products loaded ({totalCount} total)
             </span>
           )}
@@ -359,35 +388,48 @@ export const ProductsPage: React.FC = () => {
             : 'Search to browse your product catalog'
         }
         action={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setBulkDialogOpen(true)}>
-              Bulk Create
+          <div className="flex gap-2 max-sm:w-full">
+            <Button
+              variant="outline"
+              className="max-sm:flex-1"
+              onClick={() => setBulkDialogOpen(true)}
+            >
+              <Layers />
+              Bulk create
             </Button>
-            <Button onClick={handleOpenCreateDialog}>Add Product</Button>
+            <Button className="max-sm:flex-1" onClick={handleOpenCreateDialog}>
+              <Plus />
+              Add product
+            </Button>
           </div>
         }
       />
 
-      {/* Search bar - always visible */}
-      <div className="mb-4 flex flex-wrap items-center gap-4 sm:mb-6">
-        <div className="w-full sm:w-auto sm:min-w-[200px] sm:flex-auto">
+      <div className="space-y-5">
+        {/* Search bar - always visible */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <SearchInput
             value={search}
             onChange={setSearch}
             placeholder="Search by name, size, or packing..."
-            className="sm:w-full"
+            className="sm:max-w-xs"
           />
+          <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+            {/* Show searching indicator (not for next page fetch) */}
+            {isFetching && !isFetchingNextPage && !showFullLoading && (
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Loader2 className="size-3.5 animate-spin" />
+                Searching…
+              </span>
+            )}
+          </div>
         </div>
-        {/* Show searching indicator (not for next page fetch) */}
-        {isFetching && !isFetchingNextPage && !showFullLoading && (
-          <span className="text-xs text-muted-foreground">Searching...</span>
-        )}
-      </div>
 
-      {/* Products table */}
-      <Card className="overflow-hidden py-0">
-        {renderTableContent()}
-      </Card>
+        {/* Products table */}
+        <Card className="overflow-hidden py-0">
+          {renderTableContent()}
+        </Card>
+      </div>
 
       {/* Create/Edit Dialog */}
       <ProductFormDialog

@@ -287,7 +287,7 @@ export const PaymentFormDialog: React.FC<PaymentFormDialogProps> = ({
           <DialogTitle>{isEdit ? 'Edit Payment' : 'Add Payment'}</DialogTitle>
         </DialogHeader>
 
-        <div className="border-y py-4">
+        <div className="border-y border-border/70 py-4">
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
             <div className="grid grid-cols-12 gap-4">
               {/* Payment Type Toggle */}
@@ -302,14 +302,14 @@ export const PaymentFormDialog: React.FC<PaymentFormDialogProps> = ({
                   >
                     <ToggleGroupItem
                       value={PAYMENT_TYPES.INCOME}
-                      className="data-[state=on]:bg-success data-[state=on]:text-success-foreground"
+                      className="data-[state=on]:bg-success/10 data-[state=on]:text-success"
                     >
                       <IncomeIcon className="mr-2" />
                       Income
                     </ToggleGroupItem>
                     <ToggleGroupItem
                       value={PAYMENT_TYPES.EXPENSE}
-                      className="data-[state=on]:bg-destructive data-[state=on]:text-white"
+                      className="data-[state=on]:bg-destructive/10 data-[state=on]:text-destructive"
                     >
                       <ExpenseIcon className="mr-2" />
                       Expense
@@ -324,6 +324,7 @@ export const PaymentFormDialog: React.FC<PaymentFormDialogProps> = ({
                 <Input
                   id="payment-date"
                   type="date"
+                  className="tabular-nums"
                   {...register('payment_date', { required: 'Date is required' })}
                   aria-invalid={!!errors.payment_date}
                 />
@@ -336,13 +337,13 @@ export const PaymentFormDialog: React.FC<PaymentFormDialogProps> = ({
               <div className="col-span-12 grid gap-2 sm:col-span-6">
                 <Label htmlFor="payment-amount">Amount</Label>
                 <div className="relative">
-                  <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm">
+                  <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
                     ₹
                   </span>
                   <Input
                     id="payment-amount"
                     type="number"
-                    className="pl-7"
+                    className="pl-7 tabular-nums"
                     {...register('amount', {
                       required: 'Amount is required',
                       min: { value: 0.01, message: 'Amount must be positive' },
@@ -370,7 +371,7 @@ export const PaymentFormDialog: React.FC<PaymentFormDialogProps> = ({
                     />
                   )}
                 />
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   You can type your own category
                 </p>
               </div>
@@ -426,7 +427,7 @@ export const PaymentFormDialog: React.FC<PaymentFormDialogProps> = ({
               <div className="col-span-12 grid gap-2">
                 <Label htmlFor="payment-description">Description</Label>
                 <Textarea id="payment-description" rows={2} {...register('description')} />
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Brief description of the payment
                 </p>
               </div>
@@ -450,16 +451,11 @@ export const PaymentFormDialog: React.FC<PaymentFormDialogProps> = ({
           </Button>
           <Button
             type="button"
-            variant={paymentType === PAYMENT_TYPES.INCOME ? 'default' : 'destructive'}
-            className={cn(
-              paymentType === PAYMENT_TYPES.INCOME &&
-                'bg-success text-success-foreground hover:bg-success/90'
-            )}
             onClick={handleSubmit(onSubmit)}
             disabled={isLoading}
           >
             {isLoading ? (
-              <Loader2 className="size-6 animate-spin" />
+              <Loader2 className="size-4 animate-spin" />
             ) : isEdit ? (
               'Update'
             ) : (

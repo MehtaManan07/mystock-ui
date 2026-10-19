@@ -157,12 +157,15 @@ export const ProductDetailPage: React.FC = () => {
           { label: 'Products', path: '/products' },
           { label: product.name },
         ]}
-      />
-
-      <div className="mb-6 flex gap-2">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button asChild variant="ghost" size="icon" aria-label="Back to Products">
+        action={
+          <div className="flex items-center gap-2 max-sm:w-full">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="max-sm:flex-1"
+              aria-label="Back to Products"
+            >
               <a
                 href="/products"
                 onClick={(e: React.MouseEvent) => {
@@ -173,73 +176,63 @@ export const ProductDetailPage: React.FC = () => {
                 }}
               >
                 <ArrowLeft />
+                Back
               </a>
             </Button>
-          </TooltipTrigger>
-          <TooltipContent>Back to Products</TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
             <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Edit Product"
+              variant="outline"
+              size="sm"
+              className="max-sm:flex-1"
               onClick={() => setEditDialogOpen(true)}
             >
               <Pencil />
+              Edit
             </Button>
-          </TooltipTrigger>
-          <TooltipContent>Edit Product</TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-destructive"
-              aria-label="Delete Product"
-              onClick={() => setDeleteDialogOpen(true)}
-            >
-              <Trash2 />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Delete Product</TooltipContent>
-        </Tooltip>
-      </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  aria-label="Delete Product"
+                  onClick={() => setDeleteDialogOpen(true)}
+                >
+                  <Trash2 />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Delete product</TooltipContent>
+            </Tooltip>
+          </div>
+        }
+      />
 
-      <div className="grid grid-cols-12 gap-6">
-        <div className="col-span-12">
-          <ProductImagesCard
-            images={images}
-            selectedImageIndex={selectedImageIndex}
-            onSelectImage={setSelectedImageIndex}
-            onUpload={(files) => uploadImagesMutation.mutate(files, {
-              onSuccess: () => { if (fileInputRef.current) fileInputRef.current.value = ''; }
-            })}
-            onCopyFromClick={() => setCopyFromDialogOpen(true)}
-            onDeleteImage={(imageId) => deleteImageMutation.mutate(imageId, {
-              onSuccess: () => setSelectedImageIndex((i) => Math.max(0, i - 1)),
-            })}
-            uploadPending={uploadImagesMutation.isPending}
-            copyPending={copyFromMutation.isPending}
-            deletePending={deleteImageMutation.isPending}
-            fileInputRef={fileInputRef}
-          />
-        </div>
+      <div className="space-y-5">
+        <ProductImagesCard
+          images={images}
+          selectedImageIndex={selectedImageIndex}
+          onSelectImage={setSelectedImageIndex}
+          onUpload={(files) => uploadImagesMutation.mutate(files, {
+            onSuccess: () => { if (fileInputRef.current) fileInputRef.current.value = ''; }
+          })}
+          onCopyFromClick={() => setCopyFromDialogOpen(true)}
+          onDeleteImage={(imageId) => deleteImageMutation.mutate(imageId, {
+            onSuccess: () => setSelectedImageIndex((i) => Math.max(0, i - 1)),
+          })}
+          uploadPending={uploadImagesMutation.isPending}
+          copyPending={copyFromMutation.isPending}
+          deletePending={deleteImageMutation.isPending}
+          fileInputRef={fileInputRef}
+        />
 
-        <div className="col-span-12">
-          <ProductInfoCard product={product} totalQuantity={totalQuantity} />
-        </div>
+        <ProductInfoCard product={product} totalQuantity={totalQuantity} />
 
-        <div className="col-span-12">
-          <ProductStockDistributionCard
-            containers={product.containers ?? []}
-            onContainerClick={(containerId) => navigate(`/containers/${containerId}`)}
-            onManageClick={() => setManageContainersDialogOpen(true)}
-          />
-        </div>
+        <ProductStockDistributionCard
+          containers={product.containers ?? []}
+          onContainerClick={(containerId) => navigate(`/containers/${containerId}`)}
+          onManageClick={() => setManageContainersDialogOpen(true)}
+        />
 
-        <div className="col-span-12 md:col-span-8">
+        <div className="grid gap-5 lg:grid-cols-2">
           <ProductVendorSkusCard
             vendorSkus={product.vendor_skus ?? []}
             onAdd={handleOpenVendorSkuDialog}

@@ -18,7 +18,7 @@ export default function ConfirmActionWidget({ widget }: Props) {
     <div className="mb-3 flex justify-start">
       <Card className="w-full max-w-[82%]">
         <CardContent>
-          <h4 className="mb-2 text-sm font-medium">{widget.title}</h4>
+          <h4 className="mb-2 text-sm font-semibold">{widget.title}</h4>
           <Separator className="mb-3" />
 
           <div className="flex flex-col gap-1.5">
@@ -27,7 +27,7 @@ export default function ConfirmActionWidget({ widget }: Props) {
                 <p className="w-30 shrink-0 text-sm text-muted-foreground">
                   {field.label}
                 </p>
-                <p className="text-sm break-words">{field.value}</p>
+                <p className="text-sm break-words tabular-nums">{field.value}</p>
               </div>
             ))}
           </div>
@@ -50,7 +50,7 @@ export default function ConfirmActionWidget({ widget }: Props) {
                 Confirming actions isn't available yet — coming soon
               </TooltipContent>
             </Tooltip>
-            <Button size="sm" variant="ghost" disabled>
+            <Button size="sm" variant="outline" disabled>
               {widget.cancel_label}
             </Button>
           </div>

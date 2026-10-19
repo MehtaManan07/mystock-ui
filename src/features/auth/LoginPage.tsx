@@ -46,85 +46,106 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
-      <Card className="w-full max-w-[420px] py-0 shadow-lg">
-        <CardContent className="p-8">
-          {/* Logo */}
-          <div className="mb-8 text-center">
-            <div className="mb-4 inline-flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-              <Package className="size-7" />
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight">Welcome Back</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Sign in to continue to Kraft Culture
+    <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
+      {/* Subtle kraft-paper texture behind the card. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-grain opacity-70"
+      />
+
+      <div className="relative w-full max-w-[26rem] space-y-6">
+        {/* Brand mark — mirrors the sidebar identity. */}
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
+            <Package className="size-6" />
+          </div>
+          <div>
+            <p className="text-lg font-bold tracking-tight">Kraft Culture</p>
+            <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+              Inventory &amp; Billing
             </p>
           </div>
+        </div>
 
-          {/* Error message */}
-          {error && (
-            <Alert variant="destructive" className="mb-6">
-              <CircleAlert />
-              <AlertDescription>
-                {(error as { message?: string }).message ||
-                  'Login failed. Please try again.'}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                autoComplete="username"
-                {...register('username')}
-                aria-invalid={!!errors.username}
-                disabled={isPending}
-              />
-              {errors.username && (
-                <p className="text-sm text-destructive">
-                  {errors.username.message}
-                </p>
-              )}
+        <Card className="py-0">
+          <CardContent className="p-6 sm:p-8">
+            <div className="mb-6 space-y-1">
+              <h1 className="text-xl font-semibold tracking-tight">Welcome back</h1>
+              <p className="text-sm text-muted-foreground">
+                Sign in to continue to your workspace.
+              </p>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
+            {/* Error message */}
+            {error && (
+              <Alert variant="destructive" className="mb-5">
+                <CircleAlert />
+                <AlertDescription>
+                  {(error as { message?: string }).message ||
+                    'Login failed. Please try again.'}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="username">Username</Label>
                 <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  {...register('password')}
-                  aria-invalid={!!errors.password}
+                  id="username"
+                  autoComplete="username"
+                  {...register('username')}
+                  aria-invalid={!!errors.username}
                   disabled={isPending}
-                  className="pr-10"
                 />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute top-1/2 right-1 -translate-y-1/2"
-                >
-                  {showPassword ? <EyeOff /> : <Eye />}
-                </Button>
+                {errors.username && (
+                  <p className="text-sm text-destructive">
+                    {errors.username.message}
+                  </p>
+                )}
               </div>
-              {errors.password && (
-                <p className="text-sm text-destructive">
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
 
-            <Button type="submit" size="lg" className="mt-2 w-full" disabled={isPending}>
-              {isPending ? 'Signing in...' : 'Sign In'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              <div className="grid gap-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    {...register('password')}
+                    aria-invalid={!!errors.password}
+                    disabled={isPending}
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute top-1/2 right-1 -translate-y-1/2"
+                  >
+                    {showPassword ? <EyeOff /> : <Eye />}
+                  </Button>
+                </div>
+                {errors.password && (
+                  <p className="text-sm text-destructive">
+                    {errors.password.message}
+                  </p>
+                )}
+              </div>
+
+              <Button type="submit" size="lg" className="mt-2 w-full" disabled={isPending}>
+                {isPending ? 'Signing in...' : 'Sign In'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <p className="text-center text-xs text-muted-foreground">
+          Kraft Culture &middot; Internal stock &amp; billing system
+        </p>
+      </div>
     </div>
   );
 };

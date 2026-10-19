@@ -49,7 +49,7 @@ export const ContainerSelector: React.FC<ContainerSelectorProps> = ({
     }));
 
   if (isLoading) {
-    return <Loader2 className="size-5 animate-spin" />;
+    return <Loader2 className="size-4 animate-spin text-muted-foreground" />;
   }
 
   if (options.length === 0) {
@@ -60,9 +60,10 @@ export const ContainerSelector: React.FC<ContainerSelectorProps> = ({
             No stock available
           </span>
           <Button
+            type="button"
             size="sm"
             variant="outline"
-            className="border-warning text-warning hover:text-warning"
+            className="border-warning/40 text-warning hover:bg-warning/10 hover:text-warning"
             onClick={() => setAssignDialogOpen(true)}
           >
             <Warehouse />
@@ -96,13 +97,16 @@ export const ContainerSelector: React.FC<ContainerSelectorProps> = ({
         renderOption={(option) => (
           <div className="flex w-full justify-between gap-2">
             <span className="truncate">{option.name}</span>
-            <Badge variant="outline" className="border-success/50 text-success">
+            <Badge
+              variant="outline"
+              className="border-success/30 bg-success/10 tabular-nums text-success"
+            >
               {option.availableQty} items
             </Badge>
           </div>
         )}
       />
-      {!value && <p className="mt-1 text-sm text-destructive">Required</p>}
+      {!value && <p className="mt-1 text-xs text-destructive">Required</p>}
     </div>
   );
 };

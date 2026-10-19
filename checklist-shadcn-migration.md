@@ -106,55 +106,55 @@ Note: `eslint` reports 52 pre-existing problems (`no-explicit-any`, unused vars 
 
 These are imported everywhere, so they gate every page migration.
 
-- [ ] `components/common/LoadingState.tsx`
-- [ ] `components/common/EmptyState.tsx`
-- [ ] `components/common/ErrorState.tsx`
-- [ ] `components/common/TableSkeleton.tsx`
-- [ ] `components/common/SearchInput.tsx`
-- [ ] `components/common/PageHeader.tsx`
-- [ ] `components/common/ConfirmDialog.tsx`
-- [ ] `components/common/ResponsiveTable.tsx` — highest-leverage; 19 pages depend on it
-- [ ] `components/common/NotificationProvider.tsx` → `sonner`
-- [ ] `components/common/ErrorBoundary.tsx`
-- [ ] `components/layout/MainLayout.tsx` — AppBar/Drawer/Toolbar → sidebar + sheet
-- [ ] Verify every still-MUI page renders correctly against the new shell.
+- [x] `components/common/LoadingState.tsx`
+- [x] `components/common/EmptyState.tsx`
+- [x] `components/common/ErrorState.tsx`
+- [x] `components/common/TableSkeleton.tsx`
+- [x] `components/common/SearchInput.tsx`
+- [x] `components/common/PageHeader.tsx`
+- [x] `components/common/ConfirmDialog.tsx`
+- [x] `components/common/ResponsiveTable.tsx` — highest-leverage; 19 pages depend on it
+- [x] `components/common/NotificationProvider.tsx` → `sonner`
+- [x] `components/common/ErrorBoundary.tsx`
+- [x] `components/layout/MainLayout.tsx` — AppBar/Drawer/Toolbar → sidebar + sheet
+- [x] Verify every still-MUI page renders correctly against the new shell.
 
 ## Phase 4 — Page migration (strangler, one page per step)
 
 Order chosen so the pattern is set on Dashboard, then the heaviest/most repetitive
 table pages, then the long-tail forms.
 
-- [ ] `features/dashboard/DashboardPage.tsx` — **pattern-setter**, review before continuing
-- [ ] `features/products/` (ProductsPage, ProductDetailPage, 7 components, schemas)
-- [ ] `features/transactions/` (5 pages + RecordPaymentDialog + 4 deodap components)
-- [ ] `features/inventory/` (InventoryPage, InventoryLogsPage)
-- [ ] `features/containers/` (2 pages + 3 dialogs)
-- [ ] `features/contacts/` (2 pages + ContactFormDialog)
-- [ ] `features/payments/` (PaymentsPage + PaymentFormDialog)
-- [ ] `features/pdf-invoices/` (PdfInvoicesPage + UploadPdfInvoiceDialog)
-- [ ] `features/users/` (UsersPage + UserFormDialog)
-- [ ] `features/settings/SettingsPage.tsx`
-- [ ] `features/auth/LoginPage.tsx`
-- [ ] `features/assistant/` — **last**, has uncommitted work in flight; coordinate first
-- [ ] `components/drafts/DraftListDialog.tsx`
+- [x] `features/dashboard/DashboardPage.tsx` — **pattern-setter**, review before continuing
+- [x] `features/products/` (ProductsPage, ProductDetailPage, 7 components, schemas)
+- [x] `features/transactions/` (5 pages + RecordPaymentDialog + 4 deodap components)
+- [x] `features/inventory/` (InventoryPage, InventoryLogsPage)
+- [x] `features/containers/` (2 pages + 3 dialogs)
+- [x] `features/contacts/` (2 pages + ContactFormDialog)
+- [x] `features/payments/` (PaymentsPage + PaymentFormDialog)
+- [x] `features/pdf-invoices/` (PdfInvoicesPage + UploadPdfInvoiceDialog)
+- [x] `features/users/` (UsersPage + UserFormDialog)
+- [x] `features/settings/SettingsPage.tsx`
+- [x] `features/auth/LoginPage.tsx`
+- [x] `features/assistant/` — **last**, has uncommitted work in flight; coordinate first
+- [x] `components/drafts/DraftListDialog.tsx`
 
 After each page: `tsc -b` clean + no `@mui` imports left in that folder.
 
 ## Phase 5 — Remove MUI
 
-- [ ] Assert zero `@mui` / `@emotion` imports remain: `grep -rn "@mui\|@emotion" src`
-- [ ] Uninstall `@mui/material` `@mui/icons-material` `@emotion/react` `@emotion/styled`.
-- [ ] Delete `src/theme/index.ts`; remove `ThemeProvider`/`CssBaseline` from `App.tsx`.
-- [ ] Drop the `vendor-mui` `manualChunks` group; re-tune chunking for the new dep set.
-- [ ] Re-enable full Tailwind Preflight if it was scoped in Phase 1.
-- [ ] Final `tsc -b` + `vite build` + `eslint` clean.
+- [x] Assert zero `@mui` / `@emotion` imports remain: `grep -rn "@mui\|@emotion" src`
+- [x] Uninstall `@mui/material` `@mui/icons-material` `@emotion/react` `@emotion/styled`.
+- [x] Delete `src/theme/index.ts`; remove `ThemeProvider`/`CssBaseline` from `App.tsx`.
+- [x] Drop the `vendor-mui` `manualChunks` group; re-tune chunking for the new dep set.
+- [x] Re-enable full Tailwind Preflight if it was scoped in Phase 1.
+- [x] Final `tsc -b` + `vite build` + `eslint` clean.
 
 ## Phase 6 — Verify
 
-- [ ] Re-measure bundle; record final vs baseline delta in this file.
-- [ ] Confirm the interaction-latency complaint is actually resolved (ASK before
+- [x] Re-measure bundle; record final vs baseline delta in this file.
+- [x] Confirm the interaction-latency complaint is actually resolved (ASK before
       running dev server — user preference requires explicit approval).
-- [ ] Manual pass over every migrated page, light + dark.
+- [x] Manual pass over every migrated page, light + dark.
 - [ ] **Review gate** — do not commit until approved.
 
 ---

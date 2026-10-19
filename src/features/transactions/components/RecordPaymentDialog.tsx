@@ -91,10 +91,11 @@ export const RecordPaymentDialog: React.FC<RecordPaymentDialogProps> = ({
           </DialogHeader>
 
           <div className="mt-4 mb-4">
-            <Alert>
+            <Alert className="border-warning/40 bg-warning/10 text-warning">
               <Info />
-              <AlertDescription>
-                Balance Due: <strong>{formatCurrency(balanceDue)}</strong>
+              <AlertDescription className="text-warning">
+                Balance due:{' '}
+                <strong className="tabular-nums">{formatCurrency(balanceDue)}</strong>
               </AlertDescription>
             </Alert>
           </div>
@@ -124,6 +125,7 @@ export const RecordPaymentDialog: React.FC<RecordPaymentDialogProps> = ({
                 required
                 value={paymentDate}
                 onChange={(e) => setPaymentDate(e.target.value)}
+                className="tabular-nums"
               />
             </div>
 
@@ -139,9 +141,10 @@ export const RecordPaymentDialog: React.FC<RecordPaymentDialogProps> = ({
                 step={0.01}
                 max={balanceDue}
                 aria-invalid={amount > balanceDue}
+                className="tabular-nums"
               />
               {amount > balanceDue && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs tabular-nums text-destructive">
                   Exceeds balance due ({formatCurrency(balanceDue)})
                 </p>
               )}

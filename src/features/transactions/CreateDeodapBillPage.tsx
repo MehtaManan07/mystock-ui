@@ -126,8 +126,8 @@ export const CreateDeodapBillPage: React.FC = () => {
         ]}
       />
 
-      <div className="mb-4">
-        <Button asChild variant="ghost">
+      <div className="space-y-5">
+        <Button asChild variant="ghost" size="sm">
           <a
             href="/transactions"
             onClick={(e: React.MouseEvent) => {
@@ -141,32 +141,32 @@ export const CreateDeodapBillPage: React.FC = () => {
             Back to Transactions
           </a>
         </Button>
+
+        <ExcelUploadCard
+          fileName={fileName}
+          isProcessing={isProcessing}
+          parseError={parseError}
+          onFile={handleFile}
+        />
+
+        {rows.length > 0 && (
+          <BillItemsTable rows={rows} onContainerChange={handleContainerChange} />
+        )}
+
+        {foundRows.length > 0 && (
+          <div className="flex justify-end">
+            <Button
+              size="lg"
+              disabled={!allContainersSelected}
+              onClick={handleProceedToBillDetails}
+            >
+              {allContainersSelected
+                ? 'Proceed to Bill Details'
+                : `Assign containers for ${remainingCount} remaining row(s)`}
+            </Button>
+          </div>
+        )}
       </div>
-
-      <ExcelUploadCard
-        fileName={fileName}
-        isProcessing={isProcessing}
-        parseError={parseError}
-        onFile={handleFile}
-      />
-
-      {rows.length > 0 && (
-        <BillItemsTable rows={rows} onContainerChange={handleContainerChange} />
-      )}
-
-      {foundRows.length > 0 && (
-        <div className="flex justify-end">
-          <Button
-            size="lg"
-            disabled={!allContainersSelected}
-            onClick={handleProceedToBillDetails}
-          >
-            {allContainersSelected
-              ? 'Proceed to Bill Details'
-              : `Assign containers for ${remainingCount} remaining row(s)`}
-          </Button>
-        </div>
-      )}
     </div>
   );
 };

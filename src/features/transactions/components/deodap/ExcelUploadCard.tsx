@@ -31,12 +31,10 @@ export const ExcelUploadCard: React.FC<ExcelUploadCardProps> = ({
   };
 
   return (
-    <Card className="mb-6">
+    <Card>
       <CardContent>
-        <h3 className="mb-2 text-base font-semibold">
-          Step 1 — Upload Excel File
-        </h3>
-        <p className="mb-4 text-sm text-muted-foreground">
+        <h3 className="text-base font-semibold">Step 1 — Upload Excel File</h3>
+        <p className="mt-1 mb-4 text-sm text-muted-foreground">
           The file should have columns for <strong>SKU</strong> and <strong>Quantity</strong>.
           Header row is auto-detected.
         </p>
@@ -45,25 +43,27 @@ export const ExcelUploadCard: React.FC<ExcelUploadCardProps> = ({
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
           onClick={() => fileInputRef.current?.click()}
-          className="cursor-pointer rounded-lg border-2 border-dashed border-border p-8 text-center transition-colors hover:border-primary"
+          className="cursor-pointer rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center transition-colors hover:border-primary/60 hover:bg-accent/40"
         >
-          <Upload className="mx-auto mb-2 size-12 text-muted-foreground" />
-          <p>{fileName ?? 'Drag & drop or click to select a file'}</p>
-          <span className="text-xs text-muted-foreground">
+          <Upload className="mx-auto mb-3 size-8 text-muted-foreground/70" />
+          <p className="text-sm font-medium">
+            {fileName ?? 'Drag & drop or click to select a file'}
+          </p>
+          <span className="mt-1 block text-xs text-muted-foreground">
             .xlsx, .xls, .csv supported
           </span>
           <input
             ref={fileInputRef}
             type="file"
             accept=".xlsx,.xls,.csv"
-            style={{ display: 'none' }}
+            className="hidden"
             onChange={handleInputChange}
           />
         </div>
 
         {isProcessing && (
-          <div className="mt-4 flex items-center gap-2">
-            <Loader2 className="size-5 animate-spin" />
+          <div className="mt-4 flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" />
             <p className="text-sm">Parsing file and looking up products...</p>
           </div>
         )}

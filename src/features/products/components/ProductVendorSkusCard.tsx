@@ -1,8 +1,8 @@
 import React from 'react';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Tags, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -12,6 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { EmptyState } from '../../../components/common/EmptyState';
 import type { VendorSkuInfo } from '../../../types';
 
 export interface ProductVendorSkusCardProps {
@@ -27,37 +28,41 @@ export const ProductVendorSkusCard: React.FC<ProductVendorSkusCardProps> = ({
   onEdit,
   onDelete,
 }) => (
-  <Card className="mb-6">
-    <CardContent>
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-base font-semibold">Vendor SKU Mappings ({vendorSkus.length})</h3>
+  <Card className="overflow-hidden">
+    <CardHeader className="border-b border-border/70 pb-5 max-sm:grid-cols-1">
+      <CardTitle className="text-base font-semibold">Vendor SKU mappings</CardTitle>
+      <CardAction className="flex items-center gap-2 max-sm:col-start-1 max-sm:row-start-2 max-sm:justify-self-start">
+        <Badge variant="outline" className="tabular-nums">
+          {vendorSkus.length}
+        </Badge>
         <Button size="sm" onClick={onAdd}>
           <Plus />
-          Add Vendor SKU
+          Add vendor SKU
         </Button>
-      </div>
-      <Separator className="mb-4" />
+      </CardAction>
+    </CardHeader>
 
+    <CardContent className="px-0">
       {vendorSkus.length > 0 ? (
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Customer/Vendor Name</TableHead>
-                <TableHead>Vendor SKU</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {vendorSkus.map((vs) => (
-                <TableRow key={vs.vendor_id}>
-                  <TableCell>
-                    <p className="text-sm font-medium">{vs.vendor_name}</p>
-                  </TableCell>
-                  <TableCell>
-                    <p className="font-mono text-sm">{vs.vendor_sku}</p>
-                  </TableCell>
-                  <TableCell className="text-right">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="pl-6">Customer / vendor</TableHead>
+              <TableHead>Vendor SKU</TableHead>
+              <TableHead className="pr-6 text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {vendorSkus.map((vs) => (
+              <TableRow key={vs.vendor_id}>
+                <TableCell className="pl-6">
+                  <p className="text-sm font-medium">{vs.vendor_name}</p>
+                </TableCell>
+                <TableCell>
+                  <p className="font-mono text-sm text-muted-foreground">{vs.vendor_sku}</p>
+                </TableCell>
+                <TableCell className="pr-6">
+                  <div className="flex justify-end gap-1">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
@@ -76,7 +81,7 @@ export const ProductVendorSkusCard: React.FC<ProductVendorSkusCardProps> = ({
                         <Button
                           variant="ghost"
                           size="icon-sm"
-                          className="text-destructive"
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                           aria-label="Delete"
                           onClick={() => onDelete(vs.vendor_id, vs.vendor_name)}
                         >
@@ -85,17 +90,22 @@ export const ProductVendorSkusCard: React.FC<ProductVendorSkusCardProps> = ({
                       </TooltipTrigger>
                       <TooltipContent>Delete</TooltipContent>
                     </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       ) : (
-        <p className="text-sm text-muted-foreground">
-          No vendor SKU mappings yet. Add customer/marketplace-specific SKUs (e.g., deodap, meesho,
-          amazon, flipkart).
-        </p>
+        <EmptyState
+          compact
+          icon={<Tags />}
+          title="No vendor SKU mappings"
+          message="Add customer or marketplace-specific SKUs (e.g. deodap, meesho, amazon, flipkart) so orders map to this product."
+          actionLabel="Add vendor SKU"
+          actionIcon={<Plus />}
+          onAction={onAdd}
+        />
       )}
     </CardContent>
   </Card>

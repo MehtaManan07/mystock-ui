@@ -7,20 +7,14 @@ import {
   TrendingUp as IncomeIcon,
   TrendingDown as ExpenseIcon,
   Loader2,
+  Receipt,
+  SearchX,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from 'cn';
@@ -29,6 +23,7 @@ import { SearchInput } from '../../components/common/SearchInput';
 import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorState } from '../../components/common/ErrorState';
 import { EmptyState } from '../../components/common/EmptyState';
+import { ResponsiveTable } from '../../components/common/ResponsiveTable';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { usePaymentsInfinite, usePaymentSummary, useDeletePayment } from '../../hooks/usePayments';
 import { PaymentFormDialog } from './components/PaymentFormDialog';
@@ -152,6 +147,129 @@ export const PaymentsPage: React.FC = () => {
     }
   };
 
+  const hasActiveFilters = !!search || typeFilter !== 'all' || !!fromDate || !!toDate;
+
+  const columns = [
+    {
+      id: 'date',
+      label: 'Date',
+      render: (payment: Payment) => (
+        <span className="text-sm tabular-nums">{formatDate(payment.payment_date)}</span>
+      ),
+    },
+    {
+      id: 'type',
+      label: 'Type',
+      render: (payment: Payment) => {
+        const isIncome = payment.type === PAYMENT_TYPES.INCOME;
+        return (
+          <Badge
+            variant="outline"
+            className={cn(
+              'capitalize',
+              isIncome
+                ? 'border-success/30 bg-success/10 text-success'
+                : 'border-destructive/30 bg-destructive/10 text-destructive'
+            )}
+          >
+            {isIncome ? <IncomeIcon /> : <ExpenseIcon />}
+            {payment.type}
+          </Badge>
+        );
+      },
+    },
+    {
+      id: 'category',
+      label: 'Category',
+      render: (payment: Payment) =>
+        payment.category ? (
+          <Badge variant="outline" className="capitalize">
+            {payment.category}
+          </Badge>
+        ) : (
+          <span className="text-sm text-muted-foreground">Uncategorized</span>
+        ),
+    },
+    {
+      id: 'description',
+      label: 'Description',
+      render: (payment: Payment) => (
+        <p className="max-w-[220px] truncate text-sm text-muted-foreground">
+          {payment.description || '—'}
+        </p>
+      ),
+      hideOnMobile: true,
+    },
+    {
+      id: 'method',
+      label: 'Method',
+      render: (payment: Payment) => (
+        <Badge
+          variant="outline"
+          className="border-primary/30 bg-primary/10 text-primary capitalize"
+        >
+          {payment.payment_method.replace(/_/g, ' ')}
+        </Badge>
+      ),
+    },
+    {
+      id: 'amount',
+      label: 'Amount',
+      numeric: true,
+      render: (payment: Payment) => {
+        const isIncome = payment.type === PAYMENT_TYPES.INCOME;
+        return (
+          <span
+            className={cn(
+              'text-sm font-semibold tabular-nums',
+              isIncome ? 'text-success' : 'text-destructive'
+            )}
+          >
+            {isIncome ? '+' : '-'}
+            {formatCurrency(payment.amount)}
+          </span>
+        );
+      },
+    },
+    {
+      id: 'actions',
+      label: 'Actions',
+      align: 'center' as const,
+      isAction: true,
+      render: (payment: Payment) => (
+        <div className="flex justify-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Edit"
+                onClick={() => handleOpenEditDialog(payment)}
+              >
+                <Pencil />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Edit</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Delete"
+                className="text-destructive hover:text-destructive"
+                onClick={() => handleOpenDeleteDialog(payment)}
+              >
+                <Trash2 />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Delete</TooltipContent>
+          </Tooltip>
+        </div>
+      ),
+    },
+  ];
+
   const renderTableContent = () => {
     if (showFullLoading) {
       return <LoadingState message="Loading payments..." />;
@@ -164,131 +282,42 @@ export const PaymentsPage: React.FC = () => {
     if (!payments || payments.length === 0) {
       return (
         <EmptyState
-          title="No payments found"
+          icon={hasActiveFilters ? <SearchX /> : <Receipt />}
+          title={hasActiveFilters ? 'No matching payments' : 'No payments yet'}
           message={
-            search || typeFilter !== 'all' || fromDate || toDate
-              ? 'Try different filters'
-              : 'Add your first payment to get started'
+            hasActiveFilters
+              ? 'No payment matches the current search, type or date range.'
+              : 'Record income and expenses to keep your cash flow up to date.'
           }
-          actionLabel={
-            !search && typeFilter === 'all' && !fromDate && !toDate
-              ? 'Add Payment'
-              : undefined
-          }
-          onAction={
-            !search && typeFilter === 'all' && !fromDate && !toDate
-              ? handleOpenCreateDialog
-              : undefined
-          }
+          actionLabel={!hasActiveFilters ? 'Add payment' : undefined}
+          actionIcon={!hasActiveFilters ? <Plus /> : undefined}
+          onAction={!hasActiveFilters ? handleOpenCreateDialog : undefined}
         />
       );
     }
 
     return (
       <>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="text-center">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {payments.map((payment) => (
-                <TableRow key={payment.id}>
-                  <TableCell>
-                    <p className="text-sm">{formatDate(payment.payment_date)}</p>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        'capitalize',
-                        payment.type === 'income'
-                          ? 'border-success/50 text-success'
-                          : 'border-destructive/50 text-destructive'
-                      )}
-                    >
-                      {payment.type === 'income' ? <IncomeIcon /> : <ExpenseIcon />}
-                      {payment.type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{payment.category || 'Uncategorized'}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <p className="max-w-[200px] overflow-hidden text-sm text-ellipsis whitespace-nowrap">
-                      {payment.description || '-'}
-                    </p>
-                  </TableCell>
-                  <TableCell>
-                    <p className="text-sm capitalize">
-                      {payment.payment_method.replace(/_/g, ' ')}
-                    </p>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <p
-                      className={cn(
-                        'text-sm font-semibold',
-                        payment.type === 'income' ? 'text-success' : 'text-destructive'
-                      )}
-                    >
-                      {payment.type === 'income' ? '+' : '-'}
-                      {formatCurrency(payment.amount)}
-                    </p>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="Edit"
-                          onClick={() => handleOpenEditDialog(payment)}
-                        >
-                          <Pencil />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Edit</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="Delete"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => handleOpenDeleteDialog(payment)}
-                        >
-                          <Trash2 />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Delete</TooltipContent>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <ResponsiveTable
+          columns={columns}
+          data={payments}
+          keyExtractor={(payment) => payment.id.toString()}
+          emptyIcon={<Receipt />}
+          emptyTitle="No payments yet"
+          emptyMessage="Record income and expenses to keep your cash flow up to date."
+        />
 
         {/* Infinite scroll trigger and loading indicator */}
-        <div className="p-4 text-center">
-          <div ref={observerTarget} style={{ height: '20px' }} />
+        <div className="border-t border-border/70 p-4 text-center">
+          <div ref={observerTarget} className="h-5" />
           {isFetchingNextPage && (
-            <div className="flex items-center justify-center gap-2">
-              <Loader2 className="size-6 animate-spin" />
-              <p className="text-sm text-muted-foreground">Loading more payments...</p>
+            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+              <span className="text-sm">Loading more payments...</span>
             </div>
           )}
           {!hasNextPage && payments.length > 0 && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground tabular-nums">
               All payments loaded ({totalCount} total)
             </span>
           )}
@@ -310,90 +339,107 @@ export const PaymentsPage: React.FC = () => {
         }
       />
 
-      {/* Summary Cards */}
-      {summary && (
-        <div className="mb-6 flex flex-wrap gap-4">
-          <Card className="min-w-[150px] flex-1 gap-0 p-4">
-            <span className="text-xs text-muted-foreground">Total Income</span>
-            <p className="text-xl font-semibold text-success">
-              {formatCurrency(summary.total_earnings)}
-            </p>
+      <div className="space-y-5">
+        {/* Summary strip */}
+        {summary && (
+          <Card className="gap-0 overflow-hidden py-0">
+            <div className="grid grid-cols-1 divide-y divide-border/70 sm:grid-cols-2 sm:divide-x lg:grid-cols-4 lg:divide-y-0">
+              {[
+                {
+                  label: 'Total income',
+                  value: formatCurrency(summary.total_earnings),
+                  tone: 'text-success',
+                },
+                {
+                  label: 'Total expenses',
+                  value: formatCurrency(summary.total_spends),
+                  tone: 'text-destructive',
+                },
+                {
+                  label: 'Net balance',
+                  value: formatCurrency(summary.total_earnings - summary.total_spends),
+                  tone:
+                    summary.total_earnings - summary.total_spends >= 0
+                      ? 'text-success'
+                      : 'text-destructive',
+                },
+                {
+                  label: 'Total payments',
+                  value: summary.payment_count.toLocaleString('en-IN'),
+                  tone: 'text-foreground',
+                },
+              ].map((item) => (
+                <div key={item.label} className="px-5 py-4">
+                  <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                    {item.label}
+                  </span>
+                  <p className={cn('mt-1 text-xl font-semibold tabular-nums', item.tone)}>
+                    {item.value}
+                  </p>
+                </div>
+              ))}
+            </div>
           </Card>
-          <Card className="min-w-[150px] flex-1 gap-0 p-4">
-            <span className="text-xs text-muted-foreground">Total Expenses</span>
-            <p className="text-xl font-semibold text-destructive">
-              {formatCurrency(summary.total_spends)}
-            </p>
-          </Card>
-          <Card className="min-w-[150px] flex-1 gap-0 p-4">
-            <span className="text-xs text-muted-foreground">Net Balance</span>
-            <p
-              className={cn(
-                'text-xl font-semibold',
-                summary.total_earnings - summary.total_spends >= 0
-                  ? 'text-success'
-                  : 'text-destructive'
-              )}
-            >
-              {formatCurrency(summary.total_earnings - summary.total_spends)}
-            </p>
-          </Card>
-          <Card className="min-w-[150px] flex-1 gap-0 p-4">
-            <span className="text-xs text-muted-foreground">Total Transactions</span>
-            <p className="text-xl font-semibold">{summary.payment_count}</p>
-          </Card>
-        </div>
-      )}
-
-      {/* Filters */}
-      <div className="mb-6 flex flex-wrap items-center gap-4">
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Search by description..."
-        />
-        {isFetching && !isFetchingNextPage && !showFullLoading && (
-          <span className="text-xs text-muted-foreground">Searching...</span>
         )}
-        <ToggleGroup
-          type="single"
-          value={typeFilter}
-          onValueChange={handleTypeFilterChange}
-          variant="outline"
-          size="sm"
-        >
-          <ToggleGroupItem value="all">All</ToggleGroupItem>
-          <ToggleGroupItem value={PAYMENT_TYPES.INCOME}>Income</ToggleGroupItem>
-          <ToggleGroupItem value={PAYMENT_TYPES.EXPENSE}>Expense</ToggleGroupItem>
-        </ToggleGroup>
-        <div className="grid gap-1">
-          <Label htmlFor="payments-from-date" className="text-xs text-muted-foreground">
-            From Date
-          </Label>
-          <Input
-            id="payments-from-date"
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value || '')}
-            className="h-8 w-40"
-          />
-        </div>
-        <div className="grid gap-1">
-          <Label htmlFor="payments-to-date" className="text-xs text-muted-foreground">
-            To Date
-          </Label>
-          <Input
-            id="payments-to-date"
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value || '')}
-            className="h-8 w-40"
-          />
-        </div>
-      </div>
 
-      {/* Payments Table */}
-      <Card className="gap-0 overflow-hidden py-0">{renderTableContent()}</Card>
+        {/* Toolbar: search + filters */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search by description..."
+            className="sm:max-w-xs"
+          />
+
+          <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
+            {isFetching && !isFetchingNextPage && !showFullLoading && (
+              <span className="text-xs text-muted-foreground">Searching...</span>
+            )}
+            <ToggleGroup
+              type="single"
+              value={typeFilter}
+              onValueChange={handleTypeFilterChange}
+              variant="outline"
+              size="sm"
+              className="w-full sm:w-fit"
+            >
+              <ToggleGroupItem value="all" className="flex-1 sm:flex-initial">All</ToggleGroupItem>
+              <ToggleGroupItem value={PAYMENT_TYPES.INCOME} className="flex-1 sm:flex-initial">Income</ToggleGroupItem>
+              <ToggleGroupItem value={PAYMENT_TYPES.EXPENSE} className="flex-1 sm:flex-initial">Expense</ToggleGroupItem>
+            </ToggleGroup>
+
+            <div className="flex items-center gap-2">
+              <div className="grid gap-1">
+                <Label htmlFor="payments-from-date" className="text-xs text-muted-foreground">
+                  From
+                </Label>
+                <Input
+                  id="payments-from-date"
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value || '')}
+                  className="h-9 w-[9.5rem] tabular-nums"
+                />
+              </div>
+              <div className="grid gap-1">
+                <Label htmlFor="payments-to-date" className="text-xs text-muted-foreground">
+                  To
+                </Label>
+                <Input
+                  id="payments-to-date"
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value || '')}
+                  className="h-9 w-[9.5rem] tabular-nums"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Payments Table */}
+        <Card className="gap-0 overflow-hidden py-0">{renderTableContent()}</Card>
+      </div>
 
       {/* Payment Form Dialog */}
       <PaymentFormDialog
@@ -410,6 +456,7 @@ export const PaymentsPage: React.FC = () => {
           paymentToDelete ? formatCurrency(paymentToDelete.amount) : ''
         }? This action cannot be undone.`}
         confirmLabel="Delete"
+        confirmColor="error"
         onConfirm={handleConfirmDelete}
         onCancel={handleCloseDeleteDialog}
         isLoading={deleteMutation.isPending}

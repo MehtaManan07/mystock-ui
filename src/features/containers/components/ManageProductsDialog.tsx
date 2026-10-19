@@ -37,8 +37,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Check, ChevronDown, Loader2, Plus, Trash2, X } from 'lucide-react';
+import { Check, ChevronDown, Loader2, PackageOpen, Plus, Trash2, X } from 'lucide-react';
 import { cn } from 'cn';
+import { EmptyState } from '../../../components/common/EmptyState';
 import { useProducts } from '../../../hooks/useProducts';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { useSetContainerProducts } from '../../../hooks/useContainerProducts';
@@ -340,13 +341,14 @@ export const ManageProductsDialog: React.FC<ManageProductsDialogProps> = ({
                 id="new-quantity"
                 type="number"
                 min={1}
-                className="h-8 w-full sm:w-[120px]"
+                className="h-8 w-full text-right tabular-nums sm:w-[120px]"
                 value={newQuantity}
                 onChange={(e) => setNewQuantity(parseInt(e.target.value) || 0)}
               />
             </div>
 
             <Button
+              type="button"
               onClick={handleAddProduct}
               disabled={!selectedProducts || selectedProducts.length === 0 || newQuantity <= 0}
             >
@@ -357,14 +359,14 @@ export const ManageProductsDialog: React.FC<ManageProductsDialogProps> = ({
 
           {/* Products Table */}
           {items.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
+            <div className="overflow-hidden rounded-lg border border-border/70">
+              <Table stickyHeader containerClassName="max-h-[360px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Product</TableHead>
                     <TableHead>Size</TableHead>
                     <TableHead>Packing</TableHead>
-                    <TableHead className="text-right">Quantity</TableHead>
+                    <TableHead numeric>Quantity</TableHead>
                     <TableHead className="text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -374,13 +376,17 @@ export const ManageProductsDialog: React.FC<ManageProductsDialogProps> = ({
                       <TableCell>
                         <p className="text-sm font-medium">{item.product.name}</p>
                       </TableCell>
-                      <TableCell>{item.product.size}</TableCell>
-                      <TableCell>{item.product.packing}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-muted-foreground">
+                        {item.product.size}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {item.product.packing}
+                      </TableCell>
+                      <TableCell numeric>
                         <Input
                           type="number"
                           min={0}
-                          className="ml-auto h-8 w-[100px]"
+                          className="ml-auto h-8 w-[100px] text-right tabular-nums"
                           value={item.quantity}
                           onChange={(e) =>
                             handleQuantityChange(
@@ -394,6 +400,7 @@ export const ManageProductsDialog: React.FC<ManageProductsDialogProps> = ({
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
+                              type="button"
                               variant="ghost"
                               size="icon-sm"
                               aria-label="Remove"
@@ -412,29 +419,39 @@ export const ManageProductsDialog: React.FC<ManageProductsDialogProps> = ({
               </Table>
             </div>
           ) : (
-            <div className="rounded-md bg-accent py-8 text-center">
-              <p className="text-sm text-muted-foreground">
-                No products in this container. Add products using the form above.
-              </p>
+            <div className="rounded-lg border border-border/70 bg-muted/30">
+              <EmptyState
+                compact
+                icon={<PackageOpen />}
+                title="No products in this container"
+                message="Pick one or more products above and set a quantity to add them."
+              />
             </div>
           )}
 
           {/* Summary */}
-          <div className="mt-4 flex gap-4">
-            <Badge variant="outline" className="border-primary text-primary">
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Badge
+              variant="outline"
+              className="border-primary/30 bg-primary/10 text-primary tabular-nums"
+            >
               {`${items.length} products`}
             </Badge>
-            <Badge variant="outline" className="border-success text-success">
+            <Badge
+              variant="outline"
+              className="border-success/30 bg-success/10 text-success tabular-nums"
+            >
               {`${items.reduce((sum, i) => sum + i.quantity, 0)} total quantity`}
             </Badge>
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
           <Button
+            type="button"
             onClick={handleSave}
             disabled={setProductsMutation.isPending || !hasChanges()}
           >

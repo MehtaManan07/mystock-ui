@@ -9,6 +9,7 @@ import {
   Receipt as GstinIcon,
   ShoppingCart as SaleIcon,
   Truck as PurchaseIcon,
+  ReceiptText,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
@@ -74,22 +75,22 @@ export const ContactDetailPage: React.FC = () => {
     }
   };
 
-  // Filled badge styling for each payment status colour.
+  // Outlined chips following the semantic colour table.
   const statusBadgeClass = {
-    success: 'bg-success text-success-foreground',
-    warning: 'bg-warning text-warning-foreground',
-    error: 'bg-destructive text-white',
+    success: 'border-success/30 bg-success/10 text-success',
+    warning: 'border-warning/40 bg-warning/10 text-warning',
+    error: 'border-destructive/30 bg-destructive/10 text-destructive',
   } as const;
 
   // Tint standing in for the MUI chip `color` prop on contact type.
   const getTypeBadgeClass = (type: string) => {
     switch (type) {
       case CONTACT_TYPES.CUSTOMER:
-        return 'bg-primary text-primary-foreground';
+        return 'border-primary/30 bg-primary/10 text-primary';
       case CONTACT_TYPES.SUPPLIER:
-        return 'bg-secondary text-secondary-foreground';
+        return 'border-info/30 bg-info/10 text-info';
       default:
-        return 'bg-muted text-muted-foreground';
+        return 'border-border bg-muted text-muted-foreground';
     }
   };
 
@@ -100,14 +101,16 @@ export const ContactDetailPage: React.FC = () => {
       label: 'Transaction #',
       mobileLabel: 'TXN #',
       render: (transaction: Transaction) => (
-        <p className="text-sm font-semibold">{transaction.transaction_number}</p>
+        <span className="text-sm font-semibold tabular-nums">
+          {transaction.transaction_number}
+        </span>
       ),
     },
     {
       id: 'date',
       label: 'Date',
       render: (transaction: Transaction) => (
-        <span className="text-xs text-muted-foreground">
+        <span className="text-sm text-muted-foreground tabular-nums">
           {formatDate(transaction.transaction_date)}
         </span>
       ),
@@ -122,8 +125,8 @@ export const ContactDetailPage: React.FC = () => {
           className={cn(
             'capitalize',
             transaction.type === TRANSACTION_TYPES.SALE
-              ? 'border-primary/50 text-primary'
-              : 'border-secondary-foreground/40 text-secondary-foreground'
+              ? 'border-success/30 bg-success/10 text-success'
+              : 'border-primary/30 bg-primary/10 text-primary'
           )}
         >
           {transaction.type === TRANSACTION_TYPES.SALE ? <SaleIcon /> : <PurchaseIcon />}
@@ -134,16 +137,21 @@ export const ContactDetailPage: React.FC = () => {
     {
       id: 'amount',
       label: 'Amount',
-      align: 'right' as const,
+      numeric: true,
       render: (transaction: Transaction) => (
-        <p className="text-sm font-medium">{formatCurrency(transaction.total_amount)}</p>
+        <span className="text-sm font-semibold tabular-nums">
+          {formatCurrency(transaction.total_amount)}
+        </span>
       ),
     },
     {
       id: 'status',
       label: 'Status',
       render: (transaction: Transaction) => (
-        <Badge className={cn('capitalize', statusBadgeClass[getStatusColor(transaction.payment_status)])}>
+        <Badge
+          variant="outline"
+          className={cn('capitalize', statusBadgeClass[getStatusColor(transaction.payment_status)])}
+        >
           {transaction.payment_status}
         </Badge>
       ),
@@ -186,156 +194,172 @@ export const ContactDetailPage: React.FC = () => {
         ]}
       />
 
-      {/* Action buttons */}
-      <div className="mb-6 flex gap-2">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Back to Contacts" asChild>
-              <a
-                href="/contacts"
-                onClick={(e: React.MouseEvent) => {
-                  if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
-                    e.preventDefault();
-                    navigate('/contacts');
-                  }
-                }}
+      <div className="space-y-5">
+        {/* Action buttons */}
+        <div className="flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Back to Contacts" asChild>
+                <a
+                  href="/contacts"
+                  onClick={(e: React.MouseEvent) => {
+                    if (!e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                      e.preventDefault();
+                      navigate('/contacts');
+                    }
+                  }}
+                >
+                  <ArrowLeft />
+                </a>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Back to Contacts</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Edit Contact"
+                className="ml-auto"
+                onClick={() => setEditDialogOpen(true)}
               >
-                <ArrowLeft />
-              </a>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Back to Contacts</TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Edit Contact"
-              onClick={() => setEditDialogOpen(true)}
-            >
-              <Pencil />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Edit Contact</TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Delete Contact"
-              className="text-destructive hover:text-destructive"
-              onClick={() => setDeleteDialogOpen(true)}
-            >
-              <Trash2 />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Delete Contact</TooltipContent>
-        </Tooltip>
-      </div>
-
-      <div className="grid grid-cols-12 gap-6">
-        {/* Contact Info Card */}
-        <div className="col-span-12 md:col-span-6">
-          <Card>
-            <CardContent>
-              <h3 className="mb-2 text-base font-semibold">Contact Information</h3>
-              <Separator className="mb-4" />
-              
-              <div className="flex flex-col gap-5">
-                <div className="flex items-start gap-4">
-                  <PhoneIcon className="mt-1 size-5 shrink-0 text-muted-foreground" />
-                  <div>
-                    <span className="text-xs text-muted-foreground">Phone</span>
-                    <p>{contact.phone}</p>
-                  </div>
-                </div>
-                
-                {contact.address && (
-                  <div className="flex items-start gap-4">
-                    <LocationIcon className="mt-1 size-5 shrink-0 text-muted-foreground" />
-                    <div>
-                      <span className="text-xs text-muted-foreground">Address</span>
-                      <p>{contact.address}</p>
-                    </div>
-                  </div>
-                )}
-                
-                {contact.gstin && (
-                  <div className="flex items-start gap-4">
-                    <GstinIcon className="mt-1 size-5 shrink-0 text-muted-foreground" />
-                    <div>
-                      <span className="text-xs text-muted-foreground">GSTIN</span>
-                      <p className="font-mono">{contact.gstin}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                <Pencil />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Edit Contact</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Delete Contact"
+                className="text-destructive hover:text-destructive"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                <Trash2 />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Delete Contact</TooltipContent>
+          </Tooltip>
         </div>
 
-        {/* Balance Card */}
-        <div className="col-span-12 md:col-span-6">
-          <Card>
-            <CardContent>
-              <h3 className="mb-2 text-base font-semibold">Account Summary</h3>
-              <Separator className="mb-4" />
-              
-              <div className="flex flex-col gap-4">
-                <div>
-                  <span className="text-xs text-muted-foreground">Contact Type</span>
-                  <div className="mt-1">
-                    <Badge className={cn('px-3 py-1 text-sm capitalize', getTypeBadgeClass(contact.type))}>
-                      {contact.type}
-                    </Badge>
+        <div className="grid grid-cols-12 gap-5">
+          {/* Contact Info Card */}
+          <div className="col-span-12 md:col-span-6">
+            <Card className="h-full">
+              <CardContent>
+                <h3 className="text-base font-semibold">Contact Information</h3>
+                <Separator className="my-4" />
+
+                <div className="flex flex-col gap-5">
+                  <div className="flex items-start gap-3">
+                    <PhoneIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0">
+                      <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                        Phone
+                      </span>
+                      <p className="text-sm tabular-nums">{contact.phone}</p>
+                    </div>
                   </div>
+
+                  {contact.address && (
+                    <div className="flex items-start gap-3">
+                      <LocationIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                      <div className="min-w-0">
+                        <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                          Address
+                        </span>
+                        <p className="text-sm">{contact.address}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {contact.gstin && (
+                    <div className="flex items-start gap-3">
+                      <GstinIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                      <div className="min-w-0">
+                        <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                          GSTIN
+                        </span>
+                        <p className="font-mono text-sm tabular-nums">{contact.gstin}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                
-                <div>
-                  <span className="text-xs text-muted-foreground">Current Balance</span>
-                  <div className="mt-1">
-                    <Badge
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Balance Card */}
+          <div className="col-span-12 md:col-span-6">
+            <Card className="h-full">
+              <CardContent>
+                <h3 className="text-base font-semibold">Account Summary</h3>
+                <Separator className="my-4" />
+
+                <div className="flex flex-col gap-5">
+                  <div>
+                    <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                      Contact Type
+                    </span>
+                    <div className="mt-1.5">
+                      <Badge
+                        variant="outline"
+                        className={cn('capitalize', getTypeBadgeClass(contact.type))}
+                      >
+                        {contact.type}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                      Current Balance
+                    </span>
+                    <p
                       className={cn(
-                        'px-3 py-2 text-[1.1rem]',
+                        'mt-1.5 text-2xl font-semibold tabular-nums',
                         contact.balance > 0
-                          ? 'bg-success text-success-foreground'
+                          ? 'text-success'
                           : contact.balance < 0
-                          ? 'bg-destructive text-white'
-                          : 'bg-muted text-muted-foreground'
+                          ? 'text-destructive'
+                          : 'text-muted-foreground'
                       )}
                     >
                       {formatCurrency(contact.balance)}
-                    </Badge>
+                    </p>
+                    <span className="mt-1 block text-sm text-muted-foreground">
+                      {contact.balance > 0
+                        ? 'They owe you this amount'
+                        : contact.balance < 0
+                        ? 'You owe them this amount'
+                        : 'Account is settled'}
+                    </span>
                   </div>
-                  <span className="mt-2 block text-xs text-muted-foreground">
-                    {contact.balance > 0
-                      ? 'They owe you this amount'
-                      : contact.balance < 0
-                      ? 'You owe them this amount'
-                      : 'Account is settled'}
-                  </span>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
 
-        {/* Recent Transactions Card */}
-        <div className="col-span-12">
-          <Card>
-            <CardContent>
-              <h3 className="mb-2 text-base font-semibold">Recent Transactions</h3>
-              <Separator className="mb-4" />
+          {/* Recent Transactions Card */}
+          <div className="col-span-12">
+            <Card className="gap-0 overflow-hidden py-0">
+              <div className="px-6 py-4">
+                <h3 className="text-base font-semibold">Recent Transactions</h3>
+              </div>
+              <Separator />
               {transactionsLoading ? (
                 <LoadingState message="Loading transactions..." />
               ) : transactionsError ? (
                 <ErrorState onRetry={() => refetchTransactions()} />
               ) : !transactions || transactions.length === 0 ? (
                 <EmptyState
-                  title="No transactions found"
-                  message="This contact has no transactions yet."
+                  compact
+                  icon={<ReceiptText />}
+                  title="No transactions yet"
+                  message="Sales and purchases involving this contact will appear here."
                 />
               ) : (
                 <ResponsiveTable
@@ -343,11 +367,13 @@ export const ContactDetailPage: React.FC = () => {
                   data={transactions}
                   keyExtractor={(transaction) => transaction.id.toString()}
                   onRowClick={(transaction) => navigate(`/transactions/${transaction.id}`)}
-                  emptyMessage="No transactions found"
+                  emptyIcon={<ReceiptText />}
+                  emptyTitle="No transactions yet"
+                  emptyMessage="Sales and purchases involving this contact will appear here."
                 />
               )}
-            </CardContent>
-          </Card>
+            </Card>
+          </div>
         </div>
       </div>
 

@@ -150,6 +150,7 @@ export const ContactFormDialog: React.FC<ContactFormDialogProps> = ({
               <Label htmlFor="contact-phone">Phone</Label>
               <Input
                 id="contact-phone"
+                className="tabular-nums"
                 {...register('phone')}
                 placeholder="e.g., 9876543210"
                 aria-invalid={!!errors.phone}
@@ -212,6 +213,7 @@ export const ContactFormDialog: React.FC<ContactFormDialogProps> = ({
               <Label htmlFor="contact-gstin">GSTIN (Optional)</Label>
               <Input
                 id="contact-gstin"
+                className="font-mono tabular-nums uppercase"
                 {...register('gstin')}
                 placeholder="e.g., 22AAAAA0000A1Z5"
                 aria-invalid={!!errors.gstin}
@@ -233,13 +235,14 @@ export const ContactFormDialog: React.FC<ContactFormDialogProps> = ({
                   {...register('balance')}
                   type="number"
                   step="0.01"
-                  className="pl-7"
+                  className="pl-7 tabular-nums"
                   aria-invalid={!!errors.balance}
                   disabled={isLoading}
                 />
               </div>
-              <p className="text-sm text-muted-foreground">
-                Positive = they owe you, Negative = you owe them
+              <p className="text-xs text-muted-foreground">
+                <span className="font-medium text-success">Positive</span> = they owe you ·{' '}
+                <span className="font-medium text-destructive">Negative</span> = you owe them
               </p>
             </div>
           </div>

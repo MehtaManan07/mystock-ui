@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { EllipsisVertical, Loader2, Plus } from 'lucide-react';
+import { EllipsisVertical, Loader2, MessagesSquare, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,6 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { cn } from 'cn';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
+import { EmptyState } from '../../components/common/EmptyState';
 import type { ThreadSummary } from '../../types/assistant';
 
 interface Props {
@@ -69,7 +70,7 @@ export default function ThreadList({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="p-3">
+      <div className="border-b border-border/70 p-3">
         <Button variant="outline" className="w-full" onClick={onNew}>
           <Plus />
           New chat
@@ -82,23 +83,26 @@ export default function ThreadList({
             <Loader2 className="size-5.5 animate-spin text-muted-foreground" />
           </div>
         ) : threads.length === 0 ? (
-          <p className="px-4 py-6 text-center text-sm text-muted-foreground">
-            No chats yet
-          </p>
+          <EmptyState
+            compact
+            icon={<MessagesSquare />}
+            title="No chats yet"
+            message="Start a new chat to ask about stock, expenses or bills."
+          />
         ) : (
-          <ul>
+          <ul className="p-1.5">
             {threads.map((thread) => (
               <li
                 key={thread.id}
                 className={cn(
-                  'flex items-center gap-1 pr-2 hover:bg-accent',
-                  thread.id === activeThreadId && 'bg-accent',
+                  'flex items-center gap-1 rounded-md pr-1 transition-colors hover:bg-accent/40',
+                  thread.id === activeThreadId && 'bg-accent/60',
                 )}
               >
                 <button
                   type="button"
                   onClick={() => onSelect(thread.id)}
-                  className="min-w-0 flex-1 truncate px-4 py-2 text-left text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="min-w-0 flex-1 truncate rounded-md px-2.5 py-2 text-left text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 >
                   {thread.title || 'Untitled chat'}
                 </button>
@@ -147,7 +151,7 @@ export default function ThreadList({
             }}
           />
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setRenaming(null)}>
+            <Button variant="outline" onClick={() => setRenaming(null)}>
               Cancel
             </Button>
             <Button onClick={confirmRename} disabled={!renameValue.trim()}>

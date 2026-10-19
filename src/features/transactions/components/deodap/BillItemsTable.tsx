@@ -25,18 +25,28 @@ export const BillItemsTable: React.FC<BillItemsTableProps> = ({ rows, onContaine
   const notFoundRows = rows.filter((r) => r.lookupStatus === 'not_found');
 
   return (
-    <Card className="mb-6">
+    <Card>
       <CardContent>
-        <div className="mb-2 flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-base font-semibold">Step 2 — Assign Containers</h3>
-          <div className="flex gap-2">
-            <Badge className="bg-success text-success-foreground">{foundCount} found</Badge>
+          <div className="flex flex-wrap gap-2">
+            <Badge
+              variant="outline"
+              className="border-success/30 bg-success/10 tabular-nums text-success"
+            >
+              {foundCount} found
+            </Badge>
             {notFoundRows.length > 0 && (
-              <Badge variant="destructive">{notFoundRows.length} not found</Badge>
+              <Badge
+                variant="outline"
+                className="border-destructive/30 bg-destructive/10 tabular-nums text-destructive"
+              >
+                {notFoundRows.length} not found
+              </Badge>
             )}
           </div>
         </div>
-        <p className="mb-4 text-sm text-muted-foreground">
+        <p className="mt-1 mb-4 text-sm text-muted-foreground">
           For each product found, select the container from which stock will be used. If a product
           has no stock, use <strong>Assign Container</strong> to add it first.
         </p>
@@ -45,10 +55,10 @@ export const BillItemsTable: React.FC<BillItemsTableProps> = ({ rows, onContaine
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Sr No.</TableHead>
+                <TableHead numeric>Sr No.</TableHead>
                 <TableHead>SKU</TableHead>
                 <TableHead>Product</TableHead>
-                <TableHead className="text-right">Qty</TableHead>
+                <TableHead numeric>Qty</TableHead>
                 <TableHead>Container</TableHead>
               </TableRow>
             </TableHeader>
@@ -57,22 +67,24 @@ export const BillItemsTable: React.FC<BillItemsTableProps> = ({ rows, onContaine
                 <TableRow
                   key={idx}
                   className={cn(
-                    row.lookupStatus === 'not_found' && 'bg-accent opacity-50'
+                    row.lookupStatus === 'not_found' && 'bg-muted/40 text-muted-foreground'
                   )}
                 >
-                  <TableCell>{idx + 1}</TableCell>
+                  <TableCell numeric className="text-muted-foreground">
+                    {idx + 1}
+                  </TableCell>
 
                   <TableCell>
-                    <span className="font-mono text-sm">{row.sku}</span>
+                    <span className="font-mono text-sm tabular-nums">{row.sku}</span>
                   </TableCell>
 
                   <TableCell>
                     {row.lookupStatus === 'pending' ? (
-                      <Loader2 className="size-4 animate-spin" />
+                      <Loader2 className="size-4 animate-spin text-muted-foreground" />
                     ) : row.lookupStatus === 'found' ? (
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-2">
                         <CircleCheck className="size-4 shrink-0 text-success" />
-                        <div>
+                        <div className="min-w-0">
                           <p className="text-sm font-medium">{row.product!.name}</p>
                           <span className="text-xs text-muted-foreground">
                             {row.product!.size} • {row.product!.packing}
@@ -80,14 +92,14 @@ export const BillItemsTable: React.FC<BillItemsTableProps> = ({ rows, onContaine
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-2">
                         <CircleAlert className="size-4 shrink-0 text-destructive" />
                         <p className="text-sm text-destructive">SKU not found</p>
                       </div>
                     )}
                   </TableCell>
 
-                  <TableCell className="text-right">
+                  <TableCell numeric>
                     <span className="text-sm font-medium">{row.quantity} items</span>
                   </TableCell>
 
@@ -101,7 +113,7 @@ export const BillItemsTable: React.FC<BillItemsTableProps> = ({ rows, onContaine
                         onChange={(c) => onContainerChange(idx, c)}
                       />
                     ) : (
-                      <span className="text-xs text-muted-foreground/60">—</span>
+                      <span className="text-sm text-muted-foreground">—</span>
                     )}
                   </TableCell>
                 </TableRow>
@@ -111,7 +123,7 @@ export const BillItemsTable: React.FC<BillItemsTableProps> = ({ rows, onContaine
         </div>
 
         {notFoundRows.length > 0 && (
-          <Alert className="mt-4 border-warning/50 text-warning">
+          <Alert className="mt-4 border-warning/40 bg-warning/10 text-warning">
             <AlertDescription className="text-warning">
               {notFoundRows.length} SKU(s) not matched and will be skipped:{' '}
               {notFoundRows.map((r) => r.sku).join(', ')}

@@ -33,7 +33,7 @@ export default function Composer({
   };
 
   return (
-    <div className="flex items-end gap-2 border-t p-4">
+    <div className="flex items-end gap-2 border-t border-border/70 p-4">
       <Textarea
         rows={1}
         placeholder="Ask the assistant…"

@@ -3,10 +3,15 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { PageHeader } from '../../components/common/PageHeader';
 import { LoadingState } from '../../components/common/LoadingState';
@@ -72,7 +77,7 @@ const Field: React.FC<FieldProps> = ({ id, label, error, helperText, children })
     {error ? (
       <p className="text-sm text-destructive">{error}</p>
     ) : (
-      helperText && <p className="text-sm text-muted-foreground">{helperText}</p>
+      helperText && <p className="text-xs text-muted-foreground">{helperText}</p>
     )}
   </div>
 );
@@ -148,189 +153,209 @@ export const SettingsPage: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="space-y-5">
       <PageHeader
         title="Company Settings"
-        subtitle="Manage your company information and invoice settings"
+        subtitle="Details used across invoices, PDF bills and customer documents."
       />
 
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col gap-6">
-        {/* Company Information */}
+      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
         <Card>
-          <CardContent>
-            <h3 className="text-base font-semibold">Company Information</h3>
-            <Separator className="mt-2 mb-6" />
-            <div className="grid grid-cols-1 gap-4">
-              <Field id="company_name" label="Company Name" error={errors.company_name?.message}>
-                <Input
-                  id="company_name"
-                  {...register('company_name')}
-                  aria-invalid={!!errors.company_name}
-                />
-              </Field>
-              <Field
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">
+              Company information
+            </CardTitle>
+            <CardDescription>
+              The registered name and address printed at the top of every invoice.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 gap-4">
+            <Field id="company_name" label="Company name" error={errors.company_name?.message}>
+              <Input
+                id="company_name"
+                {...register('company_name')}
+                aria-invalid={!!errors.company_name}
+              />
+            </Field>
+            <Field
+              id="company_address_line1"
+              label="Address line 1"
+              error={errors.company_address_line1?.message}
+            >
+              <Input
                 id="company_address_line1"
-                label="Address Line 1"
-                error={errors.company_address_line1?.message}
-              >
-                <Input
-                  id="company_address_line1"
-                  {...register('company_address_line1')}
-                  aria-invalid={!!errors.company_address_line1}
-                />
-              </Field>
-              <Field
+                {...register('company_address_line1')}
+                aria-invalid={!!errors.company_address_line1}
+              />
+            </Field>
+            <Field
+              id="company_address_line2"
+              label="Address line 2"
+              error={errors.company_address_line2?.message}
+            >
+              <Input
                 id="company_address_line2"
-                label="Address Line 2"
-                error={errors.company_address_line2?.message}
-              >
-                <Input
-                  id="company_address_line2"
-                  {...register('company_address_line2')}
-                  aria-invalid={!!errors.company_address_line2}
-                />
-              </Field>
-              <Field
+                {...register('company_address_line2')}
+                aria-invalid={!!errors.company_address_line2}
+              />
+            </Field>
+            <Field
+              id="company_address_line3"
+              label="Address line 3"
+              error={errors.company_address_line3?.message}
+            >
+              <Input
                 id="company_address_line3"
-                label="Address Line 3"
-                error={errors.company_address_line3?.message}
-              >
-                <Input
-                  id="company_address_line3"
-                  {...register('company_address_line3')}
-                  aria-invalid={!!errors.company_address_line3}
-                />
-              </Field>
-            </div>
+                {...register('company_address_line3')}
+                aria-invalid={!!errors.company_address_line3}
+              />
+            </Field>
           </CardContent>
         </Card>
 
-        {/* Seller Information */}
         <Card>
-          <CardContent>
-            <h3 className="text-base font-semibold">Seller Information</h3>
-            <Separator className="mt-2 mb-6" />
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field id="seller_name" label="Seller Name" error={errors.seller_name?.message}>
-                <Input
-                  id="seller_name"
-                  {...register('seller_name')}
-                  aria-invalid={!!errors.seller_name}
-                />
-              </Field>
-              <Field id="seller_phone" label="Phone" error={errors.seller_phone?.message}>
-                <Input
-                  id="seller_phone"
-                  {...register('seller_phone')}
-                  aria-invalid={!!errors.seller_phone}
-                />
-              </Field>
-              <Field id="seller_email" label="Email" error={errors.seller_email?.message}>
-                <Input
-                  id="seller_email"
-                  type="email"
-                  {...register('seller_email')}
-                  aria-invalid={!!errors.seller_email}
-                />
-              </Field>
-              <Field id="seller_gstin" label="GSTIN" error={errors.seller_gstin?.message}>
-                <Input
-                  id="seller_gstin"
-                  {...register('seller_gstin')}
-                  aria-invalid={!!errors.seller_gstin}
-                />
-              </Field>
-            </div>
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">
+              Seller &amp; tax identity
+            </CardTitle>
+            <CardDescription>
+              Contact details and GSTIN shown to customers on tax invoices.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field id="seller_name" label="Seller name" error={errors.seller_name?.message}>
+              <Input
+                id="seller_name"
+                {...register('seller_name')}
+                aria-invalid={!!errors.seller_name}
+              />
+            </Field>
+            <Field id="seller_phone" label="Phone" error={errors.seller_phone?.message}>
+              <Input
+                id="seller_phone"
+                className="tabular-nums"
+                {...register('seller_phone')}
+                aria-invalid={!!errors.seller_phone}
+              />
+            </Field>
+            <Field id="seller_email" label="Email" error={errors.seller_email?.message}>
+              <Input
+                id="seller_email"
+                type="email"
+                {...register('seller_email')}
+                aria-invalid={!!errors.seller_email}
+              />
+            </Field>
+            <Field
+              id="seller_gstin"
+              label="GSTIN"
+              error={errors.seller_gstin?.message}
+              helperText="15-character GST identification number."
+            >
+              <Input
+                id="seller_gstin"
+                className="tabular-nums uppercase"
+                {...register('seller_gstin')}
+                aria-invalid={!!errors.seller_gstin}
+              />
+            </Field>
           </CardContent>
         </Card>
 
-        {/* Invoice Settings */}
         <Card>
-          <CardContent>
-            <h3 className="text-base font-semibold">Invoice Settings</h3>
-            <Separator className="mt-2 mb-6" />
-            <div className="grid grid-cols-1 gap-4">
-              <Field
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">Invoice defaults</CardTitle>
+            <CardDescription>
+              Applied to newly generated invoices. Existing archived PDFs are not changed.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 gap-4">
+            <Field
+              id="hsn_code"
+              label="HSN code"
+              error={errors.hsn_code?.message}
+              helperText="Harmonized System of Nomenclature code for products."
+            >
+              <Input
                 id="hsn_code"
-                label="HSN Code"
-                error={errors.hsn_code?.message}
-                helperText="Harmonized System of Nomenclature code for products"
-              >
-                <Input
-                  id="hsn_code"
-                  {...register('hsn_code')}
-                  aria-invalid={!!errors.hsn_code}
-                />
-              </Field>
-              <Field
+                className="tabular-nums sm:max-w-xs"
+                {...register('hsn_code')}
+                aria-invalid={!!errors.hsn_code}
+              />
+            </Field>
+            <Field
+              id="terms_and_conditions"
+              label="Terms and conditions"
+              error={errors.terms_and_conditions?.message}
+              helperText="Appears at the bottom of every invoice."
+            >
+              <Textarea
                 id="terms_and_conditions"
-                label="Terms and Conditions"
-                error={errors.terms_and_conditions?.message}
-                helperText="Appears at the bottom of invoices"
-              >
-                <Textarea
-                  id="terms_and_conditions"
-                  rows={4}
-                  {...register('terms_and_conditions')}
-                  aria-invalid={!!errors.terms_and_conditions}
-                />
-              </Field>
-            </div>
+                rows={4}
+                {...register('terms_and_conditions')}
+                aria-invalid={!!errors.terms_and_conditions}
+              />
+            </Field>
           </CardContent>
         </Card>
 
-        {/* Company Bank Details */}
         <Card>
-          <CardContent>
-            <h3 className="text-base font-semibold">Company Bank Details</h3>
-            <p className="mt-2 mb-4 text-sm text-muted-foreground">
-              Printed on newly generated invoices. Existing archived PDFs are not changed.
-              Leave all fields blank to omit bank details.
-            </p>
-            <Separator className="mb-6" />
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field id="bank_name" label="Bank Name" error={errors.bank_name?.message}>
-                <Input
-                  id="bank_name"
-                  {...register('bank_name')}
-                  aria-invalid={!!errors.bank_name}
-                />
-              </Field>
-              <Field
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">Bank details</CardTitle>
+            <CardDescription>
+              Printed on newly generated invoices so customers can pay by transfer.
+              Leave every field blank to omit bank details entirely.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field id="bank_name" label="Bank name" error={errors.bank_name?.message}>
+              <Input
+                id="bank_name"
+                {...register('bank_name')}
+                aria-invalid={!!errors.bank_name}
+              />
+            </Field>
+            <Field
+              id="bank_account_number"
+              label="Account number"
+              error={errors.bank_account_number?.message}
+            >
+              <Input
                 id="bank_account_number"
-                label="Account Number"
-                error={errors.bank_account_number?.message}
-              >
-                <Input
-                  id="bank_account_number"
-                  {...register('bank_account_number')}
-                  aria-invalid={!!errors.bank_account_number}
-                />
-              </Field>
-              <Field
+                className="tabular-nums"
+                {...register('bank_account_number')}
+                aria-invalid={!!errors.bank_account_number}
+              />
+            </Field>
+            <Field
+              id="bank_branch"
+              label="Branch / code"
+              error={errors.bank_branch?.message}
+              helperText="Optional."
+            >
+              <Input
                 id="bank_branch"
-                label="Branch / Code (optional)"
-                error={errors.bank_branch?.message}
-              >
-                <Input
-                  id="bank_branch"
-                  {...register('bank_branch')}
-                  aria-invalid={!!errors.bank_branch}
-                />
-              </Field>
-              <Field id="bank_ifsc" label="IFSC" error={errors.bank_ifsc?.message}>
-                <Input
-                  id="bank_ifsc"
-                  {...register('bank_ifsc')}
-                  aria-invalid={!!errors.bank_ifsc}
-                />
-              </Field>
-            </div>
+                {...register('bank_branch')}
+                aria-invalid={!!errors.bank_branch}
+              />
+            </Field>
+            <Field
+              id="bank_ifsc"
+              label="IFSC"
+              error={errors.bank_ifsc?.message}
+              helperText="11 characters, e.g. HDFC0001234."
+            >
+              <Input
+                id="bank_ifsc"
+                className="tabular-nums uppercase"
+                {...register('bank_ifsc')}
+                aria-invalid={!!errors.bank_ifsc}
+              />
+            </Field>
           </CardContent>
         </Card>
 
-        {/* Submit Button */}
-        <div className="flex justify-end gap-4">
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button
             type="button"
             variant="outline"
@@ -340,7 +365,7 @@ export const SettingsPage: React.FC = () => {
             Reset
           </Button>
           <Button type="submit" disabled={!isDirty || updateMutation.isPending}>
-            {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+            {updateMutation.isPending ? 'Saving...' : 'Save changes'}
           </Button>
         </div>
       </form>

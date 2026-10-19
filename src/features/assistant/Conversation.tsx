@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { EmptyState } from '../../components/common/EmptyState';
 import type { MessageResponse, Widget } from '../../types/assistant';
 import type { LiveMessage, LiveToolCall } from './useRunStream';
 import MessageBubble from './MessageBubble';
@@ -82,11 +83,13 @@ export default function Conversation({
             <Loader2 className="size-6 animate-spin text-muted-foreground" />
           </div>
         ) : isEmpty ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
-            <h3 className="text-base font-semibold">KC Assistant</h3>
-            <p className="text-sm">
-              Ask about stock, expenses, or bills to get started.
-            </p>
+          <div className="flex h-full items-center justify-center">
+            <EmptyState
+              compact
+              icon={<Sparkles />}
+              title="KC Assistant"
+              message="Ask about stock, expenses, or bills to get started."
+            />
           </div>
         ) : (
           <>

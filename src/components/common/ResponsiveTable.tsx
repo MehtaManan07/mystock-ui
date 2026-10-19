@@ -9,6 +9,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from 'cn';
+import { EmptyState } from './EmptyState';
 
 interface Column<T> {
   id: string;
@@ -19,6 +20,8 @@ interface Column<T> {
   minWidth?: number;
   mobileLabel?: string; // Custom label for mobile view
   isAction?: boolean; // Special handling for action columns
+  /** Renders with tabular figures and right alignment so digits line up. */
+  numeric?: boolean;
 }
 
 interface ResponsiveTableProps<T> {
@@ -29,6 +32,15 @@ interface ResponsiveTableProps<T> {
   /** When provided, Cmd/Ctrl+Click or middle-click opens the row URL in a new tab */
   getRowHref?: (row: T) => string;
   emptyMessage?: string;
+  /** Heading shown when there are no rows. */
+  emptyTitle?: string;
+  /** Icon shown when there are no rows. */
+  emptyIcon?: React.ReactNode;
+  /**
+   * Pins the header while the body scrolls. Only has a visible effect once the
+   * table outgrows the max height, so short tables are unaffected.
+   */
+  stickyHeader?: boolean;
   /** Extra classes for the mobile cards. */
   mobileCardClassName?: string;
 }
@@ -59,6 +71,9 @@ export function ResponsiveTable<T>({
   onRowClick,
   getRowHref,
   emptyMessage = 'No data available',
+  emptyTitle,
+  emptyIcon,
+  stickyHeader = true,
   mobileCardClassName,
 }: ResponsiveTableProps<T>) {
   const handleActivate = (row: T) => (e: React.MouseEvent) => {
@@ -77,9 +92,12 @@ export function ResponsiveTable<T>({
 
   if (data.length === 0) {
     return (
-      <div className="px-4 py-12 text-center">
-        <p className="text-sm text-muted-foreground">{emptyMessage}</p>
-      </div>
+      <EmptyState
+        compact
+        title={emptyTitle ?? emptyMessage}
+        message={emptyTitle ? emptyMessage : undefined}
+        icon={emptyIcon}
+      />
     );
   }
 
@@ -133,7 +151,8 @@ export function ResponsiveTable<T>({
                 <div
                   className={cn(
                     'flex flex-1 flex-wrap gap-1',
-                    justifyClass[col.align ?? 'right']
+                    justifyClass[col.align ?? 'right'],
+                    col.numeric && 'tabular-nums'
                   )}
                 >
                   {col.render(row)}
@@ -146,14 +165,18 @@ export function ResponsiveTable<T>({
 
       {/* Desktop: table */}
       <div className="hidden overflow-x-auto sm:block">
-        <Table className="min-w-[650px]">
+        <Table className="min-w-[650px]" stickyHeader={stickyHeader}>
           <TableHeader>
             <TableRow>
               {columns.map((col) => (
                 <TableHead
                   key={col.id}
+                  numeric={col.numeric}
                   style={col.minWidth ? { minWidth: col.minWidth } : undefined}
-                  className={cn('whitespace-nowrap', alignClass[col.align ?? 'left'])}
+                  className={cn(
+                    'whitespace-nowrap',
+                    !col.numeric && alignClass[col.align ?? 'left']
+                  )}
                 >
                   {col.label}
                 </TableHead>
@@ -171,7 +194,8 @@ export function ResponsiveTable<T>({
                 {columns.map((col) => (
                   <TableCell
                     key={col.id}
-                    className={alignClass[col.align ?? 'left']}
+                    numeric={col.numeric}
+                    className={cn(!col.numeric && alignClass[col.align ?? 'left'])}
                   >
                     {col.render(row)}
                   </TableCell>

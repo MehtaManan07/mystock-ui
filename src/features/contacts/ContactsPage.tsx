@@ -9,6 +9,9 @@ import {
   Truck as SupplierIcon,
   ArrowLeftRight as BothIcon,
   Loader2,
+  Plus,
+  SearchX,
+  Users,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -167,12 +170,19 @@ export const ContactsPage: React.FC = () => {
   const getTypeBadgeClass = (type: string) => {
     switch (type) {
       case CONTACT_TYPES.CUSTOMER:
-        return 'border-primary/50 text-primary';
+        return 'border-primary/30 bg-primary/10 text-primary';
       case CONTACT_TYPES.SUPPLIER:
-        return 'border-secondary-foreground/40 text-secondary-foreground';
+        return 'border-info/30 bg-info/10 text-info';
       default:
-        return undefined;
+        return 'border-border bg-muted text-muted-foreground';
     }
+  };
+
+  // Positive balance = they owe us (to collect), negative = we owe them (to pay).
+  const getBalanceToneClass = (balance: number) => {
+    if (balance > 0) return 'text-success';
+    if (balance < 0) return 'text-destructive';
+    return 'text-muted-foreground';
   };
 
   const hasActiveFilters = search || typeFilter !== 'all' || balanceFilter !== 'all';
@@ -183,10 +193,10 @@ export const ContactsPage: React.FC = () => {
       id: 'name',
       label: 'Name',
       render: (contact: Contact) => (
-        <div>
-          <p className="text-sm font-semibold">{contact.name}</p>
+        <div className="min-w-0 max-w-[260px]">
+          <p className="truncate text-sm font-semibold">{contact.name}</p>
           {contact.address && (
-            <span className="block text-xs text-muted-foreground">
+            <span className="block truncate text-xs text-muted-foreground">
               {contact.address}
             </span>
           )}
@@ -196,7 +206,9 @@ export const ContactsPage: React.FC = () => {
     {
       id: 'phone',
       label: 'Phone',
-      render: (contact: Contact) => <p className="text-sm">{contact.phone}</p>,
+      render: (contact: Contact) => (
+        <span className="text-sm tabular-nums">{contact.phone}</span>
+      ),
     },
     {
       id: 'type',
@@ -212,23 +224,32 @@ export const ContactsPage: React.FC = () => {
       id: 'gstin',
       label: 'GSTIN',
       render: (contact: Contact) => (
-        <p className="text-sm text-muted-foreground">{contact.gstin || '-'}</p>
+        <span className="font-mono text-xs tracking-tight text-muted-foreground tabular-nums">
+          {contact.gstin || '—'}
+        </span>
       ),
       hideOnMobile: true,
     },
     {
       id: 'balance',
       label: 'Balance',
-      align: 'right' as const,
+      numeric: true,
       render: (contact: Contact) => (
-        <Badge
-          variant={
-            contact.balance < 0 ? 'destructive' : contact.balance > 0 ? 'default' : 'outline'
-          }
-          className={cn(contact.balance > 0 && 'bg-success text-success-foreground')}
-        >
-          {formatCurrency(contact.balance)}
-        </Badge>
+        <div className="flex flex-col items-end leading-tight">
+          <span
+            className={cn(
+              'text-sm font-semibold tabular-nums',
+              getBalanceToneClass(contact.balance)
+            )}
+          >
+            {formatCurrency(contact.balance)}
+          </span>
+          {contact.balance !== 0 && (
+            <span className="text-[0.7rem] text-muted-foreground">
+              {contact.balance > 0 ? 'to collect' : 'to pay'}
+            </span>
+          )}
+        </div>
       ),
     },
     {
@@ -308,9 +329,15 @@ export const ContactsPage: React.FC = () => {
     if (!contacts || contacts.length === 0) {
       return (
         <EmptyState
-          title="No contacts found"
-          message={hasActiveFilters ? 'Try different filters' : 'Add your first contact to get started'}
-          actionLabel={!hasActiveFilters ? 'Add Contact' : undefined}
+          icon={hasActiveFilters ? <SearchX /> : <Users />}
+          title={hasActiveFilters ? 'No matching contacts' : 'No contacts yet'}
+          message={
+            hasActiveFilters
+              ? 'No contact matches the current search and filters. Try widening them.'
+              : 'Add your customers and suppliers to track balances and transactions.'
+          }
+          actionLabel={!hasActiveFilters ? 'Add contact' : undefined}
+          actionIcon={!hasActiveFilters ? <Plus /> : undefined}
           onAction={!hasActiveFilters ? handleOpenCreateDialog : undefined}
         />
       );
@@ -324,20 +351,22 @@ export const ContactsPage: React.FC = () => {
           keyExtractor={(contact) => contact.id.toString()}
           onRowClick={handleViewContact}
           getRowHref={(contact) => `/contacts/${contact.id}`}
-          emptyMessage="No contacts found"
+          emptyIcon={<Users />}
+          emptyTitle="No contacts yet"
+          emptyMessage="Add your customers and suppliers to track balances and transactions."
         />
 
         {/* Infinite scroll trigger and loading indicator */}
-        <div className="p-4 text-center">
-          <div ref={observerTarget} style={{ height: '20px' }} />
+        <div className="border-t border-border/70 p-4 text-center">
+          <div ref={observerTarget} className="h-5" />
           {isFetchingNextPage && (
-            <div className="flex items-center justify-center gap-2">
-              <Loader2 className="size-6 animate-spin" />
-              <p className="text-sm text-muted-foreground">Loading more contacts...</p>
+            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+              <span className="text-sm">Loading more contacts...</span>
             </div>
           )}
           {!hasNextPage && contacts.length > 0 && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground tabular-nums">
               All contacts loaded ({totalCount} total)
             </span>
           )}
@@ -355,52 +384,55 @@ export const ContactsPage: React.FC = () => {
         onAction={handleOpenCreateDialog}
       />
 
-      {/* Filters - responsive */}
-      <div className="mb-4 flex flex-col flex-wrap gap-4 sm:mb-6 sm:flex-row">
-        <div className="w-full sm:w-auto sm:min-w-[200px]">
+      <div className="space-y-5">
+        {/* Toolbar: search + filters */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <SearchInput
             value={search}
             onChange={setSearch}
             placeholder="Search by name or phone..."
+            className="sm:max-w-xs"
           />
+
+          <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
+            <ToggleGroup
+              type="single"
+              value={typeFilter}
+              onValueChange={(value) => value && setTypeFilter(value)}
+              variant="outline"
+              size="sm"
+              className="w-full sm:w-fit"
+            >
+              <ToggleGroupItem value="all" className="flex-1 sm:flex-initial">All</ToggleGroupItem>
+              <ToggleGroupItem value={CONTACT_TYPES.CUSTOMER} className="flex-1 sm:flex-initial">Customers</ToggleGroupItem>
+              <ToggleGroupItem value={CONTACT_TYPES.SUPPLIER} className="flex-1 sm:flex-initial">Suppliers</ToggleGroupItem>
+              <ToggleGroupItem value={CONTACT_TYPES.BOTH} className="flex-1 sm:flex-initial">Both</ToggleGroupItem>
+            </ToggleGroup>
+
+            <ToggleGroup
+              type="single"
+              value={balanceFilter}
+              onValueChange={(value) => value && setBalanceFilter(value)}
+              variant="outline"
+              size="sm"
+              className="w-full sm:w-fit"
+            >
+              <ToggleGroupItem value="all" className="flex-1 sm:flex-initial">All</ToggleGroupItem>
+              <ToggleGroupItem value="positive" className="flex-1 sm:flex-initial">Receivables</ToggleGroupItem>
+              <ToggleGroupItem value="negative" className="flex-1 sm:flex-initial">Payables</ToggleGroupItem>
+            </ToggleGroup>
+
+            {isFetching && !isFetchingNextPage && !showFullLoading && (
+              <span className="text-xs text-muted-foreground">Searching...</span>
+            )}
+          </div>
         </div>
-        
-        <ToggleGroup
-          type="single"
-          value={typeFilter}
-          onValueChange={(value) => value && setTypeFilter(value)}
-          variant="outline"
-          size="sm"
-          className="w-full sm:w-fit"
-        >
-          <ToggleGroupItem value="all" className="flex-1 sm:flex-initial">All</ToggleGroupItem>
-          <ToggleGroupItem value={CONTACT_TYPES.CUSTOMER} className="flex-1 sm:flex-initial">Customers</ToggleGroupItem>
-          <ToggleGroupItem value={CONTACT_TYPES.SUPPLIER} className="flex-1 sm:flex-initial">Suppliers</ToggleGroupItem>
-          <ToggleGroupItem value={CONTACT_TYPES.BOTH} className="flex-1 sm:flex-initial">Both</ToggleGroupItem>
-        </ToggleGroup>
 
-        <ToggleGroup
-          type="single"
-          value={balanceFilter}
-          onValueChange={(value) => value && setBalanceFilter(value)}
-          variant="outline"
-          size="sm"
-          className="w-full sm:w-fit"
-        >
-          <ToggleGroupItem value="all" className="flex-1 sm:flex-initial">All</ToggleGroupItem>
-          <ToggleGroupItem value="positive" className="flex-1 sm:flex-initial">Receivables</ToggleGroupItem>
-          <ToggleGroupItem value="negative" className="flex-1 sm:flex-initial">Payables</ToggleGroupItem>
-        </ToggleGroup>
-        
-        {isFetching && !isFetchingNextPage && !showFullLoading && (
-          <span className="self-center text-xs text-muted-foreground">Searching...</span>
-        )}
+        {/* Contacts table */}
+        <Card className="gap-0 overflow-hidden py-0">
+          {renderTableContent()}
+        </Card>
       </div>
-
-      {/* Contacts table */}
-      <Card className="gap-0 overflow-hidden py-0">
-        {renderTableContent()}
-      </Card>
 
       {/* Create/Edit Dialog */}
       <ContactFormDialog

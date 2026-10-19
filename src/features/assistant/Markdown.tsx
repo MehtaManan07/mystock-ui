@@ -53,32 +53,32 @@ export default function Markdown({ children }: { children: string }) {
           strong: ({ children: c }) => <strong className="font-semibold">{c}</strong>,
           em: ({ children: c }) => <em className="italic">{c}</em>,
           code: ({ children: c }) => (
-            <code className="rounded-sm bg-foreground/10 px-1 py-0.5 font-mono text-[0.85em]">
+            <code className="rounded-sm border border-border/70 bg-muted px-1 py-0.5 font-mono text-[0.85em]">
               {c}
             </code>
           ),
           // Fenced blocks: the nested <code> above has to shed its chip styling.
           pre: ({ children: c }) => (
-            <pre className="my-2 overflow-x-auto rounded-md bg-foreground/10 p-3 font-mono text-[0.85em] [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-[1em]">
+            <pre className="my-2 overflow-x-auto rounded-md border border-border/70 bg-muted p-3 font-mono text-[0.85em] [&_code]:border-0 [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-[1em]">
               {c}
             </pre>
           ),
           blockquote: ({ children: c }) => (
-            <blockquote className="my-2 border-l-[3px] pl-3 text-muted-foreground">
+            <blockquote className="my-2 border-l-[3px] border-border pl-3 text-muted-foreground">
               {c}
             </blockquote>
           ),
-          hr: () => <hr className="my-3 border-t" />,
+          hr: () => <hr className="my-3 border-t border-border/70" />,
           table: ({ children: c }) => (
             <div className="my-2 overflow-x-auto">
               <table className="w-full border-collapse">{c}</table>
             </div>
           ),
           th: ({ children: c }) => (
-            <th className="border px-2 py-1 text-left font-semibold">{c}</th>
+            <th className="border border-border/70 px-2 py-1 text-left text-xs font-semibold tracking-wider text-muted-foreground uppercase">{c}</th>
           ),
           td: ({ children: c }) => (
-            <td className="border px-2 py-1 text-left">{c}</td>
+            <td className="border border-border/70 px-2 py-1 text-left tabular-nums">{c}</td>
           ),
         }}
       >

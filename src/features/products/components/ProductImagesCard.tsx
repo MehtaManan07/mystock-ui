@@ -9,7 +9,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from 'cn';
 import type { ProductImage } from '../../../types';
 
@@ -46,49 +46,50 @@ export const ProductImagesCard: React.FC<ProductImagesCardProps> = ({
 
   return (
     <Card className="overflow-hidden">
-      <CardContent>
-        {/* Header */}
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-          <h3 className="text-base font-semibold">Product images</h3>
-          <div className="flex items-center gap-3">
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept="image/jpeg,image/png,image/webp"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                const files = e.target.files ? Array.from(e.target.files) : [];
-                if (files.length) onUpload(files);
-              }}
-            />
-            <Button
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadPending || !canAddMore}
-            >
-              {uploadPending ? <Loader2 className="animate-spin" /> : <Plus />}
-              {uploadPending ? 'Uploading…' : 'Add images'}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onCopyFromClick}
-              disabled={copyPending || !canAddMore}
-            >
-              {copyPending ? <Loader2 className="animate-spin" /> : <Copy />}
-              {copyPending ? 'Copying…' : 'Copy from product'}
-            </Button>
-            {images.length > 0 && (
-              <span className="text-xs text-muted-foreground">{images.length} / 15</span>
-            )}
-          </div>
-        </div>
+      <CardHeader className="border-b border-border/70 pb-5 max-sm:grid-cols-1">
+        <CardTitle className="text-base font-semibold">Product images</CardTitle>
+        <CardAction className="flex flex-wrap items-center gap-2 max-sm:col-start-1 max-sm:row-start-2 max-sm:justify-self-start">
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              const files = e.target.files ? Array.from(e.target.files) : [];
+              if (files.length) onUpload(files);
+            }}
+          />
+          {images.length > 0 && (
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {images.length} / 15
+            </span>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onCopyFromClick}
+            disabled={copyPending || !canAddMore}
+          >
+            {copyPending ? <Loader2 className="animate-spin" /> : <Copy />}
+            {copyPending ? 'Copying…' : 'Copy from product'}
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadPending || !canAddMore}
+          >
+            {uploadPending ? <Loader2 className="animate-spin" /> : <Plus />}
+            {uploadPending ? 'Uploading…' : 'Add images'}
+          </Button>
+        </CardAction>
+      </CardHeader>
 
+      <CardContent>
         {images.length > 0 ? (
           <div>
             {/* Main image with nav */}
-            <div className="relative mb-4 flex max-h-[420px] min-h-[280px] w-full items-center justify-center overflow-hidden rounded-lg border bg-muted/50">
+            <div className="relative mb-4 flex max-h-[420px] min-h-[280px] w-full items-center justify-center overflow-hidden rounded-xl border border-border/70 bg-muted/40">
               <img
                 src={selectedImage?.url}
                 alt={`Image ${selectedImageIndex + 1} of ${images.length}`}
@@ -103,7 +104,7 @@ export const ProductImagesCard: React.FC<ProductImagesCardProps> = ({
                     onClick={() =>
                       onSelectImage((selectedImageIndex - 1 + images.length) % images.length)
                     }
-                    className="absolute left-2 rounded-full bg-white/90 shadow-sm hover:bg-white"
+                    className="absolute left-2 rounded-full border border-border/70 bg-card/90 shadow-xs hover:bg-card"
                   >
                     <ChevronLeft />
                   </Button>
@@ -112,13 +113,13 @@ export const ProductImagesCard: React.FC<ProductImagesCardProps> = ({
                     size="icon-sm"
                     aria-label="Next image"
                     onClick={() => onSelectImage((selectedImageIndex + 1) % images.length)}
-                    className="absolute right-2 rounded-full bg-white/90 shadow-sm hover:bg-white"
+                    className="absolute right-2 rounded-full border border-border/70 bg-card/90 shadow-xs hover:bg-card"
                   >
                     <ChevronRight />
                   </Button>
                 </>
               )}
-              <span className="absolute right-2 bottom-2 rounded bg-black/50 px-2 py-1 text-xs text-white">
+              <span className="absolute right-2 bottom-2 rounded-md bg-foreground/70 px-2 py-1 text-xs text-background tabular-nums">
                 {selectedImageIndex + 1} / {images.length}
               </span>
             </div>
@@ -130,10 +131,10 @@ export const ProductImagesCard: React.FC<ProductImagesCardProps> = ({
                   key={img.id}
                   onClick={() => onSelectImage(idx)}
                   className={cn(
-                    'group relative size-[72px] shrink-0 cursor-pointer overflow-hidden rounded-md border-2 bg-muted transition-[border-color,transform] duration-200',
+                    'group relative size-[72px] shrink-0 cursor-pointer overflow-hidden rounded-md border-2 bg-muted transition-colors',
                     selectedImageIndex === idx
                       ? 'border-primary'
-                      : 'border-transparent hover:border-muted-foreground/40'
+                      : 'border-border/70 hover:border-primary/40'
                   )}
                 >
                   <img
@@ -145,7 +146,7 @@ export const ProductImagesCard: React.FC<ProductImagesCardProps> = ({
                     variant="ghost"
                     size="icon-xs"
                     aria-label="Delete image"
-                    className="absolute top-1 right-1 rounded-full bg-destructive text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive/90 hover:text-white"
+                    className="absolute top-1 right-1 rounded-full bg-destructive text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive/90 hover:text-destructive-foreground"
                     onClick={(e) => {
                       e.stopPropagation();
                       onDeleteImage(img.id);
@@ -161,16 +162,17 @@ export const ProductImagesCard: React.FC<ProductImagesCardProps> = ({
         ) : (
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="cursor-pointer rounded-lg border-2 border-dashed bg-muted/50 px-6 py-12 text-center transition-colors duration-200 hover:border-primary/60 hover:bg-muted"
+            className="cursor-pointer rounded-xl border border-dashed border-border bg-muted/40 px-6 py-12 text-center transition-colors hover:border-primary/50 hover:bg-accent/40"
           >
             <ImageIcon
-              className="mx-auto mb-2 size-12 text-muted-foreground/50"
+              className="mx-auto mb-3 size-10 text-muted-foreground/60"
               strokeWidth={1.5}
             />
-            <p className="mb-1 text-sm text-muted-foreground">No images yet</p>
-            <span className="text-xs text-muted-foreground">
-              Click to upload or use “Copy from product” for the same item in another size/color
-            </span>
+            <p className="text-[15px] font-semibold tracking-tight">No images yet</p>
+            <p className="mx-auto mt-1.5 max-w-sm text-sm leading-relaxed text-muted-foreground">
+              Click to upload, or use “Copy from product” for the same item in another
+              size or colour.
+            </p>
           </div>
         )}
       </CardContent>

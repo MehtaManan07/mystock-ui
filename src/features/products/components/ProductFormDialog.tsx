@@ -146,7 +146,7 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                   autoFocus
                 />
                 {errors.name && (
-                  <p className="text-sm text-destructive">{errors.name.message}</p>
+                  <p className="text-xs text-destructive">{errors.name.message}</p>
                 )}
               </div>
 
@@ -156,13 +156,14 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                   id="product-company-sku"
                   {...register('company_sku')}
                   placeholder="e.g., SKU-001, PROD-ABC"
+                  className="font-mono"
                   aria-invalid={!!errors.company_sku}
                   disabled={isLoading}
                 />
                 {errors.company_sku ? (
-                  <p className="text-sm text-destructive">{errors.company_sku.message}</p>
+                  <p className="text-xs text-destructive">{errors.company_sku.message}</p>
                 ) : (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Unique identifier for this product
                   </p>
                 )}
@@ -177,7 +178,7 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                   disabled={isLoading}
                 />
                 {errors.display_name && (
-                  <p className="text-sm text-destructive">{errors.display_name.message}</p>
+                  <p className="text-xs text-destructive">{errors.display_name.message}</p>
                 )}
               </div>
 
@@ -192,7 +193,7 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                   disabled={isLoading}
                 />
                 {errors.description && (
-                  <p className="text-sm text-destructive">{errors.description.message}</p>
+                  <p className="text-xs text-destructive">{errors.description.message}</p>
                 )}
               </div>
 
@@ -206,7 +207,7 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                   disabled={isLoading}
                 />
                 {errors.size && (
-                  <p className="text-sm text-destructive">{errors.size.message}</p>
+                  <p className="text-xs text-destructive">{errors.size.message}</p>
                 )}
               </div>
 
@@ -220,7 +221,7 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                   disabled={isLoading}
                 />
                 {errors.packing && (
-                  <p className="text-sm text-destructive">{errors.packing.message}</p>
+                  <p className="text-xs text-destructive">{errors.packing.message}</p>
                 )}
               </div>
 
@@ -234,7 +235,7 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                   disabled={isLoading}
                 />
                 {errors.product_type && (
-                  <p className="text-sm text-destructive">{errors.product_type.message}</p>
+                  <p className="text-xs text-destructive">{errors.product_type.message}</p>
                 )}
               </div>
 
@@ -248,9 +249,9 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                   disabled={isLoading}
                 />
                 {errors.tags ? (
-                  <p className="text-sm text-destructive">{errors.tags.message}</p>
+                  <p className="text-xs text-destructive">{errors.tags.message}</p>
                 ) : (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Separate multiple tags with commas
                   </p>
                 )}
@@ -265,11 +266,12 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                   step="0.01"
                   min={0}
                   placeholder="Width"
+                  className="tabular-nums"
                   aria-invalid={!!errors.dimension_width}
                   disabled={isLoading}
                 />
                 {errors.dimension_width && (
-                  <p className="text-sm text-destructive">{errors.dimension_width.message}</p>
+                  <p className="text-xs text-destructive">{errors.dimension_width.message}</p>
                 )}
               </div>
 
@@ -282,11 +284,12 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                   step="0.01"
                   min={0}
                   placeholder="Height"
+                  className="tabular-nums"
                   aria-invalid={!!errors.dimension_height}
                   disabled={isLoading}
                 />
                 {errors.dimension_height && (
-                  <p className="text-sm text-destructive">{errors.dimension_height.message}</p>
+                  <p className="text-xs text-destructive">{errors.dimension_height.message}</p>
                 )}
               </div>
 
@@ -299,11 +302,12 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                   step="0.01"
                   min={0}
                   placeholder="Length"
+                  className="tabular-nums"
                   aria-invalid={!!errors.dimension_length}
                   disabled={isLoading}
                 />
                 {errors.dimension_length && (
-                  <p className="text-sm text-destructive">{errors.dimension_length.message}</p>
+                  <p className="text-xs text-destructive">{errors.dimension_length.message}</p>
                 )}
               </div>
 
@@ -319,13 +323,13 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                     type="number"
                     step="0.01"
                     min={0}
-                    className="pl-7"
+                    className="pl-7 tabular-nums"
                     aria-invalid={!!errors.default_sale_price}
                     disabled={isLoading}
                   />
                 </div>
                 {errors.default_sale_price && (
-                  <p className="text-sm text-destructive">{errors.default_sale_price.message}</p>
+                  <p className="text-xs text-destructive">{errors.default_sale_price.message}</p>
                 )}
               </div>
 
@@ -341,15 +345,15 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                     type="number"
                     step="0.01"
                     min={0}
-                    className="pl-7"
+                    className="pl-7 tabular-nums"
                     aria-invalid={!!errors.mrp}
                     disabled={isLoading}
                   />
                 </div>
                 {errors.mrp ? (
-                  <p className="text-sm text-destructive">{errors.mrp.message}</p>
+                  <p className="text-xs text-destructive">{errors.mrp.message}</p>
                 ) : (
-                  <p className="text-sm text-muted-foreground">Maximum retail price</p>
+                  <p className="text-xs text-muted-foreground">Maximum retail price</p>
                 )}
               </div>
 
@@ -365,13 +369,13 @@ export const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                     type="number"
                     step="0.01"
                     min={0}
-                    className="pl-7"
+                    className="pl-7 tabular-nums"
                     aria-invalid={!!errors.default_purchase_price}
                     disabled={isLoading}
                   />
                 </div>
                 {errors.default_purchase_price && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-xs text-destructive">
                     {errors.default_purchase_price.message}
                   </p>
                 )}

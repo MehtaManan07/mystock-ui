@@ -7,16 +7,16 @@ import {
 } from "lucide-react"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 
-import { useThemeStore } from "@/stores/themeStore"
+import { useResolvedTheme } from "@/stores/themeStore"
 
 const Toaster = ({ ...props }: ToasterProps) => {
   // Follow the app's own theme store rather than next-themes, which has no
   // provider mounted here and would silently fall back to the OS preference.
-  const mode = useThemeStore((state) => state.mode)
+  const theme = useResolvedTheme()
 
   return (
     <Sonner
-      theme={mode}
+      theme={theme}
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4" />,

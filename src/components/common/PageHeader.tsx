@@ -39,17 +39,19 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   action,
 }) => {
   return (
-    <div className="mb-6 sm:mb-8">
+    <div className="mb-6 sm:mb-7">
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <Breadcrumb className="mb-2">
-          <BreadcrumbList>
+        <Breadcrumb className="mb-2.5">
+          <BreadcrumbList className="text-xs sm:text-xs">
             {breadcrumbs.map((item, index) => {
               const isLast = index === breadcrumbs.length - 1;
               return (
                 <React.Fragment key={item.label}>
                   <BreadcrumbItem>
                     {isLast || !item.path ? (
-                      <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                      <BreadcrumbPage className="font-medium">
+                        {item.label}
+                      </BreadcrumbPage>
                     ) : (
                       <BreadcrumbLink asChild>
                         <RouterLink to={item.path}>{item.label}</RouterLink>
@@ -64,25 +66,23 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         </Breadcrumb>
       )}
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-[1.75rem]">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl font-bold tracking-tight text-balance sm:text-2xl">
             {title}
           </h1>
           {subtitle && (
-            <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-              {subtitle}
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
           )}
         </div>
 
         {action
-          ? <div className="self-stretch sm:self-start">{action}</div>
+          ? <div className="shrink-0 self-stretch sm:self-auto">{action}</div>
           : actionLabel && onAction && (
               <Button
                 onClick={onAction}
                 disabled={actionDisabled}
-                className="w-full sm:w-auto"
+                className="w-full shrink-0 sm:w-auto"
               >
                 {actionIcon}
                 {actionLabel}

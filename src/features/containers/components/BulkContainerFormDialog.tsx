@@ -186,25 +186,29 @@ export const BulkContainerFormDialog: React.FC<BulkContainerFormDialogProps> = (
           )}
 
           {/* Add Row Button */}
-          <div className="mt-2 mb-4 flex items-center gap-4">
+          <div className="mt-2 mb-4 flex flex-wrap items-center gap-2">
             <Button
+              type="button"
               variant="outline"
               size="sm"
               onClick={handleAddRow}
               disabled={isLoading || rows.length >= 20}
             >
               <Plus />
-              Add Row
+              Add row
             </Button>
-            <Badge variant="outline" className="border-primary text-primary">
+            <Badge
+              variant="outline"
+              className="border-primary/30 bg-primary/10 text-primary tabular-nums"
+            >
               {`${rows.length} container${rows.length !== 1 ? 's' : ''}`}
             </Badge>
           </div>
 
           {/* Containers Table */}
-          <div className="max-h-[400px] overflow-auto">
-            <Table>
-              <TableHeader className="sticky top-0 z-10 bg-background">
+          <div className="overflow-hidden rounded-lg border border-border/70">
+            <Table stickyHeader containerClassName="max-h-[400px]">
+              <TableHeader>
                 <TableRow>
                   <TableHead className="w-[50%]">Container Name *</TableHead>
                   <TableHead className="w-[40%]">Type</TableHead>
@@ -228,7 +232,7 @@ export const BulkContainerFormDialog: React.FC<BulkContainerFormDialogProps> = (
                         autoFocus={index === 0}
                       />
                       {row.error && (
-                        <p className="mt-1 text-sm text-destructive">{row.error}</p>
+                        <p className="mt-1 text-xs text-destructive">{row.error}</p>
                       )}
                     </TableCell>
                     <TableCell className="align-top">
@@ -257,6 +261,7 @@ export const BulkContainerFormDialog: React.FC<BulkContainerFormDialogProps> = (
                         <TooltipTrigger asChild>
                           <span>
                             <Button
+                              type="button"
                               variant="ghost"
                               size="icon-sm"
                               aria-label="Remove row"
@@ -278,18 +283,23 @@ export const BulkContainerFormDialog: React.FC<BulkContainerFormDialogProps> = (
           </div>
 
           {/* Helper Text */}
-          <div className="mt-4">
-            <span className="text-xs text-muted-foreground">
-              You can add up to 20 containers in a single operation. Each container name must be unique.
-            </span>
-          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            You can add up to 20 containers in a single operation. Each container
+            name must be unique.
+          </p>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={isLoading}
+          >
             Cancel
           </Button>
           <Button
+            type="button"
             onClick={handleSubmit}
             disabled={isLoading || rows.length === 0}
           >

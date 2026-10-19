@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { useThemeStore } from './stores/themeStore';
+import { useResolvedTheme } from './stores/themeStore';
 import { useDraftStore } from './stores/draftStore';
 import AppRoutes from './routes';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
@@ -26,14 +26,18 @@ const queryClient = new QueryClient({
 });
 
 const ThemedApp: React.FC = () => {
-  const mode = useThemeStore((state) => state.mode);
+  const theme = useResolvedTheme();
   const { clearOldDrafts } = useDraftStore();
 
-  // Drive Tailwind's dark mode from the persisted theme store. `index.html`
-  // applies the same class before first paint to avoid a light flash.
+  // Drive Tailwind's dark mode from the resolved theme. `index.html` applies
+  // the same class before first paint to avoid a light flash. `color-scheme`
+  // additionally tells the browser to render native widgets (scrollbars, date
+  // pickers, autofill) in the matching mode.
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', mode === 'dark');
-  }, [mode]);
+    const root = document.documentElement;
+    root.classList.toggle('dark', theme === 'dark');
+    root.style.colorScheme = theme;
+  }, [theme]);
 
   // Clean up old drafts on app initialization
   useEffect(() => {

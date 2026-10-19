@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Check, ChevronDown, Trash2, X } from 'lucide-react';
+import { Check, ChevronDown, PackageOpen, Plus, Trash2, X } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Command,
   CommandEmpty,
@@ -35,6 +35,7 @@ import { productFormSchema, type ProductFormData, type ContainerQuantity } from 
 import { useCreateProductsBulk } from '../../../hooks/useProducts';
 import { useContainers, useCreateContainer } from '../../../hooks/useContainers';
 import { useSetContainerProducts } from '../../../hooks/useContainerProducts';
+import { EmptyState } from '../../../components/common/EmptyState';
 import { ResponsiveTable } from '../../../components/common/ResponsiveTable';
 import { CONTAINER_TYPES } from '../../../constants';
 import type { CreateProductDto } from '../../../types';
@@ -363,13 +364,15 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
             {/* Left Panel - Product Entry Form */}
             <div className="col-span-12 md:col-span-6">
               <Card>
+                <CardHeader className="border-b border-border/70 pb-5">
+                  <CardTitle className="text-base font-semibold">Add product</CardTitle>
+                </CardHeader>
                 <CardContent>
-                  <h3 className="mb-2 text-base font-semibold">Add Product</h3>
-
                   {error && (
                     <Alert variant="destructive" className="mb-4 pr-10">
                       <AlertDescription>{error}</AlertDescription>
                       <Button
+                        type="button"
                         variant="ghost"
                         size="icon-sm"
                         aria-label="Dismiss error"
@@ -420,6 +423,7 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
                         value={formData.company_sku}
                         onChange={(e) => handleInputChange('company_sku', e.target.value)}
                         placeholder="e.g., SKU-001, PROD-ABC"
+                        className="font-mono"
                       />
                     </div>
 
@@ -462,7 +466,7 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
                         onChange={(e) => handleInputChange('tags', e.target.value)}
                         placeholder="Comma-separated tags"
                       />
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         Separate multiple tags with commas
                       </p>
                     </div>
@@ -478,7 +482,7 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
                           type="number"
                           step="0.01"
                           min={0}
-                          className="pl-7"
+                          className="pl-7 tabular-nums"
                           value={formData.default_sale_price}
                           onChange={(e) =>
                             handleInputChange('default_sale_price', e.target.value)
@@ -498,7 +502,7 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
                           type="number"
                           step="0.01"
                           min={0}
-                          className="pl-7"
+                          className="pl-7 tabular-nums"
                           value={formData.mrp}
                           onChange={(e) => handleInputChange('mrp', e.target.value)}
                         />
@@ -516,7 +520,7 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
                           type="number"
                           step="0.01"
                           min={0}
-                          className="pl-7"
+                          className="pl-7 tabular-nums"
                           value={formData.default_purchase_price}
                           onChange={(e) =>
                             handleInputChange('default_purchase_price', e.target.value)
@@ -566,8 +570,8 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
 
                     {/* Container Section */}
                     <div className="col-span-12">
-                      <p className="mb-2 text-sm font-semibold">
-                        Container &amp; Quantity (Optional)
+                      <p className="mt-2 mb-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                        Container &amp; quantity (optional)
                       </p>
                     </div>
 
@@ -653,12 +657,14 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
 
                     <div className="col-span-12">
                       <Button
+                        type="button"
                         variant="outline"
                         size="sm"
                         className="w-full"
                         onClick={handleAddContainerQuantity}
                       >
-                        Add Container
+                        <Plus />
+                        Add container
                       </Button>
                     </div>
 
@@ -666,14 +672,19 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
                     {currentContainers.length > 0 && (
                       <>
                         <div className="col-span-12">
-                          <p className="mb-2 text-sm font-medium">Selected Containers</p>
+                          <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                            Selected containers
+                          </p>
                         </div>
                         {currentContainers.map((container, index) => (
                           <div className="col-span-12" key={index}>
-                            <div className="flex items-center gap-2 rounded bg-accent p-2">
-                              <div className="flex-1">
-                                <p className="text-sm">
-                                  {container.container_name} ({container.container_type})
+                            <div className="flex items-center gap-2 rounded-md border border-border/70 bg-muted/40 p-2">
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-medium">
+                                  {container.container_name}
+                                </p>
+                                <p className="text-xs text-muted-foreground capitalize">
+                                  {container.container_type}
                                 </p>
                               </div>
                               <Input
@@ -682,16 +693,17 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
                                 step={1}
                                 aria-label="Qty"
                                 placeholder="Qty"
-                                className="h-8 w-20"
+                                className="h-8 w-20 text-right tabular-nums"
                                 value={container.quantity}
                                 onChange={(e) =>
                                   handleUpdateContainerQuantity(index, e.target.value)
                                 }
                               />
                               <Button
+                                type="button"
                                 variant="ghost"
                                 size="icon-sm"
-                                className="text-destructive"
+                                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                                 aria-label="Remove container"
                                 onClick={() => handleRemoveContainerQuantity(index)}
                               >
@@ -704,8 +716,9 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
                     )}
 
                     <div className="col-span-12">
-                      <Button size="lg" className="w-full" onClick={handleAddProduct}>
-                        Add to List
+                      <Button type="button" className="w-full" onClick={handleAddProduct}>
+                        <Plus />
+                        Add to list
                       </Button>
                     </div>
                   </div>
@@ -715,24 +728,25 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
 
             {/* Right Panel - Preview Table */}
             <div className="col-span-12 md:col-span-6">
-              <Card>
-                <CardContent>
-                  <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-base font-semibold">Products to Create</h3>
-                    {products.length > 0 && (
-                      <Badge>
+              <Card className="overflow-hidden">
+                <CardHeader className="border-b border-border/70 pb-5">
+                  <CardTitle className="text-base font-semibold">Products to create</CardTitle>
+                  {products.length > 0 && (
+                    <CardAction>
+                      <Badge variant="outline" className="tabular-nums">
                         {products.length} product{products.length !== 1 ? 's' : ''}
                       </Badge>
-                    )}
-                  </div>
-
+                    </CardAction>
+                  )}
+                </CardHeader>
+                <CardContent className="px-0">
                   {products.length === 0 ? (
-                    <Alert>
-                      <AlertDescription>
-                        No products added yet. Fill in the form on the left and click "Add to
-                        List" to add products.
-                      </AlertDescription>
-                    </Alert>
+                    <EmptyState
+                      compact
+                      icon={<PackageOpen />}
+                      title="Nothing queued yet"
+                      message="Fill in the form on the left and choose “Add to list” to queue products for creation."
+                    />
                   ) : (
                     <>
                       <ResponsiveTable
@@ -740,7 +754,9 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
                           {
                             id: 'name',
                             label: 'Name',
-                            render: (row: any) => <p className="text-sm">{row.name}</p>
+                            render: (row: any) => (
+                              <p className="text-sm font-medium">{row.name}</p>
+                            )
                           },
                           {
                             id: 'size',
@@ -759,31 +775,38 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
                             render: (row: any) => row.containers ? (
                               <div className="flex flex-col gap-1">
                                 {row.containers.map((c: any, idx: number) => (
-                                  <span key={idx} className="text-xs">
+                                  <span key={idx} className="text-xs text-muted-foreground tabular-nums">
                                     {c.container_name}: {c.quantity}
                                   </span>
                                 ))}
                               </div>
                             ) : (
-                              <p className="text-sm">-</p>
+                              <p className="text-sm text-muted-foreground">-</p>
                             )
                           },
                           {
                             id: 'sale_price',
                             label: 'Sale Price',
+                            numeric: true,
                             hideOnMobile: true,
-                            render: (row: any) => <p className="text-sm">{row.sale_price}</p>
+                            render: (row: any) => (
+                              <span className="text-sm font-medium text-success">
+                                {row.sale_price}
+                              </span>
+                            )
                           },
                           {
                             id: 'purchase_price',
                             label: 'Purchase Price',
+                            numeric: true,
                             hideOnMobile: true,
-                            render: (row: any) => <p className="text-sm">{row.purchase_price}</p>
+                            render: (row: any) => <span className="text-sm">{row.purchase_price}</span>
                           },
                           {
                             id: 'actions',
                             label: 'Actions',
-                            align: 'center' as const,
+                            align: 'right' as const,
+                            isAction: true,
                             render: (row: any) => row.actions
                           },
                         ]}
@@ -797,9 +820,10 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
                           purchase_price: formatCurrency(product.default_purchase_price),
                           actions: (
                             <Button
+                              type="button"
                               variant="ghost"
                               size="icon-sm"
-                              className="text-destructive"
+                              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                               onClick={() => handleRemoveProduct(product.id)}
                               aria-label="delete"
                             >
@@ -810,9 +834,16 @@ export const BulkProductFormDialog: React.FC<BulkProductFormDialogProps> = ({ op
                         keyExtractor={(row) => row.id}
                       />
 
-                      <div className="mt-4 flex justify-end">
-                        <Button variant="outline" size="sm" className="border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={handleClearAll}>
-                          Clear All
+                      <div className="flex justify-end border-t border-border/70 px-6 pt-4">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          onClick={handleClearAll}
+                        >
+                          <Trash2 />
+                          Clear all
                         </Button>
                       </div>
                     </>

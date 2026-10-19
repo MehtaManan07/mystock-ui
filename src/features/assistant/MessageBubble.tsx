@@ -19,8 +19,10 @@ export default function MessageBubble({ role, content, streaming }: Props) {
     <div className={cn('mb-3 flex', isUser ? 'justify-end' : 'justify-start')}>
       <div
         className={cn(
-          'max-w-[82%] rounded-lg px-4 py-2.5 break-words',
-          isUser ? 'bg-primary text-primary-foreground' : 'bg-accent text-foreground',
+          'max-w-[82%] rounded-lg border px-4 py-2.5 break-words',
+          isUser
+            ? 'border-primary/25 bg-primary/10 text-foreground'
+            : 'border-border/70 bg-card text-card-foreground',
         )}
       >
         {isUser ? (
@@ -29,7 +31,7 @@ export default function MessageBubble({ role, content, streaming }: Props) {
           <Markdown>{content}</Markdown>
         )}
         {streaming && (
-          <span className="ml-0.5 inline-block animate-pulse">▍</span>
+          <span className="ml-0.5 inline-block animate-pulse text-primary">▍</span>
         )}
       </div>
     </div>

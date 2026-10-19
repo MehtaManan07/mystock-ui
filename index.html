@@ -22,12 +22,18 @@
       // Apply the persisted theme before first paint so Tailwind's `.dark`
       // class is present immediately. Without this the app renders light and
       // then flips to dark once React mounts. Mirrors `stores/themeStore.ts`,
-      // which zustand/persist stores as { state: { mode } }.
+      // which zustand/persist stores as { state: { mode } } and defaults to
+      // 'system'.
       (function () {
         try {
           var raw = localStorage.getItem('mystock_theme_mode');
-          var mode = raw ? JSON.parse(raw).state.mode : 'light';
-          if (mode === 'dark') document.documentElement.classList.add('dark');
+          var mode = raw ? JSON.parse(raw).state.mode : 'system';
+          var dark =
+            mode === 'dark' ||
+            (mode === 'system' &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
+          document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
         } catch (e) {
           /* corrupt or unavailable storage - fall back to light */
         }

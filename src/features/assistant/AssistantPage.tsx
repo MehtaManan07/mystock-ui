@@ -160,8 +160,8 @@ export default function AssistantPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-112px)] gap-4">
-      <div className="w-70 shrink-0 overflow-hidden rounded-lg border bg-card">
+    <div className="flex h-[calc(100vh-var(--app-chrome,112px))] gap-4">
+      <div className="w-70 shrink-0 overflow-hidden rounded-xl border border-border/70 bg-card shadow-xs">
         <ThreadList
           threads={threadsQuery.data ?? []}
           activeThreadId={activeThreadId}
@@ -176,7 +176,7 @@ export default function AssistantPage() {
         />
       </div>
 
-      <div className="flex-1 overflow-hidden rounded-lg border bg-card">
+      <div className="flex-1 overflow-hidden rounded-xl border border-border/70 bg-card shadow-xs">
         <Conversation
           messages={threadQuery.data?.messages ?? []}
           pendingMessage={pendingMessage}

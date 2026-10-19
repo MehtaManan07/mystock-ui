@@ -1,18 +1,13 @@
 /*
- * Tailwind v4 + shadcn/ui design tokens.
+ * Tailwind v4 + shadcn/ui design tokens — "warm & branded".
  *
- * PREFLIGHT IS ENABLED, AND IT IS SAFE ALONGSIDE MUI.
- * ---------------------------------------------------
- * shadcn's primitives assume Preflight (they never reset the UA button border
- * or input appearance themselves), so it has to be on.
+ * The palette is a kraft-paper warm neutral (hue ~56-85 in OKLCH, very low
+ * chroma) paired with the refined brand teal. Every foreground/background
+ * pair below was contrast-checked: body text is AAA, all muted text and
+ * semantic fills are AA or better in both modes.
  *
- * It does not disturb the not-yet-migrated MUI pages, for two verified reasons:
- *   1. MUI v7 emits its emotion styles UNLAYERED, and unlayered CSS always
- *      outranks any rule inside an @layer -- including Preflight's base layer.
- *   2. MUI's ButtonBase already sets `border: 0`, `background-color: transparent`
- *      and `margin: 0` explicitly, which is what Preflight would do anyway.
- *
- * Keep MUI's <CssBaseline> mounted until Phase 5; the two resets agree.
+ * Dark mode is a warm espresso rather than the usual blue-black, so the two
+ * modes feel like the same product rather than two different apps.
  */
 @import 'tailwindcss';
 @import 'tw-animate-css';
@@ -20,109 +15,133 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --radius: 0.625rem;
+  /* Comfortable density: slightly rounder and roomier than shadcn's default. */
+  --radius: 0.75rem;
 
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* Warm paper. `card` sits *above* the page, so it is lighter than `background`. */
+  --background: oklch(0.982 0.006 85);
+  --foreground: oklch(0.245 0.018 58);
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card: oklch(0.996 0.003 85);
+  --card-foreground: oklch(0.245 0.018 58);
 
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  --popover: oklch(0.996 0.003 85);
+  --popover-foreground: oklch(0.245 0.018 58);
 
-  /* Brand teal #0D7377 - the one piece of colour we keep from the MUI theme. */
-  --primary: oklch(0.506 0.0832 199.2);
-  --primary-foreground: oklch(0.985 0 0);
+  /* Refined brand teal — the original #0D7377, retuned to sit at the edge of
+     the sRGB gamut for a little more life while keeping 5.2:1 against white. */
+  --primary: oklch(0.52 0.088 196);
+  --primary-foreground: oklch(0.996 0.003 85);
 
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.956 0.011 83);
+  --secondary-foreground: oklch(0.3 0.02 60);
 
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted: oklch(0.956 0.011 83);
+  --muted-foreground: oklch(0.525 0.022 62);
 
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --accent: oklch(0.945 0.018 84);
+  --accent-foreground: oklch(0.3 0.02 60);
 
-  --destructive: oklch(0.568 0.2002 26.4);
-  --destructive-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.54 0.19 27.5);
+  --destructive-foreground: oklch(0.996 0.003 85);
 
-  --success: oklch(0.523 0.1347 144.2);
-  --success-foreground: oklch(0.985 0 0);
+  --success: oklch(0.52 0.125 152);
+  --success-foreground: oklch(0.996 0.003 85);
 
-  --warning: oklch(0.677 0.1827 48.4);
-  --warning-foreground: oklch(0.145 0 0);
+  --warning: oklch(0.69 0.145 72);
+  --warning-foreground: oklch(0.245 0.018 58);
 
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.506 0.0832 199.2);
+  --info: oklch(0.52 0.088 196);
+  --info-foreground: oklch(0.996 0.003 85);
 
-  --chart-1: oklch(0.506 0.0832 199.2);
-  --chart-2: oklch(0.778 0.1376 76.8);
-  --chart-3: oklch(0.6 0.0987 203.7);
-  --chart-4: oklch(0.523 0.1347 144.2);
-  --chart-5: oklch(0.677 0.1827 48.4);
+  --border: oklch(0.902 0.014 80);
+  --input: oklch(0.902 0.014 80);
+  --ring: oklch(0.52 0.088 196);
 
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.506 0.0832 199.2);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.506 0.0832 199.2);
+  /* Warm, harmonious chart ramp: teal, tan, clay, sage, plum. */
+  --chart-1: oklch(0.52 0.088 196);
+  --chart-2: oklch(0.76 0.11 78);
+  --chart-3: oklch(0.62 0.14 42);
+  --chart-4: oklch(0.66 0.085 150);
+  --chart-5: oklch(0.55 0.105 340);
+
+  /* The sidebar is a shade deeper than the page, like a kraft board edge. */
+  --sidebar: oklch(0.963 0.012 83);
+  --sidebar-foreground: oklch(0.3 0.02 60);
+  --sidebar-primary: oklch(0.52 0.088 196);
+  --sidebar-primary-foreground: oklch(0.996 0.003 85);
+  --sidebar-accent: oklch(0.925 0.02 84);
+  --sidebar-accent-foreground: oklch(0.26 0.02 58);
+  --sidebar-border: oklch(0.894 0.016 80);
+  --sidebar-ring: oklch(0.52 0.088 196);
+
+  /* Warm-tinted shadows. Neutral grey shadows look dirty over warm paper. */
+  --shadow-color: 30 25% 45%;
+  --shadow-xs: 0 1px 2px -1px hsl(var(--shadow-color) / 0.1);
+  --shadow-sm: 0 1px 3px -1px hsl(var(--shadow-color) / 0.12), 0 1px 2px -1px hsl(var(--shadow-color) / 0.08);
+  --shadow-md: 0 4px 10px -3px hsl(var(--shadow-color) / 0.14), 0 2px 4px -2px hsl(var(--shadow-color) / 0.08);
+  --shadow-lg: 0 12px 24px -8px hsl(var(--shadow-color) / 0.18), 0 4px 8px -4px hsl(var(--shadow-color) / 0.1);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
+  --background: oklch(0.178 0.012 56);
+  --foreground: oklch(0.955 0.008 85);
 
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
+  --card: oklch(0.216 0.014 58);
+  --card-foreground: oklch(0.955 0.008 85);
 
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.228 0.015 58);
+  --popover-foreground: oklch(0.955 0.008 85);
 
-  /* Lighter teal (#14919B) so the accent stays legible on a dark surface. */
-  --primary: oklch(0.6 0.0987 203.7);
-  --primary-foreground: oklch(0.145 0 0);
+  /* Brighter teal so the accent reads against a dark warm surface (8.1:1). */
+  --primary: oklch(0.725 0.115 192);
+  --primary-foreground: oklch(0.178 0.012 56);
 
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.264 0.015 58);
+  --secondary-foreground: oklch(0.955 0.008 85);
 
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  --muted: oklch(0.264 0.015 58);
+  --muted-foreground: oklch(0.72 0.016 75);
 
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.3 0.018 60);
+  --accent-foreground: oklch(0.955 0.008 85);
 
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.705 0.17 24);
+  --destructive-foreground: oklch(0.178 0.012 56);
 
-  --success: oklch(0.65 0.14 144.2);
-  --success-foreground: oklch(0.145 0 0);
+  --success: oklch(0.73 0.145 153);
+  --success-foreground: oklch(0.178 0.012 56);
 
-  --warning: oklch(0.75 0.16 60);
-  --warning-foreground: oklch(0.145 0 0);
+  --warning: oklch(0.8 0.14 76);
+  --warning-foreground: oklch(0.178 0.012 56);
 
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 18%);
-  --ring: oklch(0.6 0.0987 203.7);
+  --info: oklch(0.725 0.115 192);
+  --info-foreground: oklch(0.178 0.012 56);
 
-  --chart-1: oklch(0.6 0.0987 203.7);
-  --chart-2: oklch(0.778 0.1376 76.8);
-  --chart-3: oklch(0.506 0.0832 199.2);
-  --chart-4: oklch(0.65 0.14 144.2);
-  --chart-5: oklch(0.75 0.16 60);
+  --border: oklch(0.32 0.016 60);
+  --input: oklch(0.35 0.018 60);
+  --ring: oklch(0.725 0.115 192);
 
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.6 0.0987 203.7);
-  --sidebar-primary-foreground: oklch(0.145 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 12%);
-  --sidebar-ring: oklch(0.6 0.0987 203.7);
+  --chart-1: oklch(0.725 0.115 192);
+  --chart-2: oklch(0.78 0.12 78);
+  --chart-3: oklch(0.7 0.14 42);
+  --chart-4: oklch(0.72 0.1 150);
+  --chart-5: oklch(0.68 0.11 340);
+
+  --sidebar: oklch(0.2 0.013 57);
+  --sidebar-foreground: oklch(0.92 0.01 82);
+  --sidebar-primary: oklch(0.725 0.115 192);
+  --sidebar-primary-foreground: oklch(0.178 0.012 56);
+  --sidebar-accent: oklch(0.285 0.017 59);
+  --sidebar-accent-foreground: oklch(0.955 0.008 85);
+  --sidebar-border: oklch(0.3 0.016 59);
+  --sidebar-ring: oklch(0.725 0.115 192);
+
+  --shadow-color: 25 30% 3%;
+  --shadow-xs: 0 1px 2px -1px hsl(var(--shadow-color) / 0.5);
+  --shadow-sm: 0 1px 3px -1px hsl(var(--shadow-color) / 0.55), 0 1px 2px -1px hsl(var(--shadow-color) / 0.4);
+  --shadow-md: 0 4px 10px -3px hsl(var(--shadow-color) / 0.6), 0 2px 4px -2px hsl(var(--shadow-color) / 0.45);
+  --shadow-lg: 0 12px 24px -8px hsl(var(--shadow-color) / 0.7), 0 4px 8px -4px hsl(var(--shadow-color) / 0.5);
 }
 
 @theme inline {
@@ -148,6 +167,8 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -171,13 +192,67 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Tabular figures wherever numbers are compared down a column. With
+     proportional digits, quantities and money look ragged and are harder
+     to scan. */
+  .tabular,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    @apply bg-primary/20 text-foreground;
+  }
+
+  /* Warm scrollbars so they don't read as cold grey over the paper surface. */
+  * {
+    scrollbar-color: var(--border) transparent;
+    scrollbar-width: thin;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border: 2px solid transparent;
+    background-clip: content-box;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
+  }
+}
+
+@layer utilities {
+  /* Subtle kraft-paper grain. Pure CSS, no image request. */
+  .bg-grain {
+    background-image: radial-gradient(
+      circle at 1px 1px,
+      color-mix(in oklch, var(--foreground) 7%, transparent) 1px,
+      transparent 0
+    );
+    background-size: 14px 14px;
   }
 }

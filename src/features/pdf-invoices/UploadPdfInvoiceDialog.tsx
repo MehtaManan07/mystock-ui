@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { CircleAlert, Info } from 'lucide-react';
+import { CircleAlert, Info, Paperclip } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -109,7 +109,7 @@ export default function UploadPdfInvoiceDialog({ retryInvoice, onClose }: Props)
           <DialogHeader>
             <DialogTitle>{retryInvoice ? 'Retry PDF upload' : 'Register an existing PDF bill'}</DialogTitle>
           </DialogHeader>
-          <Alert className="mt-4 mb-4">
+          <Alert className="mt-4 mb-5">
             <Info />
             <AlertDescription>
               {retryInvoice
@@ -117,15 +117,20 @@ export default function UploadPdfInvoiceDialog({ retryInvoice, onClose }: Props)
                 : 'Copy the issued PDF details exactly. This archives a bill; it does not create a sale, payment or stock movement. Existing transaction invoices already belong in Transactions.'}
             </AlertDescription>
           </Alert>
+          <p className="mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+            Invoice &amp; customer
+          </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="invoice_number">Invoice number</Label>
               <Input id="invoice_number" required value={metadata.invoice_number} disabled={locked}
+                className="tabular-nums"
                 onChange={(e) => update('invoice_number', e.target.value)} maxLength={50} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="invoice_date">Invoice date</Label>
               <Input id="invoice_date" required type="date" value={metadata.invoice_date} disabled={locked}
+                className="tabular-nums"
                 onChange={(e) => update('invoice_date', e.target.value)} />
             </div>
             <div className="grid gap-2">
@@ -136,6 +141,7 @@ export default function UploadPdfInvoiceDialog({ retryInvoice, onClose }: Props)
             <div className="grid gap-2">
               <Label htmlFor="customer_gstin">Customer GSTIN (if applicable)</Label>
               <Input id="customer_gstin" value={metadata.customer_gstin ?? ''} disabled={locked}
+                className="tabular-nums uppercase"
                 onChange={(e) => update('customer_gstin', e.target.value)} maxLength={15} />
             </div>
             <div className="grid gap-2">
@@ -146,41 +152,55 @@ export default function UploadPdfInvoiceDialog({ retryInvoice, onClose }: Props)
             <div className="grid gap-2">
               <Label htmlFor="customer_phone">Customer phone</Label>
               <Input id="customer_phone" value={metadata.customer_phone ?? ''} disabled={locked}
+                className="tabular-nums"
                 onChange={(e) => update('customer_phone', e.target.value)} maxLength={50} />
             </div>
+          </div>
+
+          <p className="mt-6 mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+            Amounts
+          </p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {moneyFields.map(([key, label]) => (
               <div key={key} className="grid gap-2">
                 <Label htmlFor={key}>{label}</Label>
                 <Input id={key} type="number" required value={metadata[key]} disabled={locked}
+                  className="text-right tabular-nums"
                   onChange={(e) => update(key, e.target.value)} min={0} step="0.01" />
               </div>
             ))}
             <div className="grid gap-2">
               <Label htmlFor="round_off">Round-off (calculated)</Label>
-              <Input id="round_off" value={roundOff} readOnly />
+              <Input id="round_off" value={roundOff} readOnly
+                className="bg-muted text-right tabular-nums" />
             </div>
           </div>
-          <div className="mt-4 grid gap-2">
+          <div className="mt-6 grid gap-2">
             <Label htmlFor="notes">Notes / source</Label>
             <Textarea id="notes" value={metadata.notes ?? ''} disabled={locked}
               onChange={(e) => update('notes', e.target.value)} maxLength={2000} />
           </div>
-          <Button
-            asChild
-            variant="outline"
-            className={cn(
-              'mt-4 cursor-pointer',
-              upload.isPending && 'pointer-events-none opacity-50'
-            )}
-          >
-            {/* File input is wrapped in a label so the styled button opens the picker. */}
-            <label>
-              Choose PDF
-              <input hidden type="file" accept=".pdf,application/pdf" disabled={upload.isPending}
-                onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-            </label>
-          </Button>
-          <p className="mt-2 text-sm">{file?.name ?? 'No file selected (maximum 10 MB)'}</p>
+          <div className="mt-6 flex flex-wrap items-center gap-3 rounded-lg border border-border/70 border-dashed p-4">
+            <Button
+              asChild
+              variant="outline"
+              className={cn(
+                'cursor-pointer',
+                upload.isPending && 'pointer-events-none opacity-50'
+              )}
+            >
+              {/* File input is wrapped in a label so the styled button opens the picker. */}
+              <label>
+                <Paperclip />
+                Choose PDF
+                <input hidden type="file" accept=".pdf,application/pdf" disabled={upload.isPending}
+                  onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+              </label>
+            </Button>
+            <p className={cn('min-w-0 flex-1 truncate text-sm', !file && 'text-muted-foreground')}>
+              {file?.name ?? 'No file selected (maximum 10 MB)'}
+            </p>
+          </div>
           {(localError || upload.isError) && (
             <Alert variant="destructive" className="mt-4">
               <CircleAlert />

@@ -12,6 +12,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { cn } from 'cn';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -109,13 +110,13 @@ export const TransactionsPage: React.FC = () => {
   const getStatusBadgeClass = (status: string): string => {
     switch (status) {
       case PAYMENT_STATUS.PAID:
-        return 'bg-success text-success-foreground';
+        return 'border-success/30 bg-success/10 text-success';
       case PAYMENT_STATUS.PARTIAL:
-        return 'bg-warning text-warning-foreground';
+        return 'border-warning/40 bg-warning/10 text-warning';
       case PAYMENT_STATUS.UNPAID:
-        return 'bg-destructive text-white';
+        return 'border-destructive/30 bg-destructive/10 text-destructive';
       default:
-        return 'bg-warning text-warning-foreground';
+        return 'border-warning/40 bg-warning/10 text-warning';
     }
   };
 
@@ -142,7 +143,7 @@ export const TransactionsPage: React.FC = () => {
       label: 'Transaction #',
       mobileLabel: 'TXN #',
       render: (transaction: Transaction) => (
-        <span className="text-sm font-semibold">
+        <span className="text-sm font-semibold tabular-nums">
           {transaction.transaction_number}
         </span>
       ),
@@ -151,7 +152,7 @@ export const TransactionsPage: React.FC = () => {
       id: 'date',
       label: 'Date',
       render: (transaction: Transaction) => (
-        <span className="text-xs">
+        <span className="text-sm whitespace-nowrap tabular-nums text-muted-foreground">
           {formatDate(transaction.transaction_date)}
         </span>
       ),
@@ -163,11 +164,12 @@ export const TransactionsPage: React.FC = () => {
       render: (transaction: Transaction) => (
         <Badge
           variant="outline"
-          className={
+          className={cn(
+            'capitalize',
             transaction.type === TRANSACTION_TYPES.SALE
-              ? 'border-primary/50 text-primary'
-              : 'border-foreground/30 text-foreground'
-          }
+              ? 'border-primary/30 bg-primary/10 text-primary'
+              : 'border-border bg-muted text-muted-foreground'
+          )}
         >
           {transaction.type === TRANSACTION_TYPES.SALE ? <ShoppingCart /> : <Truck />}
           {transaction.type}
@@ -178,9 +180,11 @@ export const TransactionsPage: React.FC = () => {
       id: 'contact',
       label: 'Contact',
       render: (transaction: Transaction) => (
-        <div>
-          <p className="text-sm">{transaction.contact.name}</p>
-          <p className="text-xs text-muted-foreground">{transaction.contact.phone}</p>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">{transaction.contact.name}</p>
+          <p className="truncate text-xs tabular-nums text-muted-foreground">
+            {transaction.contact.phone}
+          </p>
         </div>
       ),
       hideOnMobile: true,
@@ -188,9 +192,9 @@ export const TransactionsPage: React.FC = () => {
     {
       id: 'total',
       label: 'Total',
-      align: 'right' as const,
+      numeric: true,
       render: (transaction: Transaction) => (
-        <span className="text-sm font-medium">
+        <span className="text-sm font-semibold">
           {formatCurrency(transaction.total_amount)}
         </span>
       ),
@@ -198,7 +202,7 @@ export const TransactionsPage: React.FC = () => {
     {
       id: 'paid',
       label: 'Paid',
-      align: 'right' as const,
+      numeric: true,
       render: (transaction: Transaction) => (
         <span className="text-sm text-success">
           {formatCurrency(transaction.paid_amount)}
@@ -209,14 +213,15 @@ export const TransactionsPage: React.FC = () => {
     {
       id: 'balance',
       label: 'Balance',
-      align: 'right' as const,
+      numeric: true,
       render: (transaction: Transaction) => (
         <span
-          className={
+          className={cn(
+            'text-sm',
             transaction.balance_due > 0
-              ? 'text-sm font-semibold text-destructive'
-              : 'text-sm text-muted-foreground'
-          }
+              ? 'font-semibold text-destructive'
+              : 'text-muted-foreground'
+          )}
         >
           {formatCurrency(transaction.balance_due)}
         </span>
@@ -227,7 +232,10 @@ export const TransactionsPage: React.FC = () => {
       id: 'status',
       label: 'Status',
       render: (transaction: Transaction) => (
-        <Badge className={getStatusBadgeClass(transaction.payment_status)}>
+        <Badge
+          variant="outline"
+          className={cn('capitalize', getStatusBadgeClass(transaction.payment_status))}
+        >
           {transaction.payment_status}
         </Badge>
       ),
@@ -297,8 +305,30 @@ export const TransactionsPage: React.FC = () => {
     if (!transactions || transactions.length === 0) {
       return (
         <EmptyState
+          compact
+          icon={<Receipt />}
           title="No transactions found"
-          message={hasActiveFilters ? 'Try different filters' : 'Create your first sale or purchase to get started'}
+          message={
+            hasActiveFilters
+              ? 'No transactions match the current filters. Try widening the date range or clearing a filter.'
+              : 'Record your first sale or purchase and it will show up here.'
+          }
+          {...(hasActiveFilters
+            ? {}
+            : {
+                actionLabel: 'New sale',
+                actionIcon: <ShoppingCart />,
+                onAction: () => navigate('/transactions/new-sale'),
+                secondaryAction: (
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/transactions/new-purchase')}
+                  >
+                    <Truck />
+                    New purchase
+                  </Button>
+                ),
+              })}
         />
       );
     }
@@ -311,22 +341,22 @@ export const TransactionsPage: React.FC = () => {
           keyExtractor={(transaction) => transaction.id.toString()}
           onRowClick={(transaction) => navigate(`/transactions/${transaction.id}`)}
           getRowHref={(transaction) => `/transactions/${transaction.id}`}
-          emptyMessage="No transactions found"
+          emptyIcon={<Receipt />}
+          emptyTitle="No transactions found"
+          emptyMessage="Record your first sale or purchase and it will show up here."
         />
 
         {/* Infinite scroll trigger and loading indicator */}
-        <div className="p-4 text-center">
-          <div ref={observerTarget} style={{ height: '20px' }} />
+        <div className="border-t border-border/70 p-4 text-center">
+          <div ref={observerTarget} className="h-5" />
           {isFetchingNextPage && (
-            <div className="flex items-center justify-center gap-2">
-              <Loader2 className="size-6 animate-spin" />
-              <p className="text-sm text-muted-foreground">
-                Loading more transactions...
-              </p>
+            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+              <p className="text-sm">Loading more transactions...</p>
             </div>
           )}
           {!hasNextPage && transactions.length > 0 && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs tabular-nums text-muted-foreground">
               All transactions loaded ({totalCount} total)
             </span>
           )}
@@ -340,101 +370,111 @@ export const TransactionsPage: React.FC = () => {
       <PageHeader
         title="Transactions"
         subtitle={totalCount > 0 ? `${totalCount} transactions (showing ${transactions.length})` : 'Sales and purchases'}
+        action={
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="w-full sm:w-auto">
+                <Plus />
+                New Transaction
+                <ChevronDown />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => navigate('/transactions/new-sale')}>
+                <ShoppingCart className="text-primary" />
+                New Sale
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => navigate('/transactions/new-purchase')}>
+                <Truck className="text-muted-foreground" />
+                New Purchase
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => navigate('/transactions/new-deodap-bill')}>
+                <Receipt className="text-warning" />
+                Create Deodap Bill
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
       />
 
-      {/* Action Button */}
-      <div className="mb-4 sm:mb-6">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button className="w-full sm:w-auto">
-              <Plus />
-              New Transaction
-              <ChevronDown />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem onSelect={() => navigate('/transactions/new-sale')}>
-              <ShoppingCart className="text-primary" />
-              New Sale
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => navigate('/transactions/new-purchase')}>
-              <Truck />
-              New Purchase
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => navigate('/transactions/new-deodap-bill')}>
-              <Receipt className="text-warning" />
-              Create Deodap Bill
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      {/* Filters */}
-      <div className="mb-4 flex flex-col flex-wrap gap-4 sm:mb-6 sm:flex-row">
-        <div className="w-full sm:w-auto sm:min-w-[200px] sm:flex-auto">
+      <div className="space-y-5">
+        {/* Filters */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <SearchInput
             value={search}
             onChange={setSearch}
             placeholder="Search by transaction # or notes..."
-            className="sm:w-full"
+            className="sm:max-w-xs"
           />
+
+          <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              size="sm"
+              value={typeFilter}
+              onValueChange={(value) => value && setTypeFilter(value)}
+              className="w-full sm:w-auto"
+            >
+              <ToggleGroupItem value="all" className="flex-1 sm:flex-initial">All</ToggleGroupItem>
+              <ToggleGroupItem value={TRANSACTION_TYPES.SALE} className="flex-1 sm:flex-initial">Sales</ToggleGroupItem>
+              <ToggleGroupItem value={TRANSACTION_TYPES.PURCHASE} className="flex-1 sm:flex-initial">Purchases</ToggleGroupItem>
+            </ToggleGroup>
+
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              size="sm"
+              value={statusFilter}
+              onValueChange={(value) => value && setStatusFilter(value)}
+              className="w-full sm:w-auto"
+            >
+              <ToggleGroupItem value="all" className="flex-1 sm:flex-initial">All</ToggleGroupItem>
+              <ToggleGroupItem value={PAYMENT_STATUS.PAID} className="flex-1 sm:flex-initial">Paid</ToggleGroupItem>
+              <ToggleGroupItem value={PAYMENT_STATUS.PARTIAL} className="flex-1 sm:flex-initial">Partial</ToggleGroupItem>
+              <ToggleGroupItem value={PAYMENT_STATUS.UNPAID} className="flex-1 sm:flex-initial">Unpaid</ToggleGroupItem>
+            </ToggleGroup>
+
+            <div className="flex flex-1 items-center gap-2 sm:flex-initial">
+              <Label
+                htmlFor="from-date"
+                className="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+              >
+                From
+              </Label>
+              <Input
+                id="from-date"
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value || '')}
+                className="h-9 w-full tabular-nums sm:w-[150px]"
+              />
+            </div>
+            <div className="flex flex-1 items-center gap-2 sm:flex-initial">
+              <Label
+                htmlFor="to-date"
+                className="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+              >
+                To
+              </Label>
+              <Input
+                id="to-date"
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value || '')}
+                className="h-9 w-full tabular-nums sm:w-[150px]"
+              />
+            </div>
+
+            {isFetching && !isFetchingNextPage && !showFullLoading && (
+              <span className="text-xs text-muted-foreground">Loading...</span>
+            )}
+          </div>
         </div>
 
-        <ToggleGroup
-          type="single"
-          variant="outline"
-          size="sm"
-          value={typeFilter}
-          onValueChange={(value) => value && setTypeFilter(value)}
-          className="w-full sm:w-auto"
-        >
-          <ToggleGroupItem value="all" className="flex-1 sm:flex-initial">All</ToggleGroupItem>
-          <ToggleGroupItem value={TRANSACTION_TYPES.SALE} className="flex-1 sm:flex-initial">Sales</ToggleGroupItem>
-          <ToggleGroupItem value={TRANSACTION_TYPES.PURCHASE} className="flex-1 sm:flex-initial">Purchases</ToggleGroupItem>
-        </ToggleGroup>
-
-        <ToggleGroup
-          type="single"
-          variant="outline"
-          size="sm"
-          value={statusFilter}
-          onValueChange={(value) => value && setStatusFilter(value)}
-          className="w-full sm:w-auto"
-        >
-          <ToggleGroupItem value="all" className="flex-1 sm:flex-initial">All</ToggleGroupItem>
-          <ToggleGroupItem value={PAYMENT_STATUS.PAID} className="flex-1 sm:flex-initial">Paid</ToggleGroupItem>
-          <ToggleGroupItem value={PAYMENT_STATUS.PARTIAL} className="flex-1 sm:flex-initial">Partial</ToggleGroupItem>
-          <ToggleGroupItem value={PAYMENT_STATUS.UNPAID} className="flex-1 sm:flex-initial">Unpaid</ToggleGroupItem>
-        </ToggleGroup>
-
-        <div className="grid w-full gap-2 sm:w-[150px]">
-          <Label htmlFor="from-date">From</Label>
-          <Input
-            id="from-date"
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value || '')}
-          />
-        </div>
-        <div className="grid w-full gap-2 sm:w-[150px]">
-          <Label htmlFor="to-date">To</Label>
-          <Input
-            id="to-date"
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value || '')}
-          />
-        </div>
-
-        {isFetching && !isFetchingNextPage && !showFullLoading && (
-          <span className="self-center text-xs text-muted-foreground">
-            Loading...
-          </span>
-        )}
+        {/* Transactions table */}
+        <Card className="gap-0 overflow-hidden py-0">{renderTableContent()}</Card>
       </div>
-
-      {/* Transactions table */}
-      <Card className="gap-0 py-0">{renderTableContent()}</Card>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog

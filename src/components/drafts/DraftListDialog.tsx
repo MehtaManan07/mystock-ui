@@ -1,7 +1,8 @@
 import React from 'react';
-import { Trash2 } from 'lucide-react';
+import { FileStack, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '../common/EmptyState';
 import {
   Dialog,
   DialogContent,
@@ -41,22 +42,28 @@ export const DraftListDialog: React.FC<DraftListDialogProps> = ({
           <DialogTitle>Load Draft</DialogTitle>
         </DialogHeader>
         {drafts.length === 0 ? (
-          <div className="p-6 text-center">
-            <p className="text-sm text-muted-foreground">No saved drafts</p>
-          </div>
+          <EmptyState
+            compact
+            icon={<FileStack />}
+            title="No saved drafts"
+            message="Turn on auto-save while building a sale or purchase and it will show up here."
+          />
         ) : (
-          <ul className="flex flex-col gap-1">
+          <ul className="flex flex-col gap-2">
             {drafts.map((draft) => (
-              <li key={draft.id} className="flex items-center gap-2">
+              <li
+                key={draft.id}
+                className="flex items-center gap-2 rounded-lg border border-border/70 pr-2 transition-colors hover:bg-accent/40"
+              >
                 <button
                   type="button"
-                  className="min-w-0 flex-1 rounded-md px-3 py-2 text-left transition-colors hover:bg-accent"
+                  className="min-w-0 flex-1 rounded-lg px-3 py-2.5 text-left"
                   onClick={() => handleLoadDraft(draft)}
                 >
                   <span className="block truncate text-sm font-medium">
                     {draft.name}
                   </span>
-                  <span className="block truncate text-sm text-muted-foreground">
+                  <span className="block truncate text-xs tabular-nums text-muted-foreground">
                     {draft.data.items.length}{' '}
                     {draft.data.items.length === 1 ? 'item' : 'items'} •
                     Last edited{' '}
@@ -68,8 +75,9 @@ export const DraftListDialog: React.FC<DraftListDialogProps> = ({
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
+                  size="icon-sm"
                   aria-label="delete draft"
+                  className="text-destructive hover:text-destructive"
                   onClick={(e) => handleDeleteDraft(e, draft.id)}
                 >
                   <Trash2 />

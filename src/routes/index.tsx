@@ -28,6 +28,7 @@ const PaymentsPage = React.lazy(() => import('../features/payments/PaymentsPage'
 const UsersPage = React.lazy(() => import('../features/users/UsersPage'));
 const PdfInvoicesPage = React.lazy(() => import('../features/pdf-invoices/PdfInvoicesPage'));
 const AssistantPage = React.lazy(() => import('../features/assistant/AssistantPage'));
+const SettingsPage = React.lazy(() => import('../features/settings/SettingsPage'));
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -152,6 +153,18 @@ export const AppRoutes: React.FC = () => {
           </Suspense>
         } />
         
+        {/* Company settings - Admin only */}
+        <Route
+          path="/settings"
+          element={
+            <Suspense fallback={<LoadingState />}>
+              <AuthGuard allowedRoles={[USER_ROLES.ADMIN]}>
+                <SettingsPage />
+              </AuthGuard>
+            </Suspense>
+          }
+        />
+
         {/* Users - Admin only */}
         <Route
           path="/users"
