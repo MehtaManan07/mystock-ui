@@ -13,10 +13,12 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from 'cn';
 import { pdfInvoicesApi, pdfInvoiceError } from '../../api/pdfInvoices.api';
 import { QUERY_KEYS } from '../../constants';
+import { useContacts } from '../../hooks/useContacts';
 import { useNotificationStore } from '../../stores/notificationStore';
 import type { PdfInvoice, PdfInvoiceMetadata } from '../../types/pdfInvoices';
 
@@ -29,6 +31,7 @@ function initialMetadata(invoice?: PdfInvoice): PdfInvoiceMetadata {
   return {
     invoice_number: invoice?.invoice_number ?? '',
     invoice_date: invoice?.invoice_date ?? format(new Date(), 'yyyy-MM-dd'),
+    customer_id: invoice?.customer_id ?? null,
     customer_name: invoice?.customer_name ?? '',
     customer_gstin: invoice?.customer_gstin ?? null,
     customer_address: invoice?.customer_address ?? null,
@@ -49,6 +52,7 @@ export default function UploadPdfInvoiceDialog({ retryInvoice, onClose }: Props)
   const [metadata, setMetadata] = useState(() => initialMetadata(retryInvoice));
   const [file, setFile] = useState<File | null>(null);
   const [localError, setLocalError] = useState('');
+  const customers = useContacts({ types: ['customer', 'both'] });
   const queryClient = useQueryClient();
   const notify = useNotificationStore((state) => state.success);
   const upload = useMutation({
@@ -57,7 +61,10 @@ export default function UploadPdfInvoiceDialog({ retryInvoice, onClose }: Props)
       notify('PDF bill saved to the register and cloud storage. Stock and balances were not changed.');
       onClose();
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDF_INVOICES }),
+    onSettled: () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDF_INVOICES }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONTACTS }),
+    ]),
   });
   const update = (key: keyof PdfInvoiceMetadata, value: string) => {
     setMetadata((old) => ({ ...old, [key]: value }));
@@ -72,6 +79,10 @@ export default function UploadPdfInvoiceDialog({ retryInvoice, onClose }: Props)
     setLocalError('');
     if (!file || !file.name.toLowerCase().endsWith('.pdf') || file.size > 10 * 1024 * 1024 || file.size === 0) {
       setLocalError('Select a non-empty PDF no larger than 10 MB.');
+      return;
+    }
+    if (!retryInvoice && metadata.customer_id === null) {
+      setLocalError('Select the saved customer this PDF bill belongs to.');
       return;
     }
     if (!retryInvoice && (!Number.isFinite(Number(roundOff)) || Math.abs(Number(roundOff)) >= 1)) {
@@ -121,6 +132,52 @@ export default function UploadPdfInvoiceDialog({ retryInvoice, onClose }: Props)
             Invoice &amp; customer
           </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid gap-2 sm:col-span-2">
+              <Label htmlFor="customer_id">Saved customer</Label>
+              {retryInvoice ? (
+                <Input id="customer_id" disabled
+                  value={metadata.customer_id === null ? 'Legacy invoice (unlinked)' : `Customer #${metadata.customer_id}`} />
+              ) : (
+                <Select value={metadata.customer_id?.toString() ?? ''} disabled={locked || customers.isLoading || customers.isError}
+                  onValueChange={(value) => {
+                    const customer = customers.data?.find((item) => item.id === Number(value));
+                    if (!customer) {
+                      setLocalError('The selected customer is unavailable. Reload the customer list.');
+                      return;
+                    }
+                    setMetadata((old) => ({
+                      ...old, customer_id: customer.id, customer_name: customer.name,
+                      customer_gstin: customer.gstin, customer_address: customer.address,
+                      customer_phone: customer.phone === 'Not provided' ? null : customer.phone,
+                    }));
+                  }}>
+                  <SelectTrigger id="customer_id" className="w-full">
+                    <SelectValue placeholder={customers.isLoading ? 'Loading customers...' : 'Select customer'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customers.data?.map((customer) => (
+                      <SelectItem key={customer.id} value={String(customer.id)}>
+                        {customer.name} ({customer.gstin || `#${customer.id}`})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {!retryInvoice && customers.isError ? (
+                <Alert variant="destructive">
+                  <CircleAlert />
+                  <AlertDescription>
+                    Could not load customers. {pdfInvoiceError(customers.error)}
+                    <Button type="button" variant="outline" size="sm"
+                      onClick={() => { void customers.refetch(); }}>Retry</Button>
+                  </AlertDescription>
+                </Alert>
+              ) : !retryInvoice && (
+                <p className="text-xs text-muted-foreground">
+                  Create missing customers in Contacts first. The fields below must still match the issued PDF exactly.
+                </p>
+              )}
+            </div>
             <div className="grid gap-2">
               <Label htmlFor="invoice_number">Invoice number</Label>
               <Input id="invoice_number" required value={metadata.invoice_number} disabled={locked}

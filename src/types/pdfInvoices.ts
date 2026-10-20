@@ -9,6 +9,7 @@ export interface PdfInvoiceLine {
 export interface PdfInvoiceMetadata {
   invoice_number: string;
   invoice_date: string;
+  customer_id: number | null;
   customer_name: string;
   customer_gstin: string | null;
   customer_address: string | null;

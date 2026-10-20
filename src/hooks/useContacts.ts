@@ -55,6 +55,16 @@ export const useContact = (id: number) => {
   });
 };
 
+export const useContactBills = (id: number, page: number) => {
+  return useQuery({
+    queryKey: [...QUERY_KEYS.CONTACT_BILLS(id), page],
+    queryFn: () => contactsApi.getBills(id, page),
+    enabled: id > 0,
+    staleTime: 0,
+    refetchOnMount: 'always',
+  });
+};
+
 /**
  * Hook to create a new contact with optimistic update
  */
@@ -103,7 +113,7 @@ export const useCreateContact = () => {
         const updated = contacts.filter(c => c.id < Date.now() - 10000);
         queryClient.setQueryData<Contact[]>(QUERY_KEYS.CONTACTS, [...updated, serverContact]);
       }
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONTACTS_INFINITE() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONTACTS });
     },
   });
 };
@@ -154,8 +164,7 @@ export const useUpdateContact = () => {
           contacts.map(c => c.id === id ? { ...c, ...serverContact } : c)
         );
       }
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONTACT(id) });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONTACTS_INFINITE() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONTACTS });
     },
   });
 };
@@ -185,7 +194,7 @@ export const useDeleteContact = () => {
     },
     
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONTACTS_INFINITE() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CONTACTS });
     },
 
     onError: (_err, _id, context) => {

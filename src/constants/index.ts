@@ -48,6 +48,7 @@ export const API_ENDPOINTS = {
   CONTACTS: {
     BASE: '/contacts',
     BY_ID: (id: number) => `/contacts/${id}`,
+    BILLS: (id: number) => `/contacts/${id}/bills`,
   },
   // Transactions
   TRANSACTIONS: {
@@ -186,6 +187,7 @@ export const QUERY_KEYS = {
       ? [QUERY_KEY_BASE.CONTACTS, QUERY_KEY_BASE.INFINITE, filters]
       : [QUERY_KEY_BASE.CONTACTS, QUERY_KEY_BASE.INFINITE],
   CONTACT: (id: number) => [QUERY_KEY_BASE.CONTACTS, id] as const,
+  CONTACT_BILLS: (id: number) => [QUERY_KEY_BASE.CONTACTS, id, 'bills'] as const,
 
   // Transactions
   TRANSACTIONS: [QUERY_KEY_BASE.TRANSACTIONS] as const,

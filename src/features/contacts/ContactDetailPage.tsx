@@ -7,11 +7,7 @@ import {
   Phone as PhoneIcon,
   MapPin as LocationIcon,
   Receipt as GstinIcon,
-  ShoppingCart as SaleIcon,
-  Truck as PurchaseIcon,
-  ReceiptText,
 } from 'lucide-react';
-import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,14 +17,12 @@ import { cn } from 'cn';
 import { PageHeader } from '../../components/common/PageHeader';
 import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorState } from '../../components/common/ErrorState';
-import { EmptyState } from '../../components/common/EmptyState';
-import { ResponsiveTable } from '../../components/common/ResponsiveTable';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { ContactFormDialog } from './components/ContactFormDialog';
+import { ContactBills } from './components/ContactBills';
 import { useContact, useUpdateContact, useDeleteContact } from '../../hooks/useContacts';
-import { useTransactions } from '../../hooks/useTransactions';
-import { CONTACT_TYPES, TRANSACTION_TYPES, PAYMENT_STATUS } from '../../constants';
-import type { CreateContactDto, UpdateContactDto, Transaction } from '../../types';
+import { CONTACT_TYPES } from '../../constants';
+import type { CreateContactDto, UpdateContactDto } from '../../types';
 
 export const ContactDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -41,12 +35,6 @@ export const ContactDetailPage: React.FC = () => {
 
   // Data fetching
   const { data: contact, isLoading, isError, refetch } = useContact(contactId);
-  const { 
-    data: transactions, 
-    isLoading: transactionsLoading, 
-    isError: transactionsError,
-    refetch: refetchTransactions 
-  } = useTransactions({ contact_id: contactId });
 
   // Mutations
   const updateMutation = useUpdateContact();
@@ -57,30 +45,6 @@ export const ContactDetailPage: React.FC = () => {
     const formatted = `₹${absValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
     return value < 0 ? `-${formatted}` : formatted;
   };
-
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'dd MMM yyyy');
-  };
-
-  const getStatusColor = (status: string): 'success' | 'warning' | 'error' => {
-    switch (status) {
-      case PAYMENT_STATUS.PAID:
-        return 'success';
-      case PAYMENT_STATUS.PARTIAL:
-        return 'warning';
-      case PAYMENT_STATUS.UNPAID:
-        return 'error';
-      default:
-        return 'warning';
-    }
-  };
-
-  // Outlined chips following the semantic colour table.
-  const statusBadgeClass = {
-    success: 'border-success/30 bg-success/10 text-success',
-    warning: 'border-warning/40 bg-warning/10 text-warning',
-    error: 'border-destructive/30 bg-destructive/10 text-destructive',
-  } as const;
 
   // Tint standing in for the MUI chip `color` prop on contact type.
   const getTypeBadgeClass = (type: string) => {
@@ -93,70 +57,6 @@ export const ContactDetailPage: React.FC = () => {
         return 'border-border bg-muted text-muted-foreground';
     }
   };
-
-  // Define table columns for transaction history
-  const transactionColumns = [
-    {
-      id: 'number',
-      label: 'Transaction #',
-      mobileLabel: 'TXN #',
-      render: (transaction: Transaction) => (
-        <span className="text-sm font-semibold tabular-nums">
-          {transaction.transaction_number}
-        </span>
-      ),
-    },
-    {
-      id: 'date',
-      label: 'Date',
-      render: (transaction: Transaction) => (
-        <span className="text-sm text-muted-foreground tabular-nums">
-          {formatDate(transaction.transaction_date)}
-        </span>
-      ),
-      hideOnMobile: true,
-    },
-    {
-      id: 'type',
-      label: 'Type',
-      render: (transaction: Transaction) => (
-        <Badge
-          variant="outline"
-          className={cn(
-            'capitalize',
-            transaction.type === TRANSACTION_TYPES.SALE
-              ? 'border-success/30 bg-success/10 text-success'
-              : 'border-primary/30 bg-primary/10 text-primary'
-          )}
-        >
-          {transaction.type === TRANSACTION_TYPES.SALE ? <SaleIcon /> : <PurchaseIcon />}
-          {transaction.type}
-        </Badge>
-      ),
-    },
-    {
-      id: 'amount',
-      label: 'Amount',
-      numeric: true,
-      render: (transaction: Transaction) => (
-        <span className="text-sm font-semibold tabular-nums">
-          {formatCurrency(transaction.total_amount)}
-        </span>
-      ),
-    },
-    {
-      id: 'status',
-      label: 'Status',
-      render: (transaction: Transaction) => (
-        <Badge
-          variant="outline"
-          className={cn('capitalize', statusBadgeClass[getStatusColor(transaction.payment_status)])}
-        >
-          {transaction.payment_status}
-        </Badge>
-      ),
-    },
-  ];
 
   const handleEditSubmit = (data: CreateContactDto) => {
     updateMutation.mutate(
@@ -335,7 +235,7 @@ export const ContactDetailPage: React.FC = () => {
                         ? 'They owe you this amount'
                         : contact.balance < 0
                         ? 'You owe them this amount'
-                        : 'Account is settled'}
+                        : 'No outstanding accounting balance'}
                     </span>
                   </div>
                 </div>
@@ -343,36 +243,8 @@ export const ContactDetailPage: React.FC = () => {
             </Card>
           </div>
 
-          {/* Recent Transactions Card */}
           <div className="col-span-12">
-            <Card className="gap-0 overflow-hidden py-0">
-              <div className="px-6 py-4">
-                <h3 className="text-base font-semibold">Recent Transactions</h3>
-              </div>
-              <Separator />
-              {transactionsLoading ? (
-                <LoadingState message="Loading transactions..." />
-              ) : transactionsError ? (
-                <ErrorState onRetry={() => refetchTransactions()} />
-              ) : !transactions || transactions.length === 0 ? (
-                <EmptyState
-                  compact
-                  icon={<ReceiptText />}
-                  title="No transactions yet"
-                  message="Sales and purchases involving this contact will appear here."
-                />
-              ) : (
-                <ResponsiveTable
-                  columns={transactionColumns}
-                  data={transactions}
-                  keyExtractor={(transaction) => transaction.id.toString()}
-                  onRowClick={(transaction) => navigate(`/transactions/${transaction.id}`)}
-                  emptyIcon={<ReceiptText />}
-                  emptyTitle="No transactions yet"
-                  emptyMessage="Sales and purchases involving this contact will appear here."
-                />
-              )}
-            </Card>
+            <ContactBills key={contactId} contactId={contactId} contactName={contact.name} />
           </div>
         </div>
       </div>

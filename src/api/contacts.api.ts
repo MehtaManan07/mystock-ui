@@ -2,6 +2,7 @@ import apiClient from './axios';
 import { API_ENDPOINTS } from '../constants';
 import type {
   Contact,
+  ContactBillPage,
   CreateContactDto,
   UpdateContactDto,
   ContactFilters,
@@ -64,6 +65,13 @@ export const contactsApi = {
    */
   getById: async (id: number): Promise<Contact> => {
     const response = await apiClient.get<Contact>(API_ENDPOINTS.CONTACTS.BY_ID(id));
+    return response.data;
+  },
+
+  getBills: async (id: number, page: number): Promise<ContactBillPage> => {
+    const response = await apiClient.get<ContactBillPage>(API_ENDPOINTS.CONTACTS.BILLS(id), {
+      params: { page, page_size: 25 },
+    });
     return response.data;
   },
 

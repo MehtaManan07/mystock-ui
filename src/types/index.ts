@@ -296,6 +296,36 @@ export interface ContactFilters {
   search?: string;
 }
 
+interface ContactBillBase {
+  id: number;
+  number: string;
+  date: string;
+  total_amount: string;
+}
+
+export type ContactBill = ContactBillBase & (
+  | {
+      source: 'transaction';
+      transaction_type: TransactionType;
+      payment_status: PaymentStatus;
+      upload_status: null;
+    }
+  | {
+      source: 'pdf_invoice';
+      transaction_type: null;
+      payment_status: null;
+      upload_status: 'pending' | 'ready';
+    }
+);
+
+export interface ContactBillPage {
+  items: ContactBill[];
+  total: number;
+  page: number;
+  page_size: number;
+  has_more: boolean;
+}
+
 // ============================================
 // Transaction Types
 // ============================================
