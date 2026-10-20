@@ -6,8 +6,9 @@
  * pair below was contrast-checked: body text is AAA, all muted text and
  * semantic fills are AA or better in both modes.
  *
- * Dark mode is a warm espresso rather than the usual blue-black, so the two
- * modes feel like the same product rather than two different apps.
+ * Dark mode is a cool neutral slate — a crisp blue-grey à la Linear/Vercel,
+ * kept deliberately low-chroma so surfaces read clean and the teal accent does
+ * the talking. Light mode stays warm; the shared teal links the two modes.
  */
 @import 'tailwindcss';
 @import 'tw-animate-css';
@@ -84,43 +85,43 @@
 }
 
 .dark {
-  --background: oklch(0.178 0.012 56);
-  --foreground: oklch(0.955 0.008 85);
+  --background: oklch(0.21 0.009 264);
+  --foreground: oklch(0.97 0.004 264);
 
-  --card: oklch(0.216 0.014 58);
-  --card-foreground: oklch(0.955 0.008 85);
+  --card: oklch(0.252 0.011 264);
+  --card-foreground: oklch(0.97 0.004 264);
 
-  --popover: oklch(0.228 0.015 58);
-  --popover-foreground: oklch(0.955 0.008 85);
+  --popover: oklch(0.262 0.011 264);
+  --popover-foreground: oklch(0.97 0.004 264);
 
-  /* Brighter teal so the accent reads against a dark warm surface (8.1:1). */
-  --primary: oklch(0.725 0.115 192);
-  --primary-foreground: oklch(0.178 0.012 56);
+  /* Brand teal, brightened to pop against the cool slate surface (8.2:1). */
+  --primary: oklch(0.745 0.125 195);
+  --primary-foreground: oklch(0.21 0.009 264);
 
-  --secondary: oklch(0.264 0.015 58);
-  --secondary-foreground: oklch(0.955 0.008 85);
+  --secondary: oklch(0.29 0.013 264);
+  --secondary-foreground: oklch(0.97 0.004 264);
 
-  --muted: oklch(0.264 0.015 58);
-  --muted-foreground: oklch(0.72 0.016 75);
+  --muted: oklch(0.29 0.013 264);
+  --muted-foreground: oklch(0.72 0.016 264);
 
-  --accent: oklch(0.3 0.018 60);
-  --accent-foreground: oklch(0.955 0.008 85);
+  --accent: oklch(0.335 0.016 264);
+  --accent-foreground: oklch(0.97 0.004 264);
 
   --destructive: oklch(0.705 0.17 24);
-  --destructive-foreground: oklch(0.178 0.012 56);
+  --destructive-foreground: oklch(0.21 0.009 264);
 
-  --success: oklch(0.73 0.145 153);
-  --success-foreground: oklch(0.178 0.012 56);
+  --success: oklch(0.74 0.15 158);
+  --success-foreground: oklch(0.21 0.009 264);
 
-  --warning: oklch(0.8 0.14 76);
-  --warning-foreground: oklch(0.178 0.012 56);
+  --warning: oklch(0.8 0.14 80);
+  --warning-foreground: oklch(0.21 0.009 264);
 
-  --info: oklch(0.725 0.115 192);
-  --info-foreground: oklch(0.178 0.012 56);
+  --info: oklch(0.745 0.125 195);
+  --info-foreground: oklch(0.21 0.009 264);
 
-  --border: oklch(0.32 0.016 60);
-  --input: oklch(0.35 0.018 60);
-  --ring: oklch(0.725 0.115 192);
+  --border: oklch(0.32 0.016 264);
+  --input: oklch(0.365 0.018 264);
+  --ring: oklch(0.745 0.125 195);
 
   --chart-1: oklch(0.725 0.115 192);
   --chart-2: oklch(0.78 0.12 78);
@@ -128,16 +129,16 @@
   --chart-4: oklch(0.72 0.1 150);
   --chart-5: oklch(0.68 0.11 340);
 
-  --sidebar: oklch(0.2 0.013 57);
-  --sidebar-foreground: oklch(0.92 0.01 82);
-  --sidebar-primary: oklch(0.725 0.115 192);
-  --sidebar-primary-foreground: oklch(0.178 0.012 56);
-  --sidebar-accent: oklch(0.285 0.017 59);
-  --sidebar-accent-foreground: oklch(0.955 0.008 85);
-  --sidebar-border: oklch(0.3 0.016 59);
-  --sidebar-ring: oklch(0.725 0.115 192);
+  --sidebar: oklch(0.188 0.009 264);
+  --sidebar-foreground: oklch(0.93 0.006 264);
+  --sidebar-primary: oklch(0.745 0.125 195);
+  --sidebar-primary-foreground: oklch(0.21 0.009 264);
+  --sidebar-accent: oklch(0.305 0.015 264);
+  --sidebar-accent-foreground: oklch(0.97 0.004 264);
+  --sidebar-border: oklch(0.3 0.015 264);
+  --sidebar-ring: oklch(0.745 0.125 195);
 
-  --shadow-color: 25 30% 3%;
+  --shadow-color: 225 40% 2%;
   --shadow-xs: 0 1px 2px -1px hsl(var(--shadow-color) / 0.5);
   --shadow-sm: 0 1px 3px -1px hsl(var(--shadow-color) / 0.55), 0 1px 2px -1px hsl(var(--shadow-color) / 0.4);
   --shadow-md: 0 4px 10px -3px hsl(var(--shadow-color) / 0.6), 0 2px 4px -2px hsl(var(--shadow-color) / 0.45);

@@ -82,10 +82,6 @@ const navGroups: NavGroup[] = [
       { text: 'Users', icon: <UserCog />, path: '/users', adminOnly: true },
     ],
   },
-  {
-    label: 'Tools',
-    items: [{ text: 'Assistant', icon: <Sparkles />, path: '/assistant' }],
-  },
 ];
 
 const THEME_OPTIONS: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
@@ -289,6 +285,26 @@ export const MainLayout: React.FC = () => {
         </Tooltip>
 
         <div className="flex-1" />
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/assistant')}
+              aria-current={isActivePath('/assistant') ? 'page' : undefined}
+              className={cn(
+                'gap-2 font-semibold',
+                isActivePath('/assistant')
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground'
+                  : 'border border-primary/30 text-primary hover:bg-primary/10 hover:text-primary'
+              )}
+            >
+              <Sparkles />
+              <span className="hidden sm:inline">AI</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Open KC AI</TooltipContent>
+        </Tooltip>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
